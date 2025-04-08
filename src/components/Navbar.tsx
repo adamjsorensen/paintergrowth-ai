@@ -1,9 +1,15 @@
 
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useAuth } from "./AuthProvider";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +24,22 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error logging out",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out.",
+      });
+    }
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -31,9 +53,9 @@ const Navbar = () => {
           <div className="bg-paintergrowth-600 h-8 w-8 rounded-md flex items-center justify-center">
             <span className="text-white font-bold text-xl">P</span>
           </div>
-          <span className="text-paintergrowth-800 font-bold text-xl">
+          <Link to="/" className="text-paintergrowth-800 font-bold text-xl">
             Paintergrowth.ai
-          </span>
+          </Link>
         </div>
 
         <div className="hidden md:flex items-center space-x-8 font-medium">
@@ -46,9 +68,22 @@ const Navbar = () => {
           <a href="#testimonials" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
             Testimonials
           </a>
-          <Button className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white">
-            Get Started
-          </Button>
+          
+          {user ? (
+            <Button 
+              className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white"
+              onClick={handleLogout}
+            >
+              Log Out
+            </Button>
+          ) : (
+            <Button 
+              className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white"
+              asChild
+            >
+              <Link to="/auth">Sign In</Link>
+            </Button>
+          )}
         </div>
 
         <Button className="block md:hidden" variant="ghost">
