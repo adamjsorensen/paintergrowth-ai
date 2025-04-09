@@ -133,9 +133,9 @@ const Navbar = () => {
                   </NavigationMenuItem>
                   {isAdmin && (
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger>Admin</NavigationMenuTrigger>
+                     <NavigationMenuTrigger className="justify-start">Admin</NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <div className="grid w-[200px] gap-1 p-2">
+                        <div className="grid min-w-[200px] gap-1 p-2">
                           <Link to="/admin/prompt-builder" className="block select-none rounded-md p-2 hover:bg-accent">
                             Prompt Builder
                           </Link>
