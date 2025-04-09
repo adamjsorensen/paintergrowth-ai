@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import { AuthProvider } from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProposalGenerator from "./pages/ProposalGenerator";
+import ViewProposal from "./pages/ViewProposal";
 import SavedProposals from "./pages/SavedProposals";
 import Profile from "./pages/Profile";
 import PromptBuilder from "./pages/admin/PromptBuilder";
@@ -42,6 +43,11 @@ const App = () => (
             <Route path="/generate/proposal" element={
               <ProtectedRoute>
                 <ProposalGenerator />
+              </ProtectedRoute>
+            } />
+            <Route path="/generate/proposal/:id" element={
+              <ProtectedRoute>
+                <ViewProposal />
               </ProtectedRoute>
             } />
             <Route path="/saved" element={

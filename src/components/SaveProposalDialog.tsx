@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useNavigate } from "react-router-dom";
 
 type SaveProposalDialogProps = {
   open: boolean;
@@ -21,6 +22,7 @@ type SaveProposalDialogProps = {
   proposalContent: string;
   clientName: string;
   jobType: string;
+  existingId?: string;
 };
 
 const SaveProposalDialog = ({
@@ -29,11 +31,13 @@ const SaveProposalDialog = ({
   proposalContent,
   clientName,
   jobType,
+  existingId,
 }: SaveProposalDialogProps) => {
-  const [proposalName, setProposalName] = useState(`${clientName} Proposal`);
+  const [proposalName, setProposalName] = useState(`${clientName || 'New'} Proposal`);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSave = async () => {
     try {
@@ -48,18 +52,35 @@ const SaveProposalDialog = ({
 
       setIsSaving(true);
       
-      // Instead of specifying the table name as a string, use it as a generic type parameter
-      const { error } = await supabase
-        .from('saved_proposals')
-        .insert({
-          user_id: user.id,
-          title: proposalName,
-          content: proposalContent,
-          client_name: clientName,
-          job_type: jobType
-        } as any); // Use type assertion as any to bypass TypeScript checks
-
-      if (error) throw error;
+      let result;
+      
+      if (existingId) {
+        // Update existing proposal
+        result = await supabase
+          .from('saved_proposals')
+          .update({
+            title: proposalName,
+            content: proposalContent,
+            client_name: clientName,
+            job_type: jobType,
+            status: "completed"
+          })
+          .eq('id', existingId);
+      } else {
+        // Create new proposal
+        result = await supabase
+          .from('saved_proposals')
+          .insert({
+            user_id: user.id,
+            title: proposalName,
+            content: proposalContent,
+            client_name: clientName,
+            job_type: jobType,
+            status: "completed"
+          });
+      }
+      
+      if (result.error) throw result.error;
       
       toast({
         title: "Proposal saved successfully",
@@ -67,6 +88,11 @@ const SaveProposalDialog = ({
       });
       
       onOpenChange(false);
+      
+      // Navigate to saved proposals page if it's a new save
+      if (!existingId) {
+        navigate("/saved");
+      }
     } catch (error) {
       console.error("Save error:", error);
       toast({

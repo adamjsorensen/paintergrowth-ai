@@ -22,11 +22,18 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt_id, field_values } = await req.json();
+    const { prompt_id, field_values, proposal_id } = await req.json();
     
     if (!prompt_id) {
       return new Response(
         JSON.stringify({ error: 'Missing prompt_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!proposal_id) {
+      return new Response(
+        JSON.stringify({ error: 'Missing proposal_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -83,6 +90,13 @@ serve(async (req) => {
     if (!openRouterResponse.ok) {
       const errorData = await openRouterResponse.text();
       console.error('OpenRouter API error:', errorData);
+      
+      // Update the proposal record to indicate failure
+      await supabase
+        .from('saved_proposals')
+        .update({ status: 'failed' })
+        .eq('id', proposal_id);
+        
       return new Response(
         JSON.stringify({ error: 'Failed to generate content from OpenRouter' }),
         { status: openRouterResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -92,8 +106,25 @@ serve(async (req) => {
     const data = await openRouterResponse.json();
     const generatedContent = data.choices[0].message.content;
 
+    // Update the proposal record with the generated content
+    const { error: updateError } = await supabase
+      .from('saved_proposals')
+      .update({
+        content: generatedContent,
+        status: 'completed'
+      })
+      .eq('id', proposal_id);
+
+    if (updateError) {
+      console.error('Error updating proposal:', updateError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save generated proposal' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ content: generatedContent }),
+      JSON.stringify({ success: true, proposal_id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     
