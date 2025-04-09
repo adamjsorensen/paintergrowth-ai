@@ -132,16 +132,18 @@ const Navbar = () => {
                     </Link>
                   </NavigationMenuItem>
                   {isAdmin && (
-                    <NavigationMenuItem>
-                     <NavigationMenuTrigger className="justify-start">Admin</NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <div className="grid min-w-[200px] gap-1 p-2">
-                          <Link to="/admin/prompt-builder" className="block select-none rounded-md p-2 hover:bg-accent">
-                            Prompt Builder
-                          </Link>
-                        </div>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
+                   <NavigationMenuItem>
+  <div className="relative">
+    <NavigationMenuTrigger className="justify-start">Admin</NavigationMenuTrigger>
+    <NavigationMenuContent>
+      <div className="grid min-w-[200px] gap-1 p-2">
+        <Link to="/admin/prompt-builder" className="block select-none rounded-md p-2 hover:bg-accent">
+          Prompt Builder
+        </Link>
+      </div>
+    </NavigationMenuContent>
+  </div>
+</NavigationMenuItem>
                   )}
                 </NavigationMenuList>
               </NavigationMenu>
