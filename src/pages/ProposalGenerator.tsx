@@ -1,9 +1,12 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, Save } from "lucide-react";
+import { Copy, Save, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { PromptTemplate, FieldConfig, parseFieldConfig } from "@/types/prompt-templates";
 
 import {
   Form,
@@ -18,85 +21,118 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import PageLayout from "@/components/PageLayout";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
+import { Progress } from "@/components/ui/progress";
 
-// Form validation schema
-const formSchema = z.object({
-  clientName: z.string().min(1, "Client name is required"),
-  jobType: z.enum(["interior", "exterior", "cabinets"]),
-  squareFootage: z.coerce.number().min(10, "Please enter valid square footage"),
-  tone: z.enum(["professional", "friendly", "casual"]),
-  additionalNotes: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FieldValue = string | number | boolean;
 
 const ProposalGenerator = () => {
+  const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);
+  const [fields, setFields] = useState<FieldConfig[]>([]);
+  const [fieldValues, setFieldValues] = useState<Record<string, FieldValue>>({});
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
+  const [isLoadingGeneration, setIsLoadingGeneration] = useState(false);
   const [proposal, setProposal] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      clientName: "",
-      jobType: "interior",
-      squareFootage: undefined,
-      tone: "professional",
-      additionalNotes: "",
-    },
-  });
+  // Fetch the active prompt template on component mount
+  useEffect(() => {
+    const fetchActivePromptTemplate = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("prompt_templates")
+          .select("*")
+          .eq("active", true)
+          .single();
 
-  const handleGenerate = async (values: FormValues) => {
-    try {
-      setIsGenerating(true);
-      
-      // For MVP, we'll simulate a delay and return hardcoded content
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const projectType = values.jobType.charAt(0).toUpperCase() + values.jobType.slice(1);
-      const toneStyle = values.tone === "professional" 
-        ? "formal and detailed" 
-        : values.tone === "friendly" 
-          ? "warm and personable" 
-          : "casual and conversational";
-      
-      // Generate a sample proposal based on form values
-      const proposalText = `
-# Professional Painting Proposal for ${values.clientName}
+        if (error) {
+          throw error;
+        }
 
-## Project Overview
-This proposal outlines our comprehensive ${projectType} Painting Service for your ${values.squareFootage} sq. ft. property.
+        if (data) {
+          const parsedTemplate = {
+            ...data,
+            field_config: parseFieldConfig(data.field_config)
+          } as PromptTemplate;
+          
+          setPromptTemplate(parsedTemplate);
+          setFields(parseFieldConfig(data.field_config));
+        }
+      } catch (error) {
+        console.error("Error fetching prompt template:", error);
+        toast({
+          title: "Error",
+          description: "Could not load proposal template",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingTemplate(false);
+      }
+    };
 
-## Our Approach
-Our team specializes in high-quality ${projectType.toLowerCase()} painting services. We'll begin with thorough preparation of all surfaces, including cleaning, sanding, and priming as needed. Premium paints and materials will be used throughout the project to ensure a lasting finish.
+    fetchActivePromptTemplate();
+  }, [toast]);
 
-## Project Timeline
-Based on the ${values.squareFootage} sq. ft. area, we estimate this project will take approximately ${Math.ceil(values.squareFootage / 500)} days to complete, weather and conditions permitting.
+  const handleFieldChange = (fieldId: string, value: FieldValue) => {
+    setFieldValues(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
+  };
 
-## Investment
-Our professional ${projectType.toLowerCase()} painting service for a property of ${values.squareFootage} sq. ft. is competitively priced at $${(values.squareFootage * 3.5).toFixed(2)}.
-
-${values.additionalNotes ? `## Additional Notes\n${values.additionalNotes}` : ''}
-
-We look forward to transforming your space with our professional painting services. Please let us know if you have any questions.
-
-PainterGrowth Professional Painting
-Generated with CrewkitAI by PainterGrowth
-      `;
-      
-      setProposal(proposalText);
-    } catch (error) {
+  const handleGenerate = async () => {
+    if (!promptTemplate) {
       toast({
-        title: "Generation failed",
-        description: "There was a problem generating your proposal. Please try again.",
+        title: "Error",
+        description: "No prompt template available",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check if required fields are filled
+    const missingRequiredFields = fields
+      .filter(field => field.required)
+      .filter(field => !fieldValues[field.id] && fieldValues[field.id] !== false)
+      .map(field => field.label);
+
+    if (missingRequiredFields.length > 0) {
+      toast({
+        title: "Missing required fields",
+        description: `Please fill in: ${missingRequiredFields.join(", ")}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLoadingGeneration(true);
+      setProposal(null);
+
+      const response = await supabase.functions.invoke('generate_proposal', {
+        body: {
+          prompt_id: promptTemplate.id,
+          field_values: fieldValues
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to generate proposal");
+      }
+
+      setProposal(response.data.content);
+    } catch (error) {
       console.error("Generation error:", error);
+      toast({
+        title: "Generation failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
-      setIsGenerating(false);
+      setIsLoadingGeneration(false);
     }
   };
 
@@ -105,7 +141,7 @@ Generated with CrewkitAI by PainterGrowth
       navigator.clipboard.writeText(proposal);
       toast({
         title: "Copied to clipboard",
-        description: "The proposal has been copied to your clipboard.",
+        description: "The proposal has been copied to your clipboard",
       });
     }
   };
@@ -114,131 +150,207 @@ Generated with CrewkitAI by PainterGrowth
     setShowSaveDialog(true);
   };
 
+  const renderField = (field: FieldConfig) => {
+    const { id, label, type, required, helpText, placeholder, options } = field;
+    
+    switch (type) {
+      case "text":
+        return (
+          <div className="space-y-2" key={id}>
+            <FormLabel htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </FormLabel>
+            <Input
+              id={id}
+              placeholder={placeholder || ""}
+              value={(fieldValues[id] as string) || ""}
+              onChange={(e) => handleFieldChange(id, e.target.value)}
+              required={required}
+            />
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+      
+      case "textarea":
+        return (
+          <div className="space-y-2" key={id}>
+            <FormLabel htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </FormLabel>
+            <Textarea
+              id={id}
+              placeholder={placeholder || ""}
+              value={(fieldValues[id] as string) || ""}
+              onChange={(e) => handleFieldChange(id, e.target.value)}
+              required={required}
+            />
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+      
+      case "select":
+        return (
+          <div className="space-y-2" key={id}>
+            <FormLabel htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </FormLabel>
+            <Select
+              value={(fieldValues[id] as string) || ""}
+              onValueChange={(value) => handleFieldChange(id, value)}
+            >
+              <SelectTrigger id={id}>
+                <SelectValue placeholder={placeholder || "Select an option"} />
+              </SelectTrigger>
+              <SelectContent>
+                {options?.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+      
+      case "number":
+        return (
+          <div className="space-y-2" key={id}>
+            <FormLabel htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </FormLabel>
+            <Input
+              id={id}
+              type="number"
+              placeholder={placeholder || ""}
+              value={(fieldValues[id] as number) || ""}
+              onChange={(e) => handleFieldChange(id, parseFloat(e.target.value))}
+              required={required}
+              min={field.min}
+              max={field.max}
+              step={field.step}
+            />
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+      
+      case "toggle":
+        return (
+          <div className="flex justify-between items-center space-x-2 py-2" key={id}>
+            <div>
+              <FormLabel htmlFor={id}>
+                {label}
+                {required && <span className="text-red-500 ml-1">*</span>}
+              </FormLabel>
+              {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+            </div>
+            <Switch
+              id={id}
+              checked={fieldValues[id] as boolean || false}
+              onCheckedChange={(checked) => handleFieldChange(id, checked)}
+            />
+          </div>
+        );
+      
+      case "date":
+        return (
+          <div className="space-y-2" key={id}>
+            <FormLabel htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </FormLabel>
+            <Input
+              id={id}
+              type="date"
+              value={(fieldValues[id] as string) || ""}
+              onChange={(e) => handleFieldChange(id, e.target.value)}
+              required={required}
+            />
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  if (isLoadingTemplate) {
+    return (
+      <PageLayout title="Generate Proposal">
+        <div className="container mx-auto py-8 px-4 max-w-5xl">
+          <div className="flex justify-center items-center h-64">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!promptTemplate) {
+    return (
+      <PageLayout title="Generate Proposal">
+        <div className="container mx-auto py-8 px-4 max-w-5xl">
+          <div className="text-center p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">No Active Template</h2>
+            <p className="text-gray-600">
+              There is no active proposal template. Please set up a template in the admin section.
+            </p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout title="Generate Proposal">
       <div className="container mx-auto py-8 px-4 max-w-5xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Form Section */}
           <div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="clientName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ABC Properties" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="jobType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Job Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select job type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="interior">Interior</SelectItem>
-                          <SelectItem value="exterior">Exterior</SelectItem>
-                          <SelectItem value="cabinets">Cabinets</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="squareFootage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Square Footage</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="2000" 
-                          {...field} 
-                          onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tone</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tone" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="additionalNotes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Notes</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Any specific details or requirements..." 
-                          className="min-h-[120px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold">{promptTemplate.name}</h2>
+              <div className="space-y-6">
+                {fields
+                  .sort((a, b) => a.order - b.order)
+                  .map((field) => renderField(field))}
+  
                 <Button 
-                  type="submit" 
                   className="w-full" 
-                  disabled={isGenerating}
+                  onClick={handleGenerate}
+                  disabled={isLoadingGeneration}
                 >
-                  {isGenerating ? "Generating..." : "Generate Proposal"}
+                  {isLoadingGeneration ? (
+                    <>
+                      <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : "Generate Proposal"}
                 </Button>
-              </form>
-            </Form>
+              </div>
+            </div>
           </div>
 
           {/* Output Section */}
           <div>
-            {proposal ? (
+            {isLoadingGeneration ? (
+              <Card className="h-full">
+                <CardContent className="p-6 flex flex-col justify-center items-center h-full">
+                  <div className="space-y-4 text-center">
+                    <RefreshCcw className="h-12 w-12 animate-spin text-primary mx-auto" />
+                    <h3 className="font-medium">Generating your proposal...</h3>
+                    <Progress value={65} className="w-full" />
+                    <p className="text-sm text-muted-foreground">
+                      This may take a few moments
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : proposal ? (
               <Card className="h-full">
                 <CardContent className="p-6">
                   <div className="mb-4 flex justify-end gap-2">
@@ -273,13 +385,13 @@ Generated with CrewkitAI by PainterGrowth
       </div>
 
       {/* Save Dialog */}
-      {showSaveDialog && (
+      {showSaveDialog && proposal && (
         <SaveProposalDialog
           open={showSaveDialog}
           onOpenChange={setShowSaveDialog}
-          proposalContent={proposal || ""}
-          clientName={form.getValues().clientName}
-          jobType={form.getValues().jobType}
+          proposalContent={proposal}
+          clientName={fieldValues['clientName'] as string || ''}
+          jobType={fieldValues['jobType'] as string || ''}
         />
       )}
     </PageLayout>

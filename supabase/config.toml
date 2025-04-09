@@ -1,1 +1,5 @@
+
+# This file is used by Deno to learn how to start your project. Don't modify this file!
 project_id = "vsxbpknreazkcvjswycc"
+
+[functions.generate_proposal]
