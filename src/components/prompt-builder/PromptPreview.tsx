@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FieldConfig, FieldType } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { FileUpload, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 interface PromptPreviewProps {
   systemPrompt: string;
