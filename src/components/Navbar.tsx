@@ -131,20 +131,24 @@ const Navbar = () => {
                       Saved Proposals
                     </Link>
                   </NavigationMenuItem>
-                  {isAdmin && (
-                  <NavigationMenuItem>
-  <NavigationMenuTrigger className="justify-start">Admin</NavigationMenuTrigger>
-  <NavigationMenuContent>
-    <div className="grid min-w-[200px] gap-1 p-2">
-      <Link to="/admin/prompt-builder" className="block select-none rounded-md p-2 hover:bg-accent">
-        Prompt Builder
-      </Link>
-    </div>
-  </NavigationMenuContent>
-</NavigationMenuItem>
-                  )}
-                </NavigationMenuList>
+                  </NavigationMenuList>
               </NavigationMenu>
+               {isAdmin && (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" className="flex items-center gap-2 px-3">
+        Admin
+        <ChevronDown className="h-4 w-4" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="start" className="w-48">
+      <DropdownMenuItem asChild>
+        <Link to="/admin/prompt-builder" className="w-full">Prompt Builder</Link>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+)}   
+
               
               {/* User Profile Menu */}
               <DropdownMenu>
