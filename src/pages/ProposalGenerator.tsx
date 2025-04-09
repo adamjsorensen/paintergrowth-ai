@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -280,6 +279,7 @@ Generated with CrewkitAI by PainterGrowth
           onOpenChange={setShowSaveDialog}
           proposalContent={proposal || ""}
           clientName={form.getValues().clientName}
+          jobType={form.getValues().jobType}
         />
       )}
     </PageLayout>

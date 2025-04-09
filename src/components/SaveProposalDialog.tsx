@@ -12,12 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 type SaveProposalDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   proposalContent: string;
   clientName: string;
+  jobType: string;
 };
 
 const SaveProposalDialog = ({
@@ -25,17 +28,35 @@ const SaveProposalDialog = ({
   onOpenChange,
   proposalContent,
   clientName,
+  jobType,
 }: SaveProposalDialogProps) => {
   const [proposalName, setProposalName] = useState(`${clientName} Proposal`);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSave = async () => {
     try {
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "You must be logged in to save proposals.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setIsSaving(true);
       
-      // Simulate saving to database
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase.from("saved_proposals").insert({
+        user_id: user.id,
+        title: proposalName,
+        content: proposalContent,
+        client_name: clientName,
+        job_type: jobType
+      });
+
+      if (error) throw error;
       
       toast({
         title: "Proposal saved successfully",
@@ -44,12 +65,12 @@ const SaveProposalDialog = ({
       
       onOpenChange(false);
     } catch (error) {
+      console.error("Save error:", error);
       toast({
         title: "Error saving proposal",
         description: "There was a problem saving your proposal. Please try again.",
         variant: "destructive",
       });
-      console.error("Save error:", error);
     } finally {
       setIsSaving(false);
     }

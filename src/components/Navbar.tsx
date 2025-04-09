@@ -59,6 +59,16 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center space-x-8 font-medium">
+          {user && (
+            <>
+              <Link to="/generate" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
+                Generate
+              </Link>
+              <Link to="/saved" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
+                Saved Proposals
+              </Link>
+            </>
+          )}
           <a href="#features" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
             Features
           </a>

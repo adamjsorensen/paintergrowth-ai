@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import { AuthProvider } from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProposalGenerator from "./pages/ProposalGenerator";
+import SavedProposals from "./pages/SavedProposals";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,11 @@ const App = () => (
             <Route path="/generate" element={
               <ProtectedRoute>
                 <ProposalGenerator />
+              </ProtectedRoute>
+            } />
+            <Route path="/saved" element={
+              <ProtectedRoute>
+                <SavedProposals />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
