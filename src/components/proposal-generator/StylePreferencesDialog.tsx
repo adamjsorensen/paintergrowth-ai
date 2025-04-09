@@ -89,19 +89,26 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-4xl h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-lg h-[90vh] overflow-y-auto px-4 md:px-6 pt-6 pb-0">
         <div className="text-center space-y-2 mb-4">
-          <h1 className="text-3xl font-bold tracking-tight">Let's build your perfect proposal</h1>
-          <p className="text-muted-foreground text-lg">
-            Pick a few style preferences—or skip straight to the job info.
+          <h1 className="text-2xl font-bold tracking-tight">Build your perfect proposal</h1>
+          <p className="text-sm text-muted-foreground">
+            Pick style preferences—or skip straight to the job info.
           </p>
+          <div className="flex justify-center items-center gap-2 mt-2">
+            <span className="w-2 h-2 rounded-full bg-paintergrowth-600"></span>
+            <span className="w-2 h-2 rounded-full bg-gray-200"></span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tone Preference */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-3">Tone</h3>
+        <div className="flex flex-col space-y-8 pb-20">
+          {/* Group 1: Style */}
+          <div className="space-y-5">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">Style</h3>
+            
+            {/* Tone Preference */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Tone</label>
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   type="button" 
@@ -136,37 +143,11 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
                   <span>Chill</span>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Length Preference */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6">
-              <div className="mb-3 flex justify-between">
-                <h3 className="font-semibold text-lg">Length</h3>
-                <span className="text-muted-foreground">{currentLength}%</span>
-              </div>
-              <div className="py-4">
-                <div className="flex justify-between mb-2 text-muted-foreground">
-                  <span>Short</span>
-                  <span>Long</span>
-                </div>
-                <Slider 
-                  min={0} 
-                  max={100} 
-                  step={5} 
-                  value={[currentLength]}
-                  onValueChange={handleLengthChange}
-                  className="mb-4"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Formality */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-3">Formality</h3>
+            {/* Formality */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Formality</label>
               <RadioGroup 
                 value={preferences.formality || ""} 
                 onValueChange={handleFormalityChange}
@@ -181,36 +162,64 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
                   <Label htmlFor="formal">Formal</Label>
                 </div>
               </RadioGroup>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Visual Flair */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-3">Visual Flair</h3>
+          {/* Group 2: Format */}
+          <div className="space-y-5">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">Format</h3>
+            
+            {/* Length Preference */}
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <label className="text-sm font-medium">Length</label>
+                <span className="text-sm text-muted-foreground">{currentLength}%</span>
+              </div>
+              <div>
+                <div className="flex justify-between mb-2 text-xs text-muted-foreground">
+                  <span>Short</span>
+                  <span>Long</span>
+                </div>
+                <Slider 
+                  min={0} 
+                  max={100} 
+                  step={5} 
+                  value={[currentLength]}
+                  onValueChange={handleLengthChange}
+                  className="mb-4"
+                />
+              </div>
+            </div>
+
+            {/* Visual Flair */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Visual Flair</label>
               <ToggleGroup 
                 type="multiple"
                 value={getVisualFlairValue()}
                 onValueChange={handleVisualFlairChange}
-                className="flex flex-wrap gap-2"
+                className="flex flex-wrap gap-2 w-full"
               >
-                <ToggleGroupItem value="mentionColors" className="rounded-full">
-                  Mention Colors
+                <ToggleGroupItem value="mentionColors" className="flex-1 rounded-full text-sm">
+                  Colors
                 </ToggleGroupItem>
-                <ToggleGroupItem value="includePricing" className="rounded-full">
-                  Include Pricing
+                <ToggleGroupItem value="includePricing" className="flex-1 rounded-full text-sm">
+                  Pricing
                 </ToggleGroupItem>
-                <ToggleGroupItem value="bulletPoints" className="rounded-full">
-                  Bullet Points
+                <ToggleGroupItem value="bulletPoints" className="flex-1 rounded-full text-sm">
+                  Bullets
                 </ToggleGroupItem>
               </ToggleGroup>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Relationship */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-3">Customer Relationship</h3>
+          {/* Group 3: Client Context */}
+          <div className="space-y-5">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">Client Context</h3>
+            
+            {/* Relationship */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Customer Relationship</label>
               <RadioGroup 
                 value={preferences.relationship || ""} 
                 onValueChange={handleRelationshipChange}
@@ -233,39 +242,39 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
                   <Label htmlFor="cold">Cold</Label>
                 </div>
               </RadioGroup>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Add Upsells */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Add Upsells</h3>
-                <p className="text-muted-foreground text-sm">Include additional service suggestions</p>
+            {/* Additional Options */}
+            <div className="space-y-4">
+              {/* Add Personality */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">Add Personality</h4>
+                  <p className="text-xs text-muted-foreground">Make the proposal feel more human and warm</p>
+                </div>
+                <Switch 
+                  checked={preferences.addPersonality}
+                  onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, addPersonality: checked }))}
+                />
               </div>
-              <Switch 
-                checked={preferences.addUpsells}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, addUpsells: checked }))}
-              />
-            </CardContent>
-          </Card>
 
-          {/* Add Personality */}
-          <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Add Personality</h3>
-                <p className="text-muted-foreground text-sm">Make the proposal more human</p>
+              {/* Add Upsells */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">Add Upsells</h4>
+                  <p className="text-xs text-muted-foreground">Include additional service suggestions</p>
+                </div>
+                <Switch 
+                  checked={preferences.addUpsells}
+                  onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, addUpsells: checked }))}
+                />
               </div>
-              <Switch 
-                checked={preferences.addPersonality}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, addPersonality: checked }))}
-              />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
-        <div className="flex justify-between pt-4 mt-4">
+        {/* Sticky Footer */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t flex justify-between mt-auto">
           <Button 
             variant="outline" 
             onClick={handleSkip}
