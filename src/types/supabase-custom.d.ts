@@ -6,7 +6,7 @@ import { Database as OriginalDatabase } from "@/integrations/supabase/types";
 export interface ExtendedDatabase extends OriginalDatabase {
   public: {
     Tables: {
-      // Include original tables
+      // Include original tables from the generated types
       ...OriginalDatabase['public']['Tables'],
       
       // Add custom tables
