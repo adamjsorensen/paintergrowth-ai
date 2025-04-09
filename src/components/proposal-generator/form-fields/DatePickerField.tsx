@@ -1,70 +1,52 @@
 
-import * as React from "react";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { FieldConfig } from "@/types/prompt-templates";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Settings } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DatePickerFieldProps {
   field: FieldConfig;
   value: string;
   onChange: (value: string) => void;
+  isAdvanced?: boolean;
 }
 
-const DatePickerField = ({ field, value, onChange }: DatePickerFieldProps) => {
-  const { id, label, required, helpText, placeholder } = field;
-  const [date, setDate] = React.useState<Date | undefined>(
-    value ? new Date(value) : undefined
-  );
-
-  const handleSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate);
-    if (selectedDate) {
-      onChange(selectedDate.toISOString().split("T")[0]);
-    } else {
-      onChange("");
-    }
-  };
-
+const DatePickerField = ({ field, value, onChange, isAdvanced = false }: DatePickerFieldProps) => {
+  const { id, label, required, helpText } = field;
+  
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </Label>
+    <div className="space-y-2" key={id}>
+      <div className="flex items-center gap-1 group">
+        <Label htmlFor={id} className="inline-flex">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+        
+        {isAdvanced && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-muted-foreground ml-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <Settings className="h-3 w-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Advanced option</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
       
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            variant={"outline"}
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP") : placeholder || "Pick a date"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={handleSelect}
-            initialFocus
-            className={cn("p-3 pointer-events-auto")}
-          />
-        </PopoverContent>
-      </Popover>
+      <Input
+        id={id}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className={isAdvanced ? "border-dashed" : ""}
+      />
       
       {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
     </div>

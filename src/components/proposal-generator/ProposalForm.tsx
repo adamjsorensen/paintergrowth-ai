@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import FormSection from "./FormSection";
+import ModeToggle from "./ModeToggle";
 
 // Define section configurations
 const FORM_SECTIONS = [
@@ -63,9 +64,22 @@ interface ProposalFormProps {
 
 const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: ProposalFormProps) => {
   const [fieldValues, setFieldValues] = useState<Record<string, FieldValue>>({});
+  const [formMode, setFormMode] = useState<'basic' | 'advanced'>('basic');
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Filter fields based on current mode
+  const getVisibleFields = () => {
+    if (formMode === 'advanced') {
+      return fields;
+    } else {
+      // In basic mode, show only basic fields and required fields regardless of complexity
+      return fields.filter(field => field.complexity === 'basic' || field.required);
+    }
+  };
+
+  const visibleFields = getVisibleFields();
 
   const handleFieldChange = (fieldId: string, value: FieldValue) => {
     setFieldValues(prev => ({
@@ -137,13 +151,18 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
     const result: Record<string, FieldConfig[]> = {};
     
     FORM_SECTIONS.forEach(section => {
-      result[section.id] = fields
+      // Filter fields by section AND by visibility based on current mode
+      const sectionFields = visibleFields
         .filter(field => section.fields.includes(field.id))
         .sort((a, b) => a.order - b.order);
+        
+      if (sectionFields.length > 0) {
+        result[section.id] = sectionFields;
+      }
     });
 
     // Add any fields that don't belong to a defined section to a default section
-    const remainingFields = fields.filter(field => 
+    const remainingFields = visibleFields.filter(field => 
       !Object.values(result).flat().some(f => f.id === field.id)
     ).sort((a, b) => a.order - b.order);
     
@@ -164,20 +183,33 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
     return 'col-span-2 sm:col-span-1';
   };
 
+  // Count how many fields are displayed vs. total available
+  const visibleFieldCount = visibleFields.length;
+  const totalFieldCount = fields.length;
+
   return (
     <Card className="border-none shadow-md">
       <CardHeader className="bg-gray-50 border-b border-gray-100 rounded-t-lg p-6">
-        <CardTitle className="text-xl font-semibold">{templateName}</CardTitle>
-        <CardDescription>Fill out the form below to generate your professional proposal</CardDescription>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <CardTitle className="text-xl font-semibold">{templateName}</CardTitle>
+            <CardDescription>Fill out the form below to generate your professional proposal</CardDescription>
+          </div>
+          <div className="w-full sm:w-auto">
+            <ModeToggle mode={formMode} onModeChange={setFormMode} />
+          </div>
+        </div>
+        {formMode === 'basic' && totalFieldCount > visibleFieldCount && (
+          <div className="mt-2 text-xs text-muted-foreground animate-fade-in">
+            Showing {visibleFieldCount} of {totalFieldCount} fields. Switch to Advanced mode to see all options.
+          </div>
+        )}
       </CardHeader>
       <CardContent className="p-6">
         {Object.entries(fieldsBySection).map(([sectionId, sectionFields]) => {
           if (sectionFields.length === 0) return null;
           
           const section = FORM_SECTIONS.find(s => s.id === sectionId);
-          
-          // Skip rendering sections that don't have any fields or if they're completely empty
-          if (sectionFields.length === 0) return null;
           
           return (
             <FormSection 
@@ -198,6 +230,7 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
                             : ""
                       )}
                       onChange={(value) => handleFieldChange(field.id, value)}
+                      isAdvanced={field.complexity === 'advanced'}
                     />
                   </div>
                 ))}

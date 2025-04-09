@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 type FieldValue = string | number | boolean | string[];
 
-// Enhanced field configuration with all supported field types
+// Enhanced field configuration with all supported field types and complexity levels
 const ENHANCED_FIELDS: FieldConfig[] = [
   {
     id: 'clientName',
@@ -18,7 +19,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'text',
     required: true,
     order: 10,
-    placeholder: 'Enter client name'
+    placeholder: 'Enter client name',
+    complexity: 'basic'
   },
   {
     id: 'projectAddress',
@@ -26,7 +28,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'textarea',
     required: true,
     order: 15,
-    placeholder: 'Enter the full project address'
+    placeholder: 'Enter the full project address',
+    complexity: 'basic'
   },
   {
     id: 'jobType',
@@ -40,7 +43,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'cabinets', label: 'Cabinets' },
       { value: 'deck', label: 'Deck/Fence' },
       { value: 'commercial', label: 'Commercial' }
-    ]
+    ],
+    complexity: 'basic'
   },
   {
     id: 'squareFootage',
@@ -48,7 +52,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'number',
     required: false,
     order: 30,
-    placeholder: 'Approx. square footage'
+    placeholder: 'Approx. square footage',
+    complexity: 'advanced'
   },
   {
     id: 'surfacesToPaint',
@@ -62,7 +67,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'trim', label: 'Trim' },
       { value: 'doors', label: 'Doors' },
       { value: 'cabinets', label: 'Cabinets' }
-    ]
+    ],
+    complexity: 'basic'
   },
   {
     id: 'prepNeeds',
@@ -77,7 +83,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'caulking', label: 'Caulking' },
       { value: 'patching', label: 'Patching' },
       { value: 'priming', label: 'Priming' }
-    ]
+    ],
+    complexity: 'advanced'
   },
   {
     id: 'colorPalette',
@@ -85,14 +92,16 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'textarea',
     required: false,
     order: 60,
-    placeholder: 'Describe your color preferences'
+    placeholder: 'Describe your color preferences',
+    complexity: 'basic'
   },
   {
     id: 'timeline',
     label: 'Timeline or Start Date',
     type: 'date',
     required: false,
-    order: 70
+    order: 70,
+    complexity: 'basic'
   },
   {
     id: 'specialNotes',
@@ -100,28 +109,32 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'textarea',
     required: false,
     order: 80,
-    placeholder: 'Any additional details or requirements'
+    placeholder: 'Any additional details or requirements',
+    complexity: 'advanced'
   },
   {
     id: 'showDetailedScope',
     label: 'Show detailed scope of work',
     type: 'toggle',
     required: false,
-    order: 90
+    order: 90,
+    complexity: 'advanced'
   },
   {
     id: 'breakoutQuote',
     label: 'Break out quote summary',
     type: 'toggle',
     required: false,
-    order: 100
+    order: 100,
+    complexity: 'advanced'
   },
   {
     id: 'includeTerms',
     label: 'Include terms & conditions',
     type: 'toggle',
     required: false,
-    order: 110
+    order: 110,
+    complexity: 'basic'
   },
   {
     id: 'uploadFiles',
@@ -129,7 +142,8 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'file-upload',
     required: false,
     order: 120,
-    helpText: 'Upload reference images or documents'
+    helpText: 'Upload reference images or documents',
+    complexity: 'advanced'
   }
 ];
 

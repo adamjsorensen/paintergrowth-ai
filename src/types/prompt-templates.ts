@@ -23,6 +23,7 @@ export interface FieldConfig {
   sectionId?: string; // Added to group fields into sections
   icon?: string; // Added for field icons
   colSpan?: 'full' | 'half'; // Added for layout control
+  complexity: 'basic' | 'advanced'; // Added for streamlined vs. advanced mode
 }
 
 export interface FormSection {
@@ -47,9 +48,20 @@ export const parseFieldConfig = (jsonData: Json): FieldConfig[] => {
   
   try {
     if (typeof jsonData === 'string') {
-      return JSON.parse(jsonData);
+      const parsed = JSON.parse(jsonData);
+      // Add complexity if not present (backward compatibility)
+      return parsed.map((field: any) => ({
+        ...field,
+        complexity: field.complexity || 'basic'
+      }));
     }
-    return jsonData as unknown as FieldConfig[];
+    
+    // Add complexity if not present (backward compatibility)
+    const fields = jsonData as unknown as FieldConfig[];
+    return fields.map(field => ({
+      ...field,
+      complexity: field.complexity || 'basic'
+    }));
   } catch (error) {
     console.error("Error parsing field_config:", error);
     return [];
