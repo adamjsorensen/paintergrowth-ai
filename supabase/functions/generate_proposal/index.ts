@@ -43,6 +43,12 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Update the proposal record to indicate processing
+    await supabase
+      .from('saved_proposals')
+      .update({ status: 'generating' })
+      .eq('id', proposal_id);
+
     // Fetch the prompt template
     const { data: promptTemplate, error: promptError } = await supabase
       .from('prompt_templates')
@@ -52,6 +58,13 @@ serve(async (req) => {
     
     if (promptError || !promptTemplate) {
       console.error('Error fetching prompt template:', promptError);
+      
+      // Update proposal status to failed
+      await supabase
+        .from('saved_proposals')
+        .update({ status: 'failed' })
+        .eq('id', proposal_id);
+        
       return new Response(
         JSON.stringify({ error: 'Failed to fetch prompt template' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -66,6 +79,7 @@ serve(async (req) => {
     });
 
     console.log('Processed system prompt:', systemPrompt);
+    console.log('Starting OpenRouter API call...');
 
     // Call OpenRouter API
     const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -87,6 +101,8 @@ serve(async (req) => {
       }),
     });
 
+    console.log('OpenRouter API response status:', openRouterResponse.status);
+
     if (!openRouterResponse.ok) {
       const errorData = await openRouterResponse.text();
       console.error('OpenRouter API error:', errorData);
@@ -104,6 +120,8 @@ serve(async (req) => {
     }
 
     const data = await openRouterResponse.json();
+    console.log('OpenRouter API response received successfully');
+    
     const generatedContent = data.choices[0].message.content;
 
     // Update the proposal record with the generated content
@@ -122,6 +140,8 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('Proposal updated successfully with ID:', proposal_id);
 
     return new Response(
       JSON.stringify({ success: true, proposal_id }),

@@ -69,6 +69,16 @@ const ProposalGenerator = () => {
     try {
       setIsLoadingGeneration(true);
 
+      // First, ensure the proposal record has the correct pending status
+      if (user) {
+        await supabase
+          .from('saved_proposals')
+          .update({ 
+            status: "generating" 
+          })
+          .eq('id', proposalId);
+      }
+
       // Start the proposal generation in the background
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
@@ -79,11 +89,22 @@ const ProposalGenerator = () => {
       });
 
       if (response.error) {
+        // Update status to failed if the function invocation fails
+        if (user) {
+          await supabase
+            .from('saved_proposals')
+            .update({ 
+              status: "failed" 
+            })
+            .eq('id', proposalId);
+        }
+        
         throw new Error(response.error.message || "Failed to generate proposal");
       }
 
       // We don't need to handle the response content here anymore
       // as we'll be polling for it in the ViewProposal page
+      console.log("Generation started successfully for proposal:", proposalId);
     } catch (error) {
       console.error("Generation error:", error);
       
