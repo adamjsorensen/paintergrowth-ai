@@ -1,53 +1,29 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { FieldConfig, FieldType, FieldOption } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import FieldCard from "./FieldCard";
-import FieldForm from "./field-form/FieldForm";
+import FieldBuilderHeader from "./FieldBuilderHeader";
+import FieldActions from "./FieldActions";
+import FieldList from "./FieldList";
+import EmptyState from "./EmptyState";
 
 interface FieldBuilderProps {
   fields: FieldConfig[];
   setFields: React.Dispatch<React.SetStateAction<FieldConfig[]>>;
 }
 
-const fieldSchema = z.object({
-  label: z.string().min(1, "Label is required"),
-  type: z.enum(["text", "textarea", "select", "number", "toggle", "date", "checkbox-group", "multi-select", "file-upload"]),
-  required: z.boolean().default(false),
-  helpText: z.string().optional(),
-  placeholder: z.string().optional(),
-});
-
-type FieldFormValues = z.infer<typeof fieldSchema>;
-
 const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   const [isAddingField, setIsAddingField] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [options, setOptions] = useState<FieldOption[]>([]);
 
-  const form = useForm<FieldFormValues>({
-    resolver: zodResolver(fieldSchema),
-    defaultValues: {
-      label: "",
-      type: "text",
-      required: false,
-      helpText: "",
-      placeholder: "",
-    },
-  });
-
-  const handleAddField = (values: FieldFormValues) => {
+  const handleAddField = (values: any) => {
     const fieldId = values.label.toLowerCase().replace(/\s+/g, "_");
     
     const newField: FieldConfig = {
       id: fieldId,
       label: values.label,
-      type: values.type as FieldType,
+      type: values.type,
       required: values.required,
       helpText: values.helpText,
       placeholder: values.placeholder,
@@ -63,10 +39,9 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setFields((prev) => [...prev, newField]);
     setIsAddingField(false);
     setOptions([]);
-    form.reset();
   };
 
-  const handleUpdateField = (values: FieldFormValues) => {
+  const handleUpdateField = (values: any) => {
     if (!editingFieldId) return;
     
     setFields((prev) =>
@@ -75,7 +50,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
           const updatedField: FieldConfig = {
             ...field,
             label: values.label,
-            type: values.type as FieldType,
+            type: values.type,
             required: values.required,
             helpText: values.helpText,
             placeholder: values.placeholder,
@@ -98,20 +73,11 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     
     setEditingFieldId(null);
     setOptions([]);
-    form.reset();
   };
 
   const handleEditField = (field: FieldConfig) => {
     setEditingFieldId(field.id);
     setOptions(field.options || []);
-    
-    form.reset({
-      label: field.label,
-      type: field.type,
-      required: field.required,
-      helpText: field.helpText || "",
-      placeholder: field.placeholder || "",
-    });
   };
 
   const handleDeleteField = (fieldId: string) => {
@@ -147,55 +113,38 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setIsAddingField(false);
     setEditingFieldId(null);
     setOptions([]);
-    form.reset();
   };
 
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Input Fields</h3>
-          {!isAddingField && !editingFieldId && (
-            <Button onClick={() => setIsAddingField(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Field
-            </Button>
-          )}
-        </div>
+        <FieldBuilderHeader 
+          isAddingField={isAddingField} 
+          editingFieldId={editingFieldId} 
+          onAddFieldClick={() => setIsAddingField(true)} 
+        />
         
-        {(isAddingField || editingFieldId) && (
-          <FieldForm
-            form={form}
-            isEditing={!!editingFieldId}
-            options={options}
-            setOptions={setOptions}
-            onSubmit={editingFieldId ? handleUpdateField : handleAddField}
-            onCancel={handleCancel}
-          />
-        )}
+        <FieldActions
+          isAddingField={isAddingField}
+          setIsAddingField={setIsAddingField}
+          editingFieldId={editingFieldId}
+          setEditingFieldId={setEditingFieldId}
+          options={options}
+          setOptions={setOptions}
+          onAddField={handleAddField}
+          onUpdateField={handleUpdateField}
+          onCancel={handleCancel}
+        />
         
         <div className="space-y-4">
-          {fields.length === 0 && !isAddingField && (
-            <div className="text-center py-8 text-gray-500">
-              <p>No fields added yet.</p>
-              <p className="text-sm">Click "Add Field" to create your first input field.</p>
-            </div>
-          )}
+          {fields.length === 0 && !isAddingField && <EmptyState />}
           
-          {fields
-            .sort((a, b) => a.order - b.order)
-            .map((field) => (
-              <FieldCard
-                key={field.id}
-                field={field}
-                onEdit={() => handleEditField(field)}
-                onDelete={() => handleDeleteField(field.id)}
-                onMoveUp={() => handleMoveField(field.id, "up")}
-                onMoveDown={() => handleMoveField(field.id, "down")}
-                isFirst={field.order === 1}
-                isLast={field.order === fields.length}
-              />
-            ))}
+          <FieldList
+            fields={fields}
+            onEditField={handleEditField}
+            onDeleteField={handleDeleteField}
+            onMoveField={handleMoveField}
+          />
         </div>
       </CardContent>
     </Card>

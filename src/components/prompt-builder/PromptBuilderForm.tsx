@@ -11,7 +11,7 @@ import {
 } from "@/types/prompt-templates";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import FieldBuilder from "@/components/prompt-builder/FieldBuilder";
+import FieldBuilder from "@/components/prompt-builder/field-builder/FieldBuilder";
 import PromptInfoTab from "@/components/prompt-builder/tabs/PromptInfoTab";
 import SystemPromptTab from "@/components/prompt-builder/tabs/SystemPromptTab";
 import PreviewTab from "@/components/prompt-builder/tabs/PreviewTab";
