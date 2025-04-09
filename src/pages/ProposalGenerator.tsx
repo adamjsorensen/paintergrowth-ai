@@ -7,6 +7,7 @@ import PageLayout from "@/components/PageLayout";
 import { TemplateLoading, NoTemplateMessage } from "@/components/proposal-generator/LoadingStates";
 import ProposalForm from "@/components/proposal-generator/ProposalForm";
 import { useAuth } from "@/components/AuthProvider";
+import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 type FieldValue = string | number | boolean;
 
@@ -17,6 +18,7 @@ const ProposalGenerator = () => {
   const [isLoadingGeneration, setIsLoadingGeneration] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { preferences } = useStylePreferences();
 
   // Fetch the active prompt template on component mount
   useEffect(() => {
@@ -79,11 +81,17 @@ const ProposalGenerator = () => {
           .eq('id', proposalId);
       }
 
+      // Add style preferences to the values
+      const valuesWithPreferences = {
+        ...values,
+        _stylePreferences: preferences
+      };
+
       // Start the proposal generation in the background
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
           prompt_id: promptTemplate.id,
-          field_values: values,
+          field_values: valuesWithPreferences,
           proposal_id: proposalId
         }
       });

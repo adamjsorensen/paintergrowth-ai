@@ -14,7 +14,7 @@ const GenerateIndex = () => {
       title: "Proposal",
       description: "Generate professional painting proposals for your clients",
       icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
-      route: "/generate/proposal",
+      route: "/generate/style-preferences",
     },
     // Additional content types will be added here in the future
   ];

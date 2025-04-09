@@ -17,6 +17,8 @@ import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminRoute from "./components/AdminRoute";
 import GenerateIndex from "./pages/GenerateIndex";
 import Dashboard from "./pages/Dashboard";
+import StylePreferencesPage from "./pages/StylePreferencesPage";
+import { StylePreferencesProvider } from "./context/StylePreferencesContext";
 
 const queryClient = new QueryClient();
 
@@ -24,51 +26,58 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/generate" element={
-              <ProtectedRoute>
-                <GenerateIndex />
-              </ProtectedRoute>
-            } />
-            <Route path="/generate/proposal" element={
-              <ProtectedRoute>
-                <ProposalGenerator />
-              </ProtectedRoute>
-            } />
-            <Route path="/generate/proposal/:id" element={
-              <ProtectedRoute>
-                <ViewProposal />
-              </ProtectedRoute>
-            } />
-            <Route path="/saved" element={
-              <ProtectedRoute>
-                <SavedProposals />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/prompt-builder" element={
-              <AdminRoute>
-                <PromptBuilder />
-              </AdminRoute>
-            } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <StylePreferencesProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/generate" element={
+                <ProtectedRoute>
+                  <GenerateIndex />
+                </ProtectedRoute>
+              } />
+              <Route path="/generate/style-preferences" element={
+                <ProtectedRoute>
+                  <StylePreferencesPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/generate/proposal" element={
+                <ProtectedRoute>
+                  <ProposalGenerator />
+                </ProtectedRoute>
+              } />
+              <Route path="/generate/proposal/:id" element={
+                <ProtectedRoute>
+                  <ViewProposal />
+                </ProtectedRoute>
+              } />
+              <Route path="/saved" element={
+                <ProtectedRoute>
+                  <SavedProposals />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/prompt-builder" element={
+                <AdminRoute>
+                  <PromptBuilder />
+                </AdminRoute>
+              } />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </StylePreferencesProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
