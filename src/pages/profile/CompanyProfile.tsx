@@ -1,363 +1,321 @@
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { supabase, CompanyProfile } from "@/integrations/supabase/client";
 import PageLayout from "@/components/PageLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Link } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
 
-interface CompanyFormValues {
-  business_name: string;
-  location: string;
-  services_offered: string;
-  team_size: string;
-  pricing_notes: string;
-  preferred_tone: string;
-  brand_keywords: string[];
-}
-
-interface CompanyProfile {
-  user_id: string;
-  business_name: string | null;
-  location: string | null;
-  services_offered: string | null;
-  team_size: string | null;
-  pricing_notes: string | null;
-  preferred_tone: string | null;
-  brand_keywords: string[] | null;
-  updated_at: string;
-}
-
-const CompanyProfile = () => {
+const CompanyProfilePage = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [newKeyword, setNewKeyword] = useState("");
+  const { toast } = useToast();
+  const [profileData, setProfileData] = useState<CompanyProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
-  const form = useForm<CompanyFormValues>({
-    defaultValues: {
-      business_name: "",
-      location: "",
-      services_offered: "",
-      team_size: "",
-      pricing_notes: "",
-      preferred_tone: "professional",
-      brand_keywords: []
-    }
-  });
-
+  const [businessName, setBusinessName] = useState("");
+  const [location, setLocation] = useState("");
+  const [servicesOffered, setServicesOffered] = useState("");
+  const [teamSize, setTeamSize] = useState("");
+  const [pricingNotes, setPricingNotes] = useState("");
+  const [preferredTone, setPreferredTone] = useState("");
+  const [brandKeywords, setBrandKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
+  
+  // Fetch company profile
   useEffect(() => {
-    const fetchCompanyProfile = async () => {
+    const fetchProfile = async () => {
       if (!user) return;
       
       try {
-        setIsLoading(true);
         const { data, error } = await supabase
-          .from('company_profiles')
+          .from("company_profiles")
           .select("*")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
           
-        if (error && error.code !== "PGRST116") {
-          throw error;
-        }
-        
-        if (data) {
-          const profile = data as CompanyProfile;
-          form.reset({
-            business_name: profile.business_name || "",
-            location: profile.location || "",
-            services_offered: profile.services_offered || "",
-            team_size: profile.team_size || "",
-            pricing_notes: profile.pricing_notes || "",
-            preferred_tone: profile.preferred_tone || "professional",
-            brand_keywords: profile.brand_keywords || []
-          });
+        if (error) {
+          console.error("Error fetching company profile:", error);
+        } else if (data) {
+          setProfileData(data);
+          setBusinessName(data.business_name || "");
+          setLocation(data.location || "");
+          setServicesOffered(data.services_offered || "");
+          setTeamSize(data.team_size || "");
+          setPricingNotes(data.pricing_notes || "");
+          setPreferredTone(data.preferred_tone || "");
+          setBrandKeywords(data.brand_keywords || []);
         }
       } catch (error) {
-        console.error("Error fetching company profile:", error);
-        toast.error("Failed to load company profile data");
+        console.error("Unexpected error:", error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
-    fetchCompanyProfile();
-  }, [user, form]);
+    fetchProfile();
+  }, [user]);
   
-  const onSubmit = async (values: CompanyFormValues) => {
+  // Save company profile
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('company_profiles')
-        .upsert({
-          user_id: user.id,
-          business_name: values.business_name,
-          location: values.location,
-          services_offered: values.services_offered,
-          team_size: values.team_size,
-          pricing_notes: values.pricing_notes,
-          preferred_tone: values.preferred_tone,
-          brand_keywords: values.brand_keywords,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
-        
-      if (error) throw error;
+      setSaving(true);
       
-      toast.success("Company profile updated successfully");
+      const profileUpdate = {
+        user_id: user.id,
+        business_name: businessName,
+        location,
+        services_offered: servicesOffered,
+        team_size: teamSize,
+        pricing_notes: pricingNotes,
+        preferred_tone: preferredTone,
+        brand_keywords: brandKeywords,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (profileData) {
+        // Update existing profile
+        const { error } = await supabase
+          .from("company_profiles")
+          .update(profileUpdate)
+          .eq("user_id", user.id);
+          
+        if (error) throw error;
+      } else {
+        // Insert new profile
+        const { error } = await supabase
+          .from("company_profiles")
+          .insert(profileUpdate);
+          
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Profile saved",
+        description: "Your company profile has been updated successfully.",
+      });
+      
     } catch (error) {
-      console.error("Error updating company profile:", error);
-      toast.error("Failed to update company profile");
+      console.error("Error saving profile:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem saving your profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
   };
-
-  const handleAddKeyword = () => {
-    if (!newKeyword.trim()) return;
-    
-    const keywords = form.getValues("brand_keywords") || [];
-    if (keywords.includes(newKeyword.trim())) {
-      setNewKeyword("");
-      return;
+  
+  const addKeyword = () => {
+    const keyword = keywordInput.trim();
+    if (keyword && !brandKeywords.includes(keyword)) {
+      setBrandKeywords([...brandKeywords, keyword]);
+      setKeywordInput("");
     }
-    
-    form.setValue("brand_keywords", [...keywords, newKeyword.trim()]);
-    setNewKeyword("");
+  };
+  
+  const removeKeyword = (keyword: string) => {
+    setBrandKeywords(brandKeywords.filter(k => k !== keyword));
   };
 
-  const handleRemoveKeyword = (index: number) => {
-    const keywords = form.getValues("brand_keywords") || [];
-    form.setValue("brand_keywords", keywords.filter((_, i) => i !== index));
-  };
-  
-  if (isLoading) {
-    return (
-      <PageLayout title="Company Profile">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </PageLayout>
-    );
-  }
-  
   return (
     <PageLayout title="Company Profile">
-      <div className="max-w-3xl mx-auto">
-        <Breadcrumb className="mb-6">
+      <div className="max-w-3xl mx-auto pb-10">
+        <Breadcrumb className="mb-6 ml-4">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink as={Link} to="/profile">Profile</BreadcrumbLink>
+              <BreadcrumbLink as={Link} to="/dashboard">
+                Dashboard
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbPage>Company Profile</BreadcrumbPage>
+            <BreadcrumbItem>
+              <BreadcrumbLink as={Link} to="/profile">
+                Profile
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbPage>Company Details</BreadcrumbPage>
           </BreadcrumbList>
         </Breadcrumb>
         
-        <Alert className="mb-6 bg-blue-50 border border-blue-100">
-          <InfoIcon className="h-5 w-5 text-blue-500" />
-          <AlertDescription className="text-blue-700">
-            Your company information helps personalize AI-generated content.
-          </AlertDescription>
-        </Alert>
-        
         <Card>
           <CardHeader>
-            <CardTitle>Company Information</CardTitle>
+            <CardTitle>Business Information</CardTitle>
             <CardDescription>
-              Update details about your business to improve AI-generated proposals
+              Tell us about your painting business to help generate better proposals
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="business_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your business name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="City, State or Region" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <form onSubmit={handleSave} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="businessName">Business Name</Label>
+                  <Input 
+                    id="businessName"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Your Painting Company Name"
                   />
                 </div>
                 
-                <FormField
-                  control={form.control}
-                  name="services_offered"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Services Offered</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe the services your business provides" 
-                          className="min-h-[80px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Briefly list your main services, separated by commas
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="team_size"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Team Size</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 1-5, 6-20, etc." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="preferred_tone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Preferred Communication Tone</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select tone" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="friendly">Friendly</SelectItem>
-                            <SelectItem value="professional">Professional</SelectItem>
-                            <SelectItem value="casual">Casual</SelectItem>
-                            <SelectItem value="technical">Technical</SelectItem>
-                            <SelectItem value="funny">Funny</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="space-y-2">
+                  <Label htmlFor="location">Service Area/Location</Label>
+                  <Input 
+                    id="location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g., Seattle Metro Area"
                   />
                 </div>
                 
-                <FormField
-                  control={form.control}
-                  name="pricing_notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pricing Information</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="General notes about your pricing structure" 
-                          className="min-h-[80px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        This helps the AI generate more accurate pricing suggestions
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="servicesOffered">Services Offered</Label>
+                  <Textarea 
+                    id="servicesOffered"
+                    rows={3}
+                    value={servicesOffered}
+                    onChange={(e) => setServicesOffered(e.target.value)}
+                    placeholder="Interior painting, exterior painting, cabinet refinishing, etc."
+                  />
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="brand_keywords"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Brand Keywords</FormLabel>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {field.value?.map((keyword, index) => (
-                          <Badge key={index} variant="secondary" className="text-sm">
-                            {keyword}
-                            <button 
-                              type="button" 
-                              onClick={() => handleRemoveKeyword(index)}
-                              className="ml-1 text-muted-foreground hover:text-foreground"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newKeyword}
-                          onChange={(e) => setNewKeyword(e.target.value)}
-                          placeholder="Add a keyword"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddKeyword();
-                            }
-                          }}
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={handleAddKeyword}
+                <div className="space-y-2">
+                  <Label htmlFor="teamSize">Team Size</Label>
+                  <Select 
+                    value={teamSize} 
+                    onValueChange={setTeamSize}
+                  >
+                    <SelectTrigger id="teamSize">
+                      <SelectValue placeholder="Select team size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="solo">Solo - Just Me</SelectItem>
+                      <SelectItem value="small">Small Team (2-5 people)</SelectItem>
+                      <SelectItem value="medium">Medium Team (6-15 people)</SelectItem>
+                      <SelectItem value="large">Large Team (16+ people)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="pricingNotes">Pricing Notes</Label>
+                  <Textarea 
+                    id="pricingNotes"
+                    rows={3}
+                    value={pricingNotes}
+                    onChange={(e) => setPricingNotes(e.target.value)}
+                    placeholder="Optional notes about your pricing structure or ranges"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="preferredTone">Preferred Communication Tone</Label>
+                  <Select 
+                    value={preferredTone} 
+                    onValueChange={setPreferredTone}
+                  >
+                    <SelectTrigger id="preferredTone">
+                      <SelectValue placeholder="Select preferred tone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="professional">Professional & Formal</SelectItem>
+                      <SelectItem value="friendly">Friendly & Approachable</SelectItem>
+                      <SelectItem value="casual">Casual & Conversational</SelectItem>
+                      <SelectItem value="technical">Technical & Detailed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="brandKeywords">Brand Keywords</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="brandKeywords"
+                      value={keywordInput}
+                      onChange={(e) => setKeywordInput(e.target.value)}
+                      placeholder="e.g., Quality, Reliable, Premium"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addKeyword();
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={addKeyword}
+                      disabled={!keywordInput.trim()}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {brandKeywords.map((keyword, index) => (
+                      <Badge key={index} variant="secondary" className="px-2 py-1">
+                        {keyword}
+                        <button 
+                          type="button"
+                          onClick={() => removeKeyword(keyword)}
+                          className="ml-1 hover:text-destructive"
                         >
-                          Add
-                        </Button>
-                      </div>
-                      <FormDescription>
-                        Words that describe your brand identity (e.g., reliable, innovative)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    {brandKeywords.length === 0 && (
+                      <p className="text-sm text-muted-foreground">No keywords added yet</p>
+                    )}
+                  </div>
+                </div>
                 
-                <Button type="submit">Save Changes</Button>
+                <div className="flex justify-end">
+                  <Button 
+                    type="submit" 
+                    disabled={saving}
+                  >
+                    {saving ? "Saving..." : "Save Profile"}
+                  </Button>
+                </div>
               </form>
-            </Form>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -365,4 +323,4 @@ const CompanyProfile = () => {
   );
 };
 
-export default CompanyProfile;
+export default CompanyProfilePage;

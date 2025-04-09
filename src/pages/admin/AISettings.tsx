@@ -1,149 +1,148 @@
-
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { supabase, AISettings as AISettingsType } from "@/integrations/supabase/client";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
+import { supabase, AISettings } from "@/integrations/supabase/client";
 import PageLayout from "@/components/PageLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 
-interface AISettingsFormValues {
-  model: string;
-  temperature: number;
-  max_tokens: number;
-  default_system_prompt: string;
-  default_user_prompt: string;
-}
-
-const AISettings = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [settingsId, setSettingsId] = useState<string | null>(null);
-
-  const form = useForm<AISettingsFormValues>({
-    defaultValues: {
-      model: "gpt-4o-mini",
-      temperature: 0.7,
-      max_tokens: 1024,
-      default_system_prompt: "",
-      default_user_prompt: ""
-    }
-  });
-
+const AISettingsPage = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [settings, setSettings] = useState<AISettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // Fetch AI settings
   useEffect(() => {
-    const fetchAISettings = async () => {
+    const fetchSettings = async () => {
       try {
-        // Since we're using the generic supabase client without type updates,
-        // we need to use 'any' for now
         const { data, error } = await supabase
-          .from('ai_settings')
+          .from("ai_settings")
           .select("*")
-          .order("created_at", { ascending: false })
           .limit(1)
           .single();
-
-        if (error && error.code !== "PGRST116") {
-          throw error;
-        }
-
-        if (data) {
-          form.reset({
-            model: data.model || "gpt-4o-mini",
-            temperature: data.temperature || 0.7,
-            max_tokens: data.max_tokens || 1024,
-            default_system_prompt: data.default_system_prompt || "",
-            default_user_prompt: data.default_user_prompt || ""
+          
+        if (error) {
+          console.error("Error fetching AI settings:", error);
+        } else if (data) {
+          setSettings({
+            id: data.id,
+            model: data.model,
+            temperature: data.temperature,
+            max_tokens: data.max_tokens,
+            default_system_prompt: data.default_system_prompt,
+            default_user_prompt: data.default_user_prompt,
+            created_at: data.created_at,
+            updated_at: data.updated_at
           });
-          setSettingsId(data.id);
         }
       } catch (error) {
-        console.error("Error fetching AI settings:", error);
-        toast.error("Failed to load AI settings");
+        console.error("Unexpected error:", error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-
-    fetchAISettings();
-  }, [form]);
-
-  const onSubmit = async (values: AISettingsFormValues) => {
+    
+    fetchSettings();
+  }, []);
+  
+  // Save AI settings
+  const handleSave = async () => {
+    if (!settings) return;
+    
     try {
-      let operation;
+      setSaving(true);
       
-      if (settingsId) {
-        // Update existing settings
-        operation = supabase
-          .from('ai_settings')
+      // If we have an existing record, update it
+      if (settings.id) {
+        const { error } = await supabase
+          .from("ai_settings")
           .update({
-            model: values.model,
-            temperature: values.temperature,
-            max_tokens: values.max_tokens,
-            default_system_prompt: values.default_system_prompt,
-            default_user_prompt: values.default_user_prompt,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            model: settings.model,
+            temperature: settings.temperature,
+            max_tokens: settings.max_tokens,
+            default_system_prompt: settings.default_system_prompt,
+            default_user_prompt: settings.default_user_prompt
           })
-          .eq("id", settingsId);
+          .eq("id", settings.id);
+          
+        if (error) throw error;
       } else {
-        // Create new settings
-        operation = supabase
-          .from('ai_settings')
+        // Otherwise create a new record
+        const { error } = await supabase
+          .from("ai_settings")
           .insert({
-            model: values.model,
-            temperature: values.temperature,
-            max_tokens: values.max_tokens,
-            default_system_prompt: values.default_system_prompt,
-            default_user_prompt: values.default_user_prompt,
-            updated_at: new Date().toISOString()
+            model: settings.model || "gpt-4o-mini",
+            temperature: settings.temperature || 0.7,
+            max_tokens: settings.max_tokens || 1024,
+            default_system_prompt: settings.default_system_prompt,
+            default_user_prompt: settings.default_user_prompt
           });
+          
+        if (error) throw error;
       }
-
-      const { error, data } = await operation;
-
-      if (error) throw error;
-
-      toast.success("AI settings saved successfully");
       
-      if (!settingsId && data) {
-        setSettingsId(data[0]?.id);
-      }
+      toast({
+        title: "Settings saved",
+        description: "Your AI settings have been updated successfully.",
+      });
+      
     } catch (error) {
-      console.error("Error saving AI settings:", error);
-      toast.error("Failed to save AI settings");
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem saving your settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <PageLayout title="AI Settings">
-        <div className="flex justify-center items-center h-64">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout title="AI Settings">
-      <div className="container mx-auto max-w-3xl">
-        <Breadcrumb className="mb-6">
+      <div className="max-w-3xl mx-auto pb-10">
+        <Breadcrumb className="mb-6 ml-4">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink as={Link} to="/admin">Admin</BreadcrumbLink>
+              <BreadcrumbLink as={Link} to="/dashboard">
+                Dashboard
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink as={Link} to="/admin">
+                Admin
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbPage>AI Settings</BreadcrumbPage>
@@ -152,136 +151,110 @@ const AISettings = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Configure AI Behavior</CardTitle>
+            <CardTitle>AI Configuration</CardTitle>
             <CardDescription>
-              Customize how the AI generates content across the application
+              Configure the AI model settings for content generation
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="model"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>AI Model</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select AI model" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
-                          <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                          <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                          <SelectItem value="gpt-4.5-preview">GPT-4.5 Preview</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose the OpenAI model to use for content generation
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="temperature"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Temperature: {field.value}</FormLabel>
-                      <FormControl>
-                        <Slider
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          value={[field.value]}
-                          onValueChange={(values) => field.onChange(values[0])}
-                          className="pt-2"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Lower values make responses more deterministic, higher values make responses more creative
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="max_tokens"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Tokens</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          onChange={e => field.onChange(parseInt(e.target.value))}
-                          min={1}
-                          max={16000}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Maximum number of tokens (words/characters) in generated responses
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="default_system_prompt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default System Prompt</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="You are a helpful assistant..." 
-                          className="min-h-[100px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Default instructions to guide the AI's behavior
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="default_user_prompt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default User Prompt</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="When generating content, please..." 
-                          className="min-h-[100px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Default instructions to include with every user request
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full">Save Settings</Button>
-              </form>
-            </Form>
+          <CardContent className="space-y-6">
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="model">AI Model</Label>
+                  <Select 
+                    value={settings?.model || "gpt-4o-mini"} 
+                    onValueChange={(value) => setSettings(prev => prev ? {...prev, model: value} : null)}
+                  >
+                    <SelectTrigger id="model">
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                      <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                      <SelectItem value="gpt-4">GPT-4</SelectItem>
+                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                      <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+                      <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                      <SelectItem value="claude-3-haiku">Claude 3 Haiku</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="temperature">Temperature: {settings?.temperature.toFixed(1) || "0.7"}</Label>
+                  </div>
+                  <Slider 
+                    id="temperature"
+                    min={0} 
+                    max={1} 
+                    step={0.1} 
+                    value={settings?.temperature ? [settings.temperature] : [0.7]}
+                    onValueChange={(values) => setSettings(prev => prev ? {...prev, temperature: values[0]} : null)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Lower values produce more focused, deterministic results. Higher values produce more creative, varied results.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxTokens">Max Tokens</Label>
+                  <Input 
+                    id="maxTokens"
+                    type="number" 
+                    value={settings?.max_tokens || 1024}
+                    min={1}
+                    max={4096}
+                    onChange={(e) => setSettings(prev => prev ? {...prev, max_tokens: parseInt(e.target.value)} : null)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Maximum number of tokens that can be generated in the completion.
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="systemPrompt">Default System Prompt</Label>
+                  <Textarea 
+                    id="systemPrompt"
+                    rows={5}
+                    placeholder="You are a helpful assistant..."
+                    value={settings?.default_system_prompt || ""}
+                    onChange={(e) => setSettings(prev => prev ? {...prev, default_system_prompt: e.target.value} : null)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="userPrompt">Default User Prompt Template</Label>
+                  <Textarea 
+                    id="userPrompt"
+                    rows={5}
+                    placeholder="Write a proposal for {{client}} about {{topic}}..."
+                    value={settings?.default_user_prompt || ""}
+                    onChange={(e) => setSettings(prev => prev ? {...prev, default_user_prompt: e.target.value} : null)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use double curly braces {{"{{"}}variable{{"}}"}} for template variables.
+                  </p>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={saving || loading}
+                  >
+                    {saving ? "Saving..." : "Save Settings"}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -289,4 +262,4 @@ const AISettings = () => {
   );
 };
 
-export default AISettings;
+export default AISettingsPage;

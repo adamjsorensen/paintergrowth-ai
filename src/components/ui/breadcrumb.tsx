@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { ChevronRight } from "lucide-react"
 
@@ -49,7 +48,6 @@ const BreadcrumbItem = React.forwardRef<
 ))
 BreadcrumbItem.displayName = "BreadcrumbItem"
 
-// Fix the BreadcrumbLink component to properly handle the 'to' prop for react-router Link
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {

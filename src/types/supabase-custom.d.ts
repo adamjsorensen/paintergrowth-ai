@@ -1,3 +1,4 @@
+
 // Define additional types for our custom Supabase tables
 import { Database as OriginalDatabase } from "@/integrations/supabase/types";
 
@@ -129,4 +130,4 @@ export interface ExtendedDatabase extends OriginalDatabase {
     Enums: OriginalDatabase['public']['Enums'];
     CompositeTypes: OriginalDatabase['public']['CompositeTypes'];
   };
-};
+}
