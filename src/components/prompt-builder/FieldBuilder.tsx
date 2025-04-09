@@ -36,7 +36,7 @@ interface FieldBuilderProps {
 
 const fieldSchema = z.object({
   label: z.string().min(1, "Label is required"),
-  type: z.enum(["text", "textarea", "select", "number", "toggle", "date"]),
+  type: z.enum(["text", "textarea", "select", "number", "toggle", "date", "checkbox-group", "multi-select", "file-upload"]),
   required: z.boolean().default(false),
   helpText: z.string().optional(),
   placeholder: z.string().optional(),
