@@ -24,8 +24,10 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 
+// Properly define the interface to match the database table
 interface GenerationLog {
   id: string;
+  user_id: string | null;
   user_email: string;
   created_at: string;
   model_used: string;
@@ -147,7 +149,7 @@ const ActivityLog = () => {
                   logs.map((log) => (
                     <TableRow 
                       key={log.id} 
-                      onClick={() => handleRowClick(log)}
+                      onClick={() => setSelectedLog(log)}
                       className="cursor-pointer hover:bg-gray-50"
                     >
                       <TableCell>{log.user_email}</TableCell>

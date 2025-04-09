@@ -133,22 +133,25 @@ const Navbar = () => {
                   </NavigationMenuItem>
                   </NavigationMenuList>
               </NavigationMenu>
-               {isAdmin && (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="flex items-center gap-2 px-3">
-        Admin
-        <ChevronDown className="h-4 w-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="start" className="w-48">
-      <DropdownMenuItem asChild>
-        <Link to="/admin/prompt-builder" className="w-full">Prompt Builder</Link>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-)}   
-
+              
+              {isAdmin && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 px-3">
+                      Admin
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/prompt-builder" className="w-full">Prompt Builder</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/logs/activity" className="w-full">Activity Logs</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}   
               
               {/* User Profile Menu */}
               <DropdownMenu>
@@ -238,13 +241,22 @@ const Navbar = () => {
                       Profile
                     </Link>
                     {isAdmin && (
-                      <Link 
-                        to="/admin/prompt-builder" 
-                        className="text-lg py-2 hover:text-paintergrowth-600"
-                        onClick={() => setSheetOpen(false)}
-                      >
-                        Prompt Builder
-                      </Link>
+                      <>
+                        <Link 
+                          to="/admin/prompt-builder" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Prompt Builder
+                        </Link>
+                        <Link 
+                          to="/admin/logs/activity" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Activity Logs
+                        </Link>
+                      </>
                     )}
                     <Button 
                       variant="ghost" 

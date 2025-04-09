@@ -10,6 +10,12 @@ import { FORM_SECTIONS } from "./constants/formSections";
 
 type FieldValue = string | number | boolean | string[];
 
+// Add the EnhancedFieldConfig type that combines FieldConfig with additional properties
+interface EnhancedFieldConfig extends FieldConfig {
+  value: FieldValue;
+  onChange: (value: FieldValue) => void;
+}
+
 interface ProposalFormProps {
   fields: FieldConfig[];
   isGenerating: boolean;
@@ -30,7 +36,7 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
   const visibleFields = getVisibleFields();
 
   const getFieldsBySection = () => {
-    const result: Record<string, FieldConfig[]> = {};
+    const result: Record<string, EnhancedFieldConfig[]> = {};
     
     FORM_SECTIONS.forEach(section => {
       const sectionFields = visibleFields
