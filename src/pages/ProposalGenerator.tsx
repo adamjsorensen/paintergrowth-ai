@@ -1,21 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { z } from "zod";
-import { Copy, Save, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PromptTemplate, FieldConfig, parseFieldConfig } from "@/types/prompt-templates";
-
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import PageLayout from "@/components/PageLayout";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
-import { Progress } from "@/components/ui/progress";
+import { TemplateLoading, NoTemplateMessage } from "@/components/proposal-generator/LoadingStates";
+import ProposalForm from "@/components/proposal-generator/ProposalForm";
+import ProposalResult from "@/components/proposal-generator/ProposalResult";
 
 type FieldValue = string | number | boolean;
 
@@ -67,14 +59,7 @@ const ProposalGenerator = () => {
     fetchActivePromptTemplate();
   }, [toast]);
 
-  const handleFieldChange = (fieldId: string, value: FieldValue) => {
-    setFieldValues(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerate = async (values: Record<string, FieldValue>) => {
     if (!promptTemplate) {
       toast({
         title: "Error",
@@ -84,10 +69,12 @@ const ProposalGenerator = () => {
       return;
     }
 
+    setFieldValues(values);
+
     // Check if required fields are filled
     const missingRequiredFields = fields
       .filter(field => field.required)
-      .filter(field => !fieldValues[field.id] && fieldValues[field.id] !== false)
+      .filter(field => !values[field.id] && values[field.id] !== false)
       .map(field => field.label);
 
     if (missingRequiredFields.length > 0) {
@@ -106,7 +93,7 @@ const ProposalGenerator = () => {
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
           prompt_id: promptTemplate.id,
-          field_values: fieldValues
+          field_values: values
         }
       });
 
@@ -141,142 +128,11 @@ const ProposalGenerator = () => {
     setShowSaveDialog(true);
   };
 
-  const renderField = (field: FieldConfig) => {
-    const { id, label, type, required, helpText, placeholder, options } = field;
-    
-    switch (type) {
-      case "text":
-        return (
-          <div className="space-y-2" key={id}>
-            <Label htmlFor={id}>
-              {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Input
-              id={id}
-              placeholder={placeholder || ""}
-              value={(fieldValues[id] as string) || ""}
-              onChange={(e) => handleFieldChange(id, e.target.value)}
-              required={required}
-            />
-            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-          </div>
-        );
-      
-      case "textarea":
-        return (
-          <div className="space-y-2" key={id}>
-            <Label htmlFor={id}>
-              {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Textarea
-              id={id}
-              placeholder={placeholder || ""}
-              value={(fieldValues[id] as string) || ""}
-              onChange={(e) => handleFieldChange(id, e.target.value)}
-              required={required}
-            />
-            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-          </div>
-        );
-      
-      case "select":
-        return (
-          <div className="space-y-2" key={id}>
-            <Label htmlFor={id}>
-              {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Select
-              value={(fieldValues[id] as string) || ""}
-              onValueChange={(value) => handleFieldChange(id, value)}
-            >
-              <SelectTrigger id={id}>
-                <SelectValue placeholder={placeholder || "Select an option"} />
-              </SelectTrigger>
-              <SelectContent>
-                {options?.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-          </div>
-        );
-      
-      case "number":
-        return (
-          <div className="space-y-2" key={id}>
-            <Label htmlFor={id}>
-              {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Input
-              id={id}
-              type="number"
-              placeholder={placeholder || ""}
-              value={(fieldValues[id] as number) || ""}
-              onChange={(e) => handleFieldChange(id, parseFloat(e.target.value))}
-              required={required}
-              min={field.min}
-              max={field.max}
-              step={field.step}
-            />
-            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-          </div>
-        );
-      
-      case "toggle":
-        return (
-          <div className="flex justify-between items-center space-x-2 py-2" key={id}>
-            <div>
-              <Label htmlFor={id}>
-                {label}
-                {required && <span className="text-red-500 ml-1">*</span>}
-              </Label>
-              {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-            </div>
-            <Switch
-              id={id}
-              checked={fieldValues[id] as boolean || false}
-              onCheckedChange={(checked) => handleFieldChange(id, checked)}
-            />
-          </div>
-        );
-      
-      case "date":
-        return (
-          <div className="space-y-2" key={id}>
-            <Label htmlFor={id}>
-              {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Input
-              id={id}
-              type="date"
-              value={(fieldValues[id] as string) || ""}
-              onChange={(e) => handleFieldChange(id, e.target.value)}
-              required={required}
-            />
-            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-          </div>
-        );
-      
-      default:
-        return null;
-    }
-  };
-
   if (isLoadingTemplate) {
     return (
       <PageLayout title="Generate Proposal">
         <div className="container mx-auto py-8 px-4 max-w-5xl">
-          <div className="flex justify-center items-center h-64">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          </div>
+          <TemplateLoading />
         </div>
       </PageLayout>
     );
@@ -286,12 +142,7 @@ const ProposalGenerator = () => {
     return (
       <PageLayout title="Generate Proposal">
         <div className="container mx-auto py-8 px-4 max-w-5xl">
-          <div className="text-center p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">No Active Template</h2>
-            <p className="text-gray-600">
-              There is no active proposal template. Please set up a template in the admin section.
-            </p>
-          </div>
+          <NoTemplateMessage />
         </div>
       </PageLayout>
     );
@@ -303,74 +154,22 @@ const ProposalGenerator = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Form Section */}
           <div>
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold">{promptTemplate.name}</h2>
-              <div className="space-y-6">
-                {fields
-                  .sort((a, b) => a.order - b.order)
-                  .map((field) => renderField(field))}
-  
-                <Button 
-                  className="w-full" 
-                  onClick={handleGenerate}
-                  disabled={isLoadingGeneration}
-                >
-                  {isLoadingGeneration ? (
-                    <>
-                      <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : "Generate Proposal"}
-                </Button>
-              </div>
-            </div>
+            <ProposalForm 
+              fields={fields}
+              isGenerating={isLoadingGeneration}
+              onGenerate={handleGenerate}
+              templateName={promptTemplate.name}
+            />
           </div>
 
           {/* Output Section */}
           <div>
-            {isLoadingGeneration ? (
-              <Card className="h-full">
-                <CardContent className="p-6 flex flex-col justify-center items-center h-full">
-                  <div className="space-y-4 text-center">
-                    <RefreshCcw className="h-12 w-12 animate-spin text-primary mx-auto" />
-                    <h3 className="font-medium">Generating your proposal...</h3>
-                    <Progress value={65} className="w-full" />
-                    <p className="text-sm text-muted-foreground">
-                      This may take a few moments
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : proposal ? (
-              <Card className="h-full">
-                <CardContent className="p-6">
-                  <div className="mb-4 flex justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={handleSave}>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save
-                    </Button>
-                  </div>
-                  <div className="prose prose-blue max-w-none overflow-auto">
-                    <div className="whitespace-pre-wrap font-sans">
-                      {proposal}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="flex h-full items-center justify-center border border-dashed border-gray-300 rounded-lg p-12 text-center">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-gray-600">No Proposal Generated Yet</h3>
-                  <p className="text-sm text-gray-500">
-                    Fill out the form and click "Generate Proposal" to create your customized proposal
-                  </p>
-                </div>
-              </div>
-            )}
+            <ProposalResult
+              proposal={proposal}
+              isLoading={isLoadingGeneration}
+              onCopy={handleCopy}
+              onSave={handleSave}
+            />
           </div>
         </div>
       </div>
