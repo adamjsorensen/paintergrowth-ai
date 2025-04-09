@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Copy, Save, ArrowLeft } from "lucide-react";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -170,7 +173,7 @@ const ViewProposal = () => {
             <CardContent className="p-8 text-center">
               <h2 className="text-2xl font-bold mb-4">Proposal Not Found</h2>
               <p className="text-gray-600 mb-8">
-                We couldn't find this proposal or it's still being generated. 
+                We couldn't find this proposal or it's still being generated.
                 You can go back and try again.
               </p>
               <Button onClick={handleBack}>
@@ -201,8 +204,13 @@ const ViewProposal = () => {
             <CardTitle className="text-2xl">Generated Proposal</CardTitle>
           </CardHeader>
           <CardContent className="p-8">
-            <div className="prose prose-blue max-w-none whitespace-pre-wrap font-sans">
-              {proposal}
+            <div className="prose prose-blue max-w-none">
+              <ReactMarkdown 
+                className="font-sans" 
+                remarkPlugins={[remarkGfm]}
+              >
+                {proposal}
+              </ReactMarkdown>
             </div>
           </CardContent>
           <CardFooter className="py-4 px-8 bg-gray-50 border-t border-gray-100 rounded-b-lg flex justify-end gap-3">

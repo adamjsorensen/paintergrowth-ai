@@ -3,7 +3,8 @@ import { Copy, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GenerationLoading, EmptyProposalState } from "./LoadingStates";
-import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ProposalResultProps {
   proposal: string | null;
@@ -35,9 +36,9 @@ const ProposalResult = ({ proposal, isLoading, onCopy, onSave }: ProposalResultP
           </Button>
         </div>
         <div className="prose prose-blue max-w-none overflow-auto">
-          <div className="whitespace-pre-wrap font-sans">
+          <ReactMarkdown className="font-sans" remarkPlugins={[remarkGfm]}>
             {proposal}
-          </div>
+          </ReactMarkdown>
         </div>
       </CardContent>
     </Card>
