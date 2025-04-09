@@ -109,7 +109,7 @@ const Navbar = () => {
           <div className="bg-paintergrowth-600 h-8 w-8 rounded-md flex items-center justify-center">
             <span className="text-white font-bold text-xl">P</span>
           </div>
-          <Link to="/" className="text-paintergrowth-800 font-bold text-xl">
+          <Link to={user ? "/dashboard" : "/"} className="text-paintergrowth-800 font-bold text-xl">
             Paintergrowth.ai
           </Link>
         </div>
