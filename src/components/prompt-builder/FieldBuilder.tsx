@@ -52,6 +52,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
       helpText: values.helpText,
       placeholder: values.placeholder,
       order: fields.length + 1,
+      complexity: 'basic', // Set default complexity to basic for new fields
     };
     
     // Handle options for select, checkbox-group, and multi-select field types
@@ -78,6 +79,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
             required: values.required,
             helpText: values.helpText,
             placeholder: values.placeholder,
+            // Preserve existing complexity or default to basic if not present
+            complexity: field.complexity || 'basic',
           };
           
           // Handle options for select, checkbox-group, and multi-select field types
