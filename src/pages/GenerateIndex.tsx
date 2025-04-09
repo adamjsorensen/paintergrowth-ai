@@ -1,12 +1,15 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "@/components/PageLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import StylePreferencesDialog from "@/components/proposal-generator/StylePreferencesDialog";
 
 const GenerateIndex = () => {
   const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const contentTypes = [
     {
@@ -14,7 +17,7 @@ const GenerateIndex = () => {
       title: "Proposal",
       description: "Generate professional painting proposals for your clients",
       icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
-      route: "/generate/style-preferences",
+      onClick: () => setDialogOpen(true),
     },
     // Additional content types will be added here in the future
   ];
@@ -35,7 +38,7 @@ const GenerateIndex = () => {
               <CardFooter className="pt-2 flex justify-center">
                 <Button 
                   className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white w-full"
-                  onClick={() => navigate(contentType.route)}
+                  onClick={contentType.onClick}
                 >
                   Create {contentType.title}
                 </Button>
@@ -44,6 +47,8 @@ const GenerateIndex = () => {
           ))}
         </div>
       </div>
+      
+      <StylePreferencesDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </PageLayout>
   );
 };

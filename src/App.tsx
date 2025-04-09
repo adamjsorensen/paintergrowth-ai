@@ -17,7 +17,6 @@ import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminRoute from "./components/AdminRoute";
 import GenerateIndex from "./pages/GenerateIndex";
 import Dashboard from "./pages/Dashboard";
-import StylePreferencesPage from "./pages/StylePreferencesPage";
 import { StylePreferencesProvider } from "./context/StylePreferencesContext";
 
 const queryClient = new QueryClient();
@@ -41,11 +40,6 @@ const App = () => (
               <Route path="/generate" element={
                 <ProtectedRoute>
                   <GenerateIndex />
-                </ProtectedRoute>
-              } />
-              <Route path="/generate/style-preferences" element={
-                <ProtectedRoute>
-                  <StylePreferencesPage />
                 </ProtectedRoute>
               } />
               <Route path="/generate/proposal" element={
