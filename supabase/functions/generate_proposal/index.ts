@@ -22,7 +22,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt_id, field_values, proposal_id } = await req.json();
+    const { prompt_id, field_values, proposal_id, user_email } = await req.json();
     
     if (!prompt_id) {
       return new Response(
@@ -49,6 +49,15 @@ serve(async (req) => {
       .update({ status: 'generating' })
       .eq('id', proposal_id);
 
+    // Get user ID from proposal record
+    const { data: proposalData } = await supabase
+      .from('saved_proposals')
+      .select('user_id')
+      .eq('id', proposal_id)
+      .single();
+    
+    const user_id = proposalData?.user_id;
+
     // Fetch the prompt template
     const { data: promptTemplate, error: promptError } = await supabase
       .from('prompt_templates')
@@ -64,6 +73,23 @@ serve(async (req) => {
         .from('saved_proposals')
         .update({ status: 'failed', content: 'Failed to fetch prompt template: ' + promptError.message })
         .eq('id', proposal_id);
+
+      // Log the failed generation
+      await supabase
+        .from('generation_logs')
+        .insert({
+          user_id,
+          user_email: user_email || 'unknown',
+          prompt_id,
+          proposal_id,
+          model_used: 'openai/gpt-4o-mini',
+          system_prompt: 'Failed to fetch prompt template',
+          final_prompt: 'Generate a detailed proposal based on the information provided.',
+          user_input: field_values,
+          status: 'failed',
+          ai_response: 'Failed to fetch prompt template: ' + promptError.message,
+          rag_context: 'Coming soon'
+        });
         
       return new Response(
         JSON.stringify({ error: 'Failed to fetch prompt template: ' + promptError.message }),
@@ -122,6 +148,23 @@ serve(async (req) => {
           })
           .eq('id', proposal_id);
           
+        // Log the failed generation
+        await supabase
+          .from('generation_logs')
+          .insert({
+            user_id,
+            user_email: user_email || 'unknown',
+            prompt_id,
+            proposal_id,
+            model_used: 'openai/gpt-4o-mini',
+            system_prompt: systemPrompt,
+            final_prompt: 'Generate a detailed proposal based on the information provided.',
+            user_input: field_values,
+            status: 'failed',
+            ai_response: 'Failed to generate content from OpenRouter: ' + errorData,
+            rag_context: 'Coming soon'
+          });
+          
         return new Response(
           JSON.stringify({ error: 'Failed to generate content from OpenRouter' }),
           { status: openRouterResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -144,11 +187,46 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Error updating proposal:', updateError);
+        
+        // Log the failed generation
+        await supabase
+          .from('generation_logs')
+          .insert({
+            user_id,
+            user_email: user_email || 'unknown',
+            prompt_id,
+            proposal_id,
+            model_used: 'openai/gpt-4o-mini',
+            system_prompt: systemPrompt,
+            final_prompt: 'Generate a detailed proposal based on the information provided.',
+            user_input: field_values,
+            status: 'failed',
+            ai_response: 'Error updating proposal: ' + updateError.message,
+            rag_context: 'Coming soon'
+          });
+        
         return new Response(
           JSON.stringify({ error: 'Failed to save generated proposal: ' + updateError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      // Log the successful generation
+      await supabase
+        .from('generation_logs')
+        .insert({
+          user_id,
+          user_email: user_email || 'unknown',
+          prompt_id,
+          proposal_id,
+          model_used: 'openai/gpt-4o-mini',
+          system_prompt: systemPrompt,
+          final_prompt: 'Generate a detailed proposal based on the information provided.',
+          user_input: field_values,
+          status: 'success',
+          ai_response: generatedContent,
+          rag_context: 'Coming soon'
+        });
 
       console.log('Proposal updated successfully with ID:', proposal_id);
 
@@ -170,6 +248,23 @@ serve(async (req) => {
           content: `Prompt template with ID ${prompt_id} not found`
         })
         .eq('id', proposal_id);
+        
+      // Log the failed generation
+      await supabase
+        .from('generation_logs')
+        .insert({
+          user_id,
+          user_email: user_email || 'unknown',
+          prompt_id,
+          proposal_id,
+          model_used: 'openai/gpt-4o-mini',
+          system_prompt: `Prompt template with ID ${prompt_id} not found`,
+          final_prompt: 'Generate a detailed proposal based on the information provided.',
+          user_input: field_values,
+          status: 'failed',
+          ai_response: `Prompt template with ID ${prompt_id} not found`,
+          rag_context: 'Coming soon'
+        });
         
       return new Response(
         JSON.stringify({ error: `Prompt template with ID ${prompt_id} not found` }),
@@ -222,6 +317,23 @@ serve(async (req) => {
         })
         .eq('id', proposal_id);
         
+      // Log the failed generation
+      await supabase
+        .from('generation_logs')
+        .insert({
+          user_id,
+          user_email: user_email || 'unknown',
+          prompt_id,
+          proposal_id,
+          model_used: 'openai/gpt-4o-mini',
+          system_prompt: systemPrompt,
+          final_prompt: 'Generate a detailed proposal based on the information provided.',
+          user_input: field_values,
+          status: 'failed',
+          ai_response: 'Failed to generate content from OpenRouter: ' + errorData,
+          rag_context: 'Coming soon'
+        });
+        
       return new Response(
         JSON.stringify({ error: 'Failed to generate content from OpenRouter' }),
         { status: openRouterResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -244,11 +356,46 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating proposal:', updateError);
+      
+      // Log the failed generation
+      await supabase
+        .from('generation_logs')
+        .insert({
+          user_id,
+          user_email: user_email || 'unknown',
+          prompt_id,
+          proposal_id,
+          model_used: 'openai/gpt-4o-mini',
+          system_prompt: systemPrompt,
+          final_prompt: 'Generate a detailed proposal based on the information provided.',
+          user_input: field_values,
+          status: 'failed',
+          ai_response: 'Error updating proposal: ' + updateError.message,
+          rag_context: 'Coming soon'
+        });
+      
       return new Response(
         JSON.stringify({ error: 'Failed to save generated proposal: ' + updateError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Log the successful generation
+    await supabase
+      .from('generation_logs')
+      .insert({
+        user_id,
+        user_email: user_email || 'unknown',
+        prompt_id,
+        proposal_id,
+        model_used: 'openai/gpt-4o-mini',
+        system_prompt: systemPrompt,
+        final_prompt: 'Generate a detailed proposal based on the information provided.',
+        user_input: field_values,
+        status: 'success',
+        ai_response: generatedContent,
+        rag_context: 'Coming soon'
+      });
 
     console.log('Proposal updated successfully with ID:', proposal_id);
 

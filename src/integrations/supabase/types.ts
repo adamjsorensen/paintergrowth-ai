@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      generation_logs: {
+        Row: {
+          ai_response: string | null
+          created_at: string
+          final_prompt: string
+          id: string
+          model_used: string
+          prompt_id: string | null
+          proposal_id: string | null
+          rag_context: string | null
+          status: string
+          system_prompt: string
+          user_email: string
+          user_id: string | null
+          user_input: Json
+        }
+        Insert: {
+          ai_response?: string | null
+          created_at?: string
+          final_prompt: string
+          id?: string
+          model_used: string
+          prompt_id?: string | null
+          proposal_id?: string | null
+          rag_context?: string | null
+          status?: string
+          system_prompt: string
+          user_email: string
+          user_id?: string | null
+          user_input: Json
+        }
+        Update: {
+          ai_response?: string | null
+          created_at?: string
+          final_prompt?: string
+          id?: string
+          model_used?: string
+          prompt_id?: string | null
+          proposal_id?: string | null
+          rag_context?: string | null
+          status?: string
+          system_prompt?: string
+          user_email?: string
+          user_id?: string | null
+          user_input?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_logs_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generation_logs_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "saved_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
