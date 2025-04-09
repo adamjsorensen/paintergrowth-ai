@@ -6,10 +6,11 @@ interface FormSectionProps {
   title: string;
   children: ReactNode;
   icon?: ReactNode;
+  defaultOpen?: boolean;
 }
 
-const FormSection = ({ title, children, icon }: FormSectionProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+const FormSection = ({ title, children, icon, defaultOpen = false }: FormSectionProps) => {
+  const [collapsed, setCollapsed] = useState(!defaultOpen);
 
   return (
     <div className="mb-8">

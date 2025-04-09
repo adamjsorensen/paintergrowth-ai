@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -13,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import FormSection from "./FormSection";
 import ModeToggle from "./ModeToggle";
 
-// Define section configurations
 const FORM_SECTIONS = [
   {
     id: 'client',
@@ -69,12 +67,10 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Filter fields based on current mode
   const getVisibleFields = () => {
     if (formMode === 'advanced') {
       return fields;
     } else {
-      // In basic mode, show only basic fields and required fields regardless of complexity
       return fields.filter(field => field.complexity === 'basic' || field.required);
     }
   };
@@ -89,7 +85,6 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
   };
 
   const handleSubmit = async () => {
-    // Check if required fields are filled
     const missingRequiredFields = fields
       .filter(field => field.required)
       .filter(field => !fieldValues[field.id] && fieldValues[field.id] !== false && 
@@ -107,7 +102,6 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
 
     const proposalId = uuidv4();
 
-    // Create an empty proposal record in the database with pending status
     if (user) {
       try {
         await supabase
@@ -132,7 +126,6 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
       }
     }
 
-    // Start the generation in the background and redirect to view page
     try {
       onGenerate(fieldValues, proposalId);
       navigate(`/generate/proposal/${proposalId}`);
@@ -146,12 +139,10 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
     }
   };
 
-  // Group fields by section for rendering
   const getFieldsBySection = () => {
     const result: Record<string, FieldConfig[]> = {};
     
     FORM_SECTIONS.forEach(section => {
-      // Filter fields by section AND by visibility based on current mode
       const sectionFields = visibleFields
         .filter(field => section.fields.includes(field.id))
         .sort((a, b) => a.order - b.order);
@@ -161,7 +152,6 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
       }
     });
 
-    // Add any fields that don't belong to a defined section to a default section
     const remainingFields = visibleFields.filter(field => 
       !Object.values(result).flat().some(f => f.id === field.id)
     ).sort((a, b) => a.order - b.order);
@@ -175,7 +165,6 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
 
   const fieldsBySection = getFieldsBySection();
 
-  // Function to determine if field should be rendered in a full width or half width column
   const getFieldClass = (fieldId: string) => {
     if (['specialNotes', 'projectAddress', 'colorPalette'].includes(fieldId)) {
       return 'col-span-2';
@@ -183,7 +172,6 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
     return 'col-span-2 sm:col-span-1';
   };
 
-  // Count how many fields are displayed vs. total available
   const visibleFieldCount = visibleFields.length;
   const totalFieldCount = fields.length;
 
@@ -210,12 +198,14 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
           if (sectionFields.length === 0) return null;
           
           const section = FORM_SECTIONS.find(s => s.id === sectionId);
+          const isClientInfoSection = sectionId === 'client';
           
           return (
             <FormSection 
               key={sectionId} 
               title={section?.title || "Additional Information"} 
               icon={section?.icon}
+              defaultOpen={isClientInfoSection}
             >
               <div className="grid grid-cols-2 gap-6">
                 {sectionFields.map((field) => (
