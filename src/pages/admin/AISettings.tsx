@@ -40,7 +40,6 @@ const AISettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // Fetch AI settings
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -74,14 +73,12 @@ const AISettingsPage = () => {
     fetchSettings();
   }, []);
   
-  // Save AI settings
   const handleSave = async () => {
     if (!settings) return;
     
     try {
       setSaving(true);
       
-      // If we have an existing record, update it
       if (settings.id) {
         const { error } = await supabase
           .from("ai_settings")
@@ -97,7 +94,6 @@ const AISettingsPage = () => {
           
         if (error) throw error;
       } else {
-        // Otherwise create a new record
         const { error } = await supabase
           .from("ai_settings")
           .insert({
@@ -188,7 +184,7 @@ const AISettingsPage = () => {
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="temperature">Temperature: {settings?.temperature.toFixed(1) || "0.7"}</Label>
+                    <Label htmlFor="temperature">Temperature: {settings?.temperature?.toFixed(1) || "0.7"}</Label>
                   </div>
                   <Slider 
                     id="temperature"

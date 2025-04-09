@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "./AuthProvider";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-// Add missing User and Separator imports
+// Fix missing imports
 import { Settings, Menu, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 

@@ -53,11 +53,10 @@ const BreadcrumbLink = React.forwardRef<
   React.ComponentPropsWithoutRef<"a"> & {
     asChild?: boolean;
     as?: React.ElementType;
-    to?: string; // Add the 'to' prop
+    to?: string;
   }
 >(({ asChild, as: Comp, className, to, ...props }, ref) => {
   if (asChild) {
-    // This allows passing react-router Link as children
     return React.cloneElement(props.children as React.ReactElement, {
       ref,
       className: cn("hover:text-foreground", className)
@@ -65,7 +64,6 @@ const BreadcrumbLink = React.forwardRef<
   }
   
   const Component = Comp || "a";
-  // Pass the 'to' prop if it exists and Component is not 'a'
   const componentProps = Component !== "a" && to ? { to, ...props } : props;
   
   return (
