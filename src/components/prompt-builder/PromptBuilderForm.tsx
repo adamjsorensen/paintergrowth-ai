@@ -9,7 +9,6 @@ import {
   FieldConfig, 
   stringifyFieldConfig 
 } from "@/types/prompt-templates";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import FieldBuilder from "@/components/prompt-builder/FieldBuilder";
@@ -17,6 +16,8 @@ import PromptInfoTab from "@/components/prompt-builder/tabs/PromptInfoTab";
 import SystemPromptTab from "@/components/prompt-builder/tabs/SystemPromptTab";
 import PreviewTab from "@/components/prompt-builder/tabs/PreviewTab";
 import { useToast } from "@/hooks/use-toast";
+import CollapsibleSection from "./CollapsibleSection";
+import { Info, FileText, Settings } from "lucide-react";
 
 const promptSchema = z.object({
   name: z.string().min(1, "Display name is required"),
@@ -33,7 +34,6 @@ interface PromptBuilderFormProps {
 
 const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, initialFields }) => {
   const [fields, setFields] = useState<FieldConfig[]>(initialFields);
-  const [activeTab, setActiveTab] = useState("prompt-info");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -95,37 +95,46 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSaveTemplate)} className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">Configure Proposal Generator</h2>
           <Button type="submit" disabled={saving}>
             {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="prompt-info">Prompt Info</TabsTrigger>
-            <TabsTrigger value="system-prompt">System Prompt</TabsTrigger>
-            <TabsTrigger value="fields">Input Fields</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="prompt-info" className="mt-6">
-            <PromptInfoTab form={form} />
-          </TabsContent>
-          
-          <TabsContent value="system-prompt" className="mt-6">
-            <SystemPromptTab form={form} />
-          </TabsContent>
-          
-          <TabsContent value="fields" className="mt-6">
-            <FieldBuilder fields={fields} setFields={setFields} />
-          </TabsContent>
-        </Tabs>
+        <CollapsibleSection 
+          title="Basic Information" 
+          icon={<Info className="h-5 w-5" />}
+          defaultOpen={true}
+        >
+          <PromptInfoTab form={form} />
+        </CollapsibleSection>
         
-        <PreviewTab 
-          systemPrompt={form.watch("system_prompt")} 
-          fields={fields}
-        />
+        <CollapsibleSection 
+          title="System Prompt" 
+          icon={<FileText className="h-5 w-5" />}
+          defaultOpen={false}
+        >
+          <SystemPromptTab form={form} />
+        </CollapsibleSection>
+        
+        <CollapsibleSection 
+          title="Input Fields" 
+          icon={<Settings className="h-5 w-5" />}
+          defaultOpen={false}
+        >
+          <FieldBuilder fields={fields} setFields={setFields} />
+        </CollapsibleSection>
+        
+        <CollapsibleSection 
+          title="Preview" 
+          defaultOpen={false}
+        >
+          <PreviewTab 
+            systemPrompt={form.watch("system_prompt")} 
+            fields={fields}
+          />
+        </CollapsibleSection>
       </form>
     </Form>
   );
