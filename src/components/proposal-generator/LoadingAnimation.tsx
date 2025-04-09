@@ -5,14 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const paintingMessages = [
   "Mixing the paints...",
-  "Setting up the easel...",
-  "Preparing the brushes...",
-  "Sketching the outline...",
-  "Adding a splash of color...",
-  "Working on the details...",
+  "Prepping surfaces…",
+  "Taping off the trim…",
+  "Sanding rough edges...",
+  "Applying primer...",
+  "Working on the details...almost done!",
   "Letting the first coat dry...",
   "Adding the finishing touches...",
-  "Signing the masterpiece..."
 ];
 
 const LoadingAnimation = () => {
@@ -33,7 +32,7 @@ const LoadingAnimation = () => {
           return 95;
         }
         // Non-linear progress to seem more natural
-        const increment = Math.max(1, 15 - Math.floor(prev / 10));
+        const increment = Math.max(1, 15 - Math.floor(prev / 5));
         return prev + increment;
       });
     }, 800);
@@ -50,8 +49,8 @@ const LoadingAnimation = () => {
         <CardContent className="p-12">
           <div className="flex flex-col items-center justify-center space-y-8">
             <div className="relative w-32 h-32">
-              <div className="absolute inset-0 rounded-full border-8 border-t-transparent border-paintergrowth-300 animate-spin duration-700"></div>
-              <div className="absolute inset-4 rounded-full border-6 border-r-transparent border-paintergrowth-500 animate-spin duration-500 direction-reverse"></div>
+             <div className="absolute inset-0 rounded-full border-8 border-t-transparent border-paintergrowth-300 animate-spin duration-[1200ms]"></div>
+<div className="absolute inset-4 rounded-full border-6 border-r-transparent border-paintergrowth-500 animate-spin duration-[900ms] direction-reverse"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -80,7 +79,7 @@ const LoadingAnimation = () => {
             <Progress value={progress} className="w-full h-2 bg-paintergrowth-100" />
             
             <p className="text-sm text-gray-500">
-              We're creating your proposal masterpiece. This will just take a moment...
+              Paintergrowth.ai is generating your proposal. This will just take a moment...
             </p>
           </div>
         </CardContent>
