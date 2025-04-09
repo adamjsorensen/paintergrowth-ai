@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PromptTemplate, FieldConfig, parseFieldConfig } from "@/types/prompt-templates";
+import { PromptTemplate, FieldConfig, parseFieldConfig, stringifyFieldConfig } from "@/types/prompt-templates";
 import PageLayout from "@/components/PageLayout";
 import { TemplateLoading, NoTemplateMessage } from "@/components/proposal-generator/LoadingStates";
 import ProposalForm from "@/components/proposal-generator/ProposalForm";
@@ -181,14 +180,18 @@ const ProposalGenerator = () => {
       // If the enhanced template doesn't exist, create it
       if (!existingTemplates) {
         console.log("Creating enhanced template...");
+        
+        // Fix: Create a properly structured saveData object for insert
+        const saveData = {
+          name: "Enhanced Proposal Generator",
+          active: true,
+          system_prompt: ENHANCED_SYSTEM_PROMPT,
+          field_config: stringifyFieldConfig(ENHANCED_FIELDS),
+        };
+        
         const { error: createError } = await supabase
           .from("prompt_templates")
-          .insert([{
-            name: "Enhanced Proposal Generator",
-            active: true,
-            system_prompt: ENHANCED_SYSTEM_PROMPT,
-            field_config: ENHANCED_FIELDS,
-          }]);
+          .insert([saveData]);
           
         if (createError) throw createError;
         

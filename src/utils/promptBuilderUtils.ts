@@ -1,5 +1,5 @@
 
-import { FieldConfig } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { stringifyFieldConfig } from "@/types/prompt-templates";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,4 +46,28 @@ export const savePromptTemplate = async (templateData: {
       .from("prompt_templates")
       .insert([saveData]);
   }
+};
+
+/**
+ * Generate preview text by replacing placeholders with field values
+ */
+export const generatePreviewText = (systemPrompt: string, values: Record<string, any>, fields: FieldConfig[]): string => {
+  let preview = systemPrompt;
+  
+  // Replace all field variables with their values
+  Object.entries(values).forEach(([key, value]) => {
+    const regex = new RegExp(`{{${key}}}`, "g");
+    const displayValue = Array.isArray(value) ? value.join(", ") : value;
+    preview = preview.replace(regex, String(displayValue || `[${key}]`));
+  });
+  
+  // For any fields that haven't been filled, replace with placeholder
+  fields.forEach((field) => {
+    const regex = new RegExp(`{{${field.id}}}`, "g");
+    if (preview.match(regex)) {
+      preview = preview.replace(regex, `[${field.id}]`);
+    }
+  });
+  
+  return preview;
 };
