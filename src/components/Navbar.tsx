@@ -67,6 +67,9 @@ const Navbar = () => {
               <Link to="/saved" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
                 Saved Proposals
               </Link>
+              <Link to="/profile" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
+                Profile
+              </Link>
             </>
           )}
           <a href="#features" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
