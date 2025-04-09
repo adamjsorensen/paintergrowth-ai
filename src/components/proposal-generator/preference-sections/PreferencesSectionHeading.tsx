@@ -5,7 +5,7 @@ interface PreferencesSectionHeadingProps {
 
 const PreferencesSectionHeading = ({ title }: PreferencesSectionHeadingProps) => {
   return (
-    <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">{title}</h3>
+    <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 border-b pb-2 mb-2">{title}</h3>
   );
 };
 

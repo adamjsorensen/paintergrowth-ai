@@ -16,13 +16,24 @@ const FormalityPreference = ({ value, onChange }: FormalityPreferenceProps) => {
         onValueChange={onChange}
         className="flex gap-4"
       >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="casual" id="casual" />
-          <Label htmlFor="casual">Casual</Label>
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="casual" id="casual" />
+            <Label htmlFor="casual">Casual</Label>
+          </div>
+          {value === "casual" && (
+            <p className="text-xs text-gray-500 ml-6">Conversational, everyday language.</p>
+          )}
         </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="formal" id="formal" />
-          <Label htmlFor="formal">Formal</Label>
+        
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="formal" id="formal" />
+            <Label htmlFor="formal">Formal</Label>
+          </div>
+          {value === "formal" && (
+            <p className="text-xs text-gray-500 ml-6">Traditional business language and etiquette.</p>
+          )}
         </div>
       </RadioGroup>
     </div>
