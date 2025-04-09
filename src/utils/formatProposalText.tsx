@@ -1,70 +1,83 @@
+import React from 'react'
 
-import React from 'react';
-
-/**
- * Formats plain text with basic markdown-like formatting:
- * - Paragraphs (separated by blank lines)
- * - Headers (lines starting with #)
- * - Bold text (**bold**)
- */
 export function formatProposalText(text: string | null): React.ReactNode {
-  if (!text) return null;
-  
-  // Split text into paragraphs (separated by one or more blank lines)
-  const paragraphs = text.split(/\n{2,}/);
-  
+  if (!text) return null
+
+  const paragraphs = text.split(/\n{2,}/)
+
   return (
     <>
       {paragraphs.map((paragraph, index) => {
-        // Check if the paragraph is a header (starts with # or ##)
-        const headerMatch = paragraph.match(/^(#{1,3})\s+(.+)$/);
-        
-        if (headerMatch) {
-          const level = headerMatch[1].length;
-          const content = headerMatch[2];
-          
-          // Format bold text within headers
-          const formattedContent = formatBoldText(content);
-          
-          switch (level) {
-            case 1:
-              return <h1 key={index} className="text-2xl font-bold mt-6 mb-2">{formattedContent}</h1>;
-            case 2:
-              return <h2 key={index} className="text-xl font-bold mt-5 mb-2">{formattedContent}</h2>;
-            case 3:
-              return <h3 key={index} className="text-lg font-bold mt-4 mb-2">{formattedContent}</h3>;
-            default:
-              return <h4 key={index} className="text-md font-bold mt-3 mb-2">{formattedContent}</h4>;
-          }
+        // Handle markdown-style tables
+        if (paragraph.trim().startsWith('|')) {
+          return <TableRenderer key={index} raw={paragraph} />
         }
-        
-        // Regular paragraph
-        // Format bold text within paragraph
-        const formattedContent = formatBoldText(paragraph);
-        
+
+        // Headers
+        const headerMatch = paragraph.match(/^(#{1,3})\s+(.+)$/)
+        if (headerMatch) {
+          const level = headerMatch[1].length
+          const content = formatInline(headerMatch[2])
+          const HeaderTag = `h${level}` as keyof JSX.IntrinsicElements
+          return (
+            <HeaderTag key={index} className={`mt-${4 + (3 - level)} mb-2 font-bold text-${level === 1 ? '2xl' : level === 2 ? 'xl' : 'lg'}`}>
+              {content}
+            </HeaderTag>
+          )
+        }
+
+        // Paragraph with single line breaks handled
+        const lines = paragraph.split('\n')
         return (
           <p key={index} className="mb-4">
-            {formattedContent}
+            {lines.map((line, i) => (
+              <React.Fragment key={i}>
+                {formatInline(line)}
+                {i < lines.length - 1 && <br />}
+              </React.Fragment>
+            ))}
           </p>
-        );
+        )
       })}
     </>
-  );
+  )
 }
 
-// Helper function to format bold text
-function formatBoldText(text: string): React.ReactNode {
-  if (!text.includes('**')) return text;
-  
-  // Find text between ** pairs and make it bold
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-  
+// Inline formatting for **bold**
+function formatInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*)/g)
   return parts.map((part, i) => {
-    // Check if this part is wrapped in **
     if (part.startsWith('**') && part.endsWith('**')) {
-      const boldText = part.substring(2, part.length - 2);
-      return <strong key={i}>{boldText}</strong>;
+      return <strong key={i}>{part.slice(2, -2)}</strong>
     }
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
+    return <React.Fragment key={i}>{part}</React.Fragment>
+  })
+}
+
+// Table rendering logic
+function TableRenderer({ raw }: { raw: string }) {
+  const rows = raw.trim().split('\n').filter(row => row.trim() !== '')
+  const headers = rows[0].split('|').slice(1, -1).map(h => h.trim())
+  const data = rows.slice(2).map(row => row.split('|').slice(1, -1).map(cell => cell.trim()))
+
+  return (
+    <table className="w-full my-4 border border-gray-300 text-sm">
+      <thead>
+        <tr className="bg-gray-100">
+          {headers.map((h, i) => (
+            <th key={i} className="text-left p-2 border-b border-gray-300 font-medium">{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row, i) => (
+          <tr key={i}>
+            {row.map((cell, j) => (
+              <td key={j} className="p-2 border-b border-gray-200">{cell}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
 }
