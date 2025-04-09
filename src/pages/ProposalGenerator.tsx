@@ -1,21 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Copy, Save, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PromptTemplate, FieldConfig, parseFieldConfig } from "@/types/prompt-templates";
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -157,10 +148,10 @@ const ProposalGenerator = () => {
       case "text":
         return (
           <div className="space-y-2" key={id}>
-            <FormLabel htmlFor={id}>
+            <Label htmlFor={id}>
               {label}
               {required && <span className="text-red-500 ml-1">*</span>}
-            </FormLabel>
+            </Label>
             <Input
               id={id}
               placeholder={placeholder || ""}
@@ -175,10 +166,10 @@ const ProposalGenerator = () => {
       case "textarea":
         return (
           <div className="space-y-2" key={id}>
-            <FormLabel htmlFor={id}>
+            <Label htmlFor={id}>
               {label}
               {required && <span className="text-red-500 ml-1">*</span>}
-            </FormLabel>
+            </Label>
             <Textarea
               id={id}
               placeholder={placeholder || ""}
@@ -193,10 +184,10 @@ const ProposalGenerator = () => {
       case "select":
         return (
           <div className="space-y-2" key={id}>
-            <FormLabel htmlFor={id}>
+            <Label htmlFor={id}>
               {label}
               {required && <span className="text-red-500 ml-1">*</span>}
-            </FormLabel>
+            </Label>
             <Select
               value={(fieldValues[id] as string) || ""}
               onValueChange={(value) => handleFieldChange(id, value)}
@@ -219,10 +210,10 @@ const ProposalGenerator = () => {
       case "number":
         return (
           <div className="space-y-2" key={id}>
-            <FormLabel htmlFor={id}>
+            <Label htmlFor={id}>
               {label}
               {required && <span className="text-red-500 ml-1">*</span>}
-            </FormLabel>
+            </Label>
             <Input
               id={id}
               type="number"
@@ -242,10 +233,10 @@ const ProposalGenerator = () => {
         return (
           <div className="flex justify-between items-center space-x-2 py-2" key={id}>
             <div>
-              <FormLabel htmlFor={id}>
+              <Label htmlFor={id}>
                 {label}
                 {required && <span className="text-red-500 ml-1">*</span>}
-              </FormLabel>
+              </Label>
               {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
             </div>
             <Switch
@@ -259,10 +250,10 @@ const ProposalGenerator = () => {
       case "date":
         return (
           <div className="space-y-2" key={id}>
-            <FormLabel htmlFor={id}>
+            <Label htmlFor={id}>
               {label}
               {required && <span className="text-red-500 ml-1">*</span>}
-            </FormLabel>
+            </Label>
             <Input
               id={id}
               type="date"

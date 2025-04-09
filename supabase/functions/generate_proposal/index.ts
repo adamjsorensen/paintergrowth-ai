@@ -41,7 +41,7 @@ serve(async (req) => {
       .from('prompt_templates')
       .select('*')
       .eq('id', prompt_id)
-      .single();
+      .maybeSingle();
     
     if (promptError || !promptTemplate) {
       console.error('Error fetching prompt template:', promptError);
