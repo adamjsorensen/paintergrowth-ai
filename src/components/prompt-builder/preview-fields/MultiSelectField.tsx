@@ -33,6 +33,11 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
   value,
   onChange,
 }) => {
+  // Ensure value is always an array
+  const safeValue = Array.isArray(value) ? value : [];
+  // Ensure options is always defined
+  const safeOptions = Array.isArray(options) ? options : [];
+  
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>
@@ -42,9 +47,8 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
       <Select
         value="placeholder"
         onValueChange={(newValue) => {
-          const currentValues = value || [];
-          if (!currentValues.includes(newValue)) {
-            onChange([...currentValues, newValue]);
+          if (!safeValue.includes(newValue)) {
+            onChange([...safeValue, newValue]);
           }
         }}
       >
@@ -52,17 +56,17 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
           <SelectValue placeholder={placeholder || "Select options..."} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
+          {safeOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      {(value?.length > 0) && (
+      {(safeValue?.length > 0) && (
         <div className="flex flex-wrap gap-1 mt-2">
-          {(value || []).map((selectedValue: string) => {
-            const option = options.find((o) => o.value === selectedValue);
+          {safeValue.map((selectedValue: string) => {
+            const option = safeOptions.find((o) => o.value === selectedValue);
             return (
               <Badge key={selectedValue} variant="secondary" className="px-2 py-1">
                 {option?.label || selectedValue}
@@ -70,7 +74,7 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
                   type="button"
                   className="ml-1"
                   onClick={() => {
-                    onChange((value || []).filter((v: string) => v !== selectedValue));
+                    onChange(safeValue.filter((v: string) => v !== selectedValue));
                   }}
                 >
                   <X className="h-3 w-3" />

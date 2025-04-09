@@ -52,7 +52,11 @@ export const parseFieldConfig = (jsonData: Json): FieldConfig[] => {
       // Add complexity if not present (backward compatibility)
       return parsed.map((field: any) => ({
         ...field,
-        complexity: field.complexity || 'basic'
+        complexity: field.complexity || 'basic',
+        // Ensure options is always an array for multi-select and checkbox-group fields
+        options: (field.type === 'multi-select' || field.type === 'select' || field.type === 'checkbox-group') 
+          ? (Array.isArray(field.options) ? field.options : []) 
+          : field.options
       }));
     }
     
@@ -60,7 +64,11 @@ export const parseFieldConfig = (jsonData: Json): FieldConfig[] => {
     const fields = jsonData as unknown as FieldConfig[];
     return fields.map(field => ({
       ...field,
-      complexity: field.complexity || 'basic'
+      complexity: field.complexity || 'basic',
+      // Ensure options is always an array for multi-select and checkbox-group fields
+      options: (field.type === 'multi-select' || field.type === 'select' || field.type === 'checkbox-group') 
+        ? (Array.isArray(field.options) ? field.options : []) 
+        : field.options
     }));
   } catch (error) {
     console.error("Error parsing field_config:", error);

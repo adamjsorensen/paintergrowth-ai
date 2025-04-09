@@ -28,25 +28,34 @@ interface MultiSelectFieldProps {
 }
 
 const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiSelectFieldProps) => {
-  const { id, label, required, helpText, options, placeholder } = field;
+  const { id, label, required, helpText, placeholder } = field;
   const [open, setOpen] = useState(false);
   
+  // Ensure options is always defined and an array
+  const options = Array.isArray(field.options) ? field.options : [];
+  
   const toggleOption = (optionValue: string) => {
-    if (value.includes(optionValue)) {
-      onChange(value.filter(v => v !== optionValue));
+    const safeValue = Array.isArray(value) ? value : [];
+    
+    if (safeValue.includes(optionValue)) {
+      onChange(safeValue.filter(v => v !== optionValue));
     } else {
-      onChange([...value, optionValue]);
+      onChange([...safeValue, optionValue]);
     }
   };
   
   const removeOption = (optionValue: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange(value.filter(v => v !== optionValue));
+    const safeValue = Array.isArray(value) ? value : [];
+    onChange(safeValue.filter(v => v !== optionValue));
   };
   
-  const selectedLabels = options?.filter(option => 
-    value.includes(option.value)
-  ).map(option => option.label);
+  // Ensure value is always an array before processing
+  const safeValue = Array.isArray(value) ? value : [];
+  
+  const selectedLabels = options
+    .filter(option => safeValue.includes(option.value))
+    .map(option => option.label);
 
   return (
     <div className="space-y-2" key={id}>
@@ -78,13 +87,13 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={`w-full justify-between ${value.length > 0 ? "h-auto" : "h-10"} ${isAdvanced ? "border-dashed" : ""}`}
+            className={`w-full justify-between ${safeValue.length > 0 ? "h-auto" : "h-10"} ${isAdvanced ? "border-dashed" : ""}`}
             onClick={() => setOpen(!open)}
           >
-            {value.length > 0 ? (
+            {safeValue.length > 0 ? (
               <div className="flex flex-wrap gap-1 py-1">
-                {value.map(item => {
-                  const optionLabel = options?.find(o => o.value === item)?.label || item;
+                {safeValue.map(item => {
+                  const optionLabel = options.find(o => o.value === item)?.label || item;
                   return (
                     <Badge key={item} variant="secondary" className="mr-1 mb-1">
                       {optionLabel}
@@ -110,7 +119,7 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
             <CommandInput placeholder="Search options..." />
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
-              {options?.map((option) => (
+              {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.value}
@@ -119,7 +128,7 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value.includes(option.value) ? "opacity-100" : "opacity-0"
+                      safeValue.includes(option.value) ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {option.label}

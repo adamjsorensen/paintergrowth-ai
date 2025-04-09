@@ -20,7 +20,7 @@ interface FormFieldRendererProps {
 }
 
 const FormFieldRenderer = ({ field, value, onChange, isAdvanced = false }: FormFieldRendererProps) => {
-  const { id, label, type, required, helpText, placeholder, options } = field;
+  const { id, label, type, required, helpText, placeholder } = field;
   
   // For multi-value fields, ensure value is an array
   const ensureArray = (val: any): string[] => {
@@ -52,6 +52,17 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced = false }: FormF
       )}
     </div>
   );
+  
+  // Ensure field has options if needed
+  const options = (field.type === 'select' || field.type === 'multi-select' || field.type === 'checkbox-group') 
+    ? (Array.isArray(field.options) ? field.options : []) 
+    : field.options;
+  
+  // Create a field with guaranteed options
+  const fieldWithOptions = {
+    ...field,
+    options
+  };
   
   switch (type) {
     case "text":
@@ -98,7 +109,7 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced = false }: FormF
               <SelectValue placeholder={placeholder || "Select an option"} />
             </SelectTrigger>
             <SelectContent>
-              {options?.map((option) => (
+              {fieldWithOptions.options?.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -158,7 +169,7 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced = false }: FormF
     case "checkbox-group":
       return (
         <CheckboxGroupField 
-          field={field} 
+          field={fieldWithOptions} 
           value={ensureArray(value)} 
           onChange={(val) => onChange(val)} 
           isAdvanced={isAdvanced}
@@ -168,7 +179,7 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced = false }: FormF
     case "multi-select":
       return (
         <MultiSelectField 
-          field={field} 
+          field={fieldWithOptions} 
           value={ensureArray(value)} 
           onChange={(val) => onChange(val)} 
           isAdvanced={isAdvanced}
