@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +33,6 @@ const CompanyProfilePage = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [currentKeyword, setCurrentKeyword] = useState("");
 
-  // Form setup
   const form = useForm<FormValues>({
     defaultValues: {
       business_name: "",
@@ -48,7 +46,6 @@ const CompanyProfilePage = () => {
     },
   });
 
-  // Fetch company profile
   const { data: companyProfile, isLoading } = useQuery({
     queryKey: ["companyProfile", user?.id],
     queryFn: async () => {
@@ -70,7 +67,6 @@ const CompanyProfilePage = () => {
     enabled: !!user?.id,
   });
 
-  // Update company profile
   const updateCompanyProfile = useMutation({
     mutationFn: async (values: CompanyProfileUpdate) => {
       if (!user?.id) throw new Error("User not authenticated");
@@ -106,7 +102,6 @@ const CompanyProfilePage = () => {
     },
   });
 
-  // Set form values when profile data is loaded
   useEffect(() => {
     if (companyProfile) {
       form.reset({
@@ -120,7 +115,6 @@ const CompanyProfilePage = () => {
         currentKeyword: "",
       });
       
-      // Set keywords separately
       setKeywords(companyProfile.brand_keywords || []);
     }
   }, [companyProfile, form]);
