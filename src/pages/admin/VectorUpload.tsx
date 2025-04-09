@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
+import { Check, Loader2, AlertTriangle } from "lucide-react";
 
 type FormValues = {
   title: string;
@@ -23,10 +26,15 @@ type FormValues = {
   metadata: string;
 };
 
+type EmbeddingStatus = {
+  [key: string]: 'idle' | 'loading' | 'success' | 'error';
+};
+
 const VectorUploadPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [chunks, setChunks] = useState<string[]>([]);
+  const [embeddingStatus, setEmbeddingStatus] = useState<EmbeddingStatus>({});
 
   // Form setup
   const form = useForm<FormValues>({
@@ -56,6 +64,33 @@ const VectorUploadPage = () => {
       
       return data as Document[];
     },
+  });
+
+  // Create embedding for a document
+  const generateEmbedding = useMutation({
+    mutationFn: async (documentId: string) => {
+      setEmbeddingStatus(prev => ({ ...prev, [documentId]: 'loading' }));
+      
+      try {
+        const response = await supabase.functions.invoke('generate-embedding', {
+          body: { documentId },
+        });
+        
+        if (!response.data || response.error) {
+          throw new Error(response.error?.message || 'Unknown error generating embedding');
+        }
+        
+        setEmbeddingStatus(prev => ({ ...prev, [documentId]: 'success' }));
+        return response.data;
+      } catch (error) {
+        console.error("Error generating embedding:", error);
+        setEmbeddingStatus(prev => ({ ...prev, [documentId]: 'error' }));
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    }
   });
 
   // Create embedding via edge function and save document
@@ -89,12 +124,16 @@ const VectorUploadPage = () => {
             collection: values.collection,
             content_type: values.content_type,
             metadata: parsedMetadata,
-            // Normally embedding would be filled here via an edge function
+            // Embedding will be added via the edge function
           })
           .select();
           
         if (error) throw error;
-        if (data) results.push(data[0]);
+        if (data) {
+          results.push(data[0]);
+          // Generate embedding for the inserted document
+          generateEmbedding.mutate(data[0].id);
+        }
       }
       
       return results;
@@ -102,7 +141,7 @@ const VectorUploadPage = () => {
     onSuccess: () => {
       toast({
         title: "Document Uploaded",
-        description: "Content has been successfully uploaded and vectorized.",
+        description: "Content has been successfully uploaded and vectorization started.",
       });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       form.reset();
@@ -160,6 +199,36 @@ const VectorUploadPage = () => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleString();
+  };
+
+  const renderEmbeddingStatus = (doc: Document) => {
+    // If the document already has an embedding
+    if (doc.embedding) {
+      return <span className="inline-flex items-center text-green-600"><Check size={16} className="mr-1" /> Embedded</span>;
+    }
+    
+    // Check the current embedding status
+    const status = embeddingStatus[doc.id];
+    
+    switch(status) {
+      case 'loading':
+        return <span className="inline-flex items-center text-amber-600"><Loader2 size={16} className="mr-1 animate-spin" /> Processing</span>;
+      case 'success':
+        return <span className="inline-flex items-center text-green-600"><Check size={16} className="mr-1" /> Embedded</span>;
+      case 'error':
+        return <span className="inline-flex items-center text-red-600"><AlertTriangle size={16} className="mr-1" /> Failed</span>;
+      default:
+        return (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => generateEmbedding.mutate(doc.id)}
+            disabled={generateEmbedding.isPending}
+          >
+            Generate Embedding
+          </Button>
+        );
+    }
   };
 
   return (
@@ -357,7 +426,7 @@ const VectorUploadPage = () => {
                         <TableRow>
                           <TableHead>Title</TableHead>
                           <TableHead>Type</TableHead>
-                          <TableHead>Date</TableHead>
+                          <TableHead>Embedding</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -366,7 +435,7 @@ const VectorUploadPage = () => {
                             <TableRow key={doc.id}>
                               <TableCell className="font-medium">{doc.title}</TableCell>
                               <TableCell>{doc.content_type}</TableCell>
-                              <TableCell>{formatDate(doc.created_at || '')}</TableCell>
+                              <TableCell>{renderEmbeddingStatus(doc)}</TableCell>
                             </TableRow>
                           ))
                         ) : (
