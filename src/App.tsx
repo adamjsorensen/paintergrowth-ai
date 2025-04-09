@@ -13,21 +13,12 @@ import ProposalGenerator from "./pages/ProposalGenerator";
 import ViewProposal from "./pages/ViewProposal";
 import SavedProposals from "./pages/SavedProposals";
 import Profile from "./pages/Profile";
+import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminRoute from "./components/AdminRoute";
 import ActivityLog from "./pages/admin/ActivityLog";
 import GenerateIndex from "./pages/GenerateIndex";
 import Dashboard from "./pages/Dashboard";
 import { StylePreferencesProvider } from "./context/StylePreferencesContext";
-
-// Admin pages
-import AdminHub from "./pages/admin/AdminHub";
-import PromptBuilderHub from "./pages/admin/prompt-builder/PromptBuilderHub";
-import ProposalGeneratorAdmin from "./pages/admin/prompt-builder/ProposalGenerator";
-import AISettings from "./pages/admin/AISettings";
-import VectorUpload from "./pages/admin/VectorUpload";
-
-// Profile pages
-import CompanyProfile from "./pages/profile/CompanyProfile";
 
 const queryClient = new QueryClient();
 
@@ -67,47 +58,14 @@ const App = () => (
                   <SavedProposals />
                 </ProtectedRoute>
               } />
-              
-              {/* Profile Routes */}
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
               } />
-              <Route path="/profile/company" element={
-                <ProtectedRoute>
-                  <CompanyProfile />
-                </ProtectedRoute>
-              } />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <AdminHub />
-                </AdminRoute>
-              } />
-              
-              {/* Admin Prompt Builder */}
               <Route path="/admin/prompt-builder" element={
                 <AdminRoute>
-                  <PromptBuilderHub />
-                </AdminRoute>
-              } />
-              <Route path="/admin/prompt-builder/proposal-generator" element={
-                <AdminRoute>
-                  <ProposalGeneratorAdmin />
-                </AdminRoute>
-              } />
-              
-              {/* Admin other pages */}
-              <Route path="/admin/ai-settings" element={
-                <AdminRoute>
-                  <AISettings />
-                </AdminRoute>
-              } />
-              <Route path="/admin/vector-upload" element={
-                <AdminRoute>
-                  <VectorUpload />
+                  <PromptBuilder />
                 </AdminRoute>
               } />
               <Route path="/admin/logs/activity" element={
@@ -115,7 +73,6 @@ const App = () => (
                   <ActivityLog />
                 </AdminRoute>
               } />
-              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
