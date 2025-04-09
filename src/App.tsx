@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminRoute from "./components/AdminRoute";
 import GenerateIndex from "./pages/GenerateIndex";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,11 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/generate" element={
               <ProtectedRoute>
                 <GenerateIndex />

@@ -7,12 +7,16 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  shouldRedirect: boolean;
+  setShouldRedirect: (value: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   isLoading: true,
+  shouldRedirect: true,
+  setShouldRedirect: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -21,6 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldRedirect, setShouldRedirect] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -43,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading }}>
+    <AuthContext.Provider value={{ user, session, isLoading, shouldRedirect, setShouldRedirect }}>
       {children}
     </AuthContext.Provider>
   );
