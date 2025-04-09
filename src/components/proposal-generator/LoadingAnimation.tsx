@@ -79,7 +79,7 @@ const LoadingAnimation = () => {
             <Progress value={progress} className="w-full h-2 bg-paintergrowth-100" />
             
             <p className="text-sm text-gray-500">
-              Paintergrowth.ai is generating your proposal. This will just take a moment...
+              Paintergrowth.ai is generating your proposal. This typically takes 15-20 seconds...
             </p>
           </div>
         </CardContent>
