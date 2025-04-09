@@ -9,65 +9,147 @@ import ProposalForm from "@/components/proposal-generator/ProposalForm";
 import { useAuth } from "@/components/AuthProvider";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 
-type FieldValue = string | number | boolean;
+type FieldValue = string | number | boolean | string[];
+
+// Mock field configuration for demo
+const MOCK_FIELDS: FieldConfig[] = [
+  {
+    id: 'clientName',
+    label: 'Client Name',
+    type: 'text',
+    required: true,
+    order: 10,
+    placeholder: 'Enter client name'
+  },
+  {
+    id: 'jobType',
+    label: 'Job Type',
+    type: 'select',
+    required: true,
+    order: 20,
+    options: [
+      { value: 'interior', label: 'Interior' },
+      { value: 'exterior', label: 'Exterior' },
+      { value: 'cabinets', label: 'Cabinets' },
+      { value: 'deck', label: 'Deck/Fence' },
+      { value: 'commercial', label: 'Commercial' }
+    ]
+  },
+  {
+    id: 'squareFootage',
+    label: 'Square Footage',
+    type: 'number',
+    required: false,
+    order: 30,
+    placeholder: 'Approx. square footage'
+  },
+  {
+    id: 'projectAddress',
+    label: 'Project Address',
+    type: 'textarea',
+    required: true,
+    order: 15,
+    placeholder: 'Enter the full project address'
+  },
+  {
+    id: 'surfacesToPaint',
+    label: 'Surfaces to Paint',
+    type: 'multi-select',
+    required: true,
+    order: 40,
+    options: [
+      { value: 'walls', label: 'Walls' },
+      { value: 'ceilings', label: 'Ceilings' },
+      { value: 'trim', label: 'Trim' },
+      { value: 'doors', label: 'Doors' },
+      { value: 'cabinets', label: 'Cabinets' }
+    ]
+  },
+  {
+    id: 'prepNeeds',
+    label: 'Preparation Needs',
+    type: 'checkbox-group',
+    required: false,
+    order: 50,
+    options: [
+      { value: 'scraping', label: 'Scraping' },
+      { value: 'sanding', label: 'Sanding' },
+      { value: 'powerwashing', label: 'Powerwashing' },
+      { value: 'caulking', label: 'Caulking' },
+      { value: 'patching', label: 'Patching' },
+      { value: 'priming', label: 'Priming' }
+    ]
+  },
+  {
+    id: 'colorPalette',
+    label: 'Preferred Colors / Palette',
+    type: 'textarea',
+    required: false,
+    order: 60,
+    placeholder: 'Describe your color preferences'
+  },
+  {
+    id: 'timeline',
+    label: 'Timeline or Start Date',
+    type: 'date',
+    required: false,
+    order: 70
+  },
+  {
+    id: 'specialNotes',
+    label: 'Special Notes',
+    type: 'textarea',
+    required: false,
+    order: 80,
+    placeholder: 'Any additional details or requirements'
+  },
+  {
+    id: 'showDetailedScope',
+    label: 'Show detailed scope of work',
+    type: 'toggle',
+    required: false,
+    order: 90
+  },
+  {
+    id: 'breakoutQuote',
+    label: 'Break out quote summary',
+    type: 'toggle',
+    required: false,
+    order: 100
+  },
+  {
+    id: 'includeTerms',
+    label: 'Include terms & conditions',
+    type: 'toggle',
+    required: false,
+    order: 110
+  },
+  {
+    id: 'uploadFiles',
+    label: 'Upload Files/Images',
+    type: 'file-upload',
+    required: false,
+    order: 120,
+    helpText: 'Upload reference images or documents'
+  }
+];
 
 const ProposalGenerator = () => {
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);
-  const [fields, setFields] = useState<FieldConfig[]>([]);
-  const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
+  const [fields, setFields] = useState<FieldConfig[]>(MOCK_FIELDS);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const [isLoadingGeneration, setIsLoadingGeneration] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { preferences } = useStylePreferences();
 
-  // Fetch the active prompt template on component mount
+  // Temporarily skipping API fetch for development
   useEffect(() => {
-    const fetchActivePromptTemplate = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("prompt_templates")
-          .select("*")
-          .eq("active", true)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          const parsedTemplate = {
-            ...data,
-            field_config: parseFieldConfig(data.field_config)
-          } as PromptTemplate;
-          
-          setPromptTemplate(parsedTemplate);
-          setFields(parseFieldConfig(data.field_config));
-        }
-      } catch (error) {
-        console.error("Error fetching prompt template:", error);
-        toast({
-          title: "Error",
-          description: "Could not load proposal template",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingTemplate(false);
-      }
-    };
-
-    fetchActivePromptTemplate();
-  }, [toast]);
+    setIsLoadingTemplate(false);
+    // For development, we'll use the mock fields and skip the API fetch
+  }, []);
 
   const handleGenerate = async (values: Record<string, FieldValue>, proposalId: string) => {
-    if (!promptTemplate) {
-      toast({
-        title: "Error",
-        description: "No prompt template available",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsLoadingGeneration(true);
 
@@ -87,17 +169,19 @@ const ProposalGenerator = () => {
         _stylePreferences: preferences
       };
 
+      console.log("Generating proposal with values:", valuesWithPreferences);
+
       // Start the proposal generation in the background
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
-          prompt_id: promptTemplate.id,
+          // If no template is available, use a default template ID
+          prompt_id: promptTemplate?.id || "00000000-0000-0000-0000-000000000000",
           field_values: valuesWithPreferences,
           proposal_id: proposalId
         }
       });
 
       if (response.error) {
-        // Update status to failed if the function invocation fails
         if (user) {
           await supabase
             .from('saved_proposals')
@@ -110,13 +194,10 @@ const ProposalGenerator = () => {
         throw new Error(response.error.message || "Failed to generate proposal");
       }
 
-      // We don't need to handle the response content here anymore
-      // as we'll be polling for it in the ViewProposal page
       console.log("Generation started successfully for proposal:", proposalId);
     } catch (error) {
       console.error("Generation error:", error);
       
-      // Update the proposal record to indicate failure
       if (user) {
         await supabase
           .from('saved_proposals')
@@ -146,24 +227,14 @@ const ProposalGenerator = () => {
     );
   }
 
-  if (!promptTemplate) {
-    return (
-      <PageLayout title="Generate Proposal">
-        <div className="container mx-auto py-8 px-4 max-w-5xl">
-          <NoTemplateMessage />
-        </div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout title="Generate Proposal">
-      <div className="container mx-auto py-8 px-4 max-w-3xl">
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
         <ProposalForm 
           fields={fields}
           isGenerating={isLoadingGeneration}
           onGenerate={handleGenerate}
-          templateName={promptTemplate.name}
+          templateName="Painting Proposal"
         />
       </div>
     </PageLayout>

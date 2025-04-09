@@ -5,15 +5,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CheckboxGroupField from "./form-fields/CheckboxGroupField";
+import MultiSelectField from "./form-fields/MultiSelectField";
+import DatePickerField from "./form-fields/DatePickerField";
+import FileUploadField from "./form-fields/FileUploadField";
 
 interface FormFieldRendererProps {
   field: FieldConfig;
-  value: string | number | boolean;
-  onChange: (value: string | number | boolean) => void;
+  value: string | number | boolean | string[];
+  onChange: (value: string | number | boolean | string[]) => void;
 }
 
 const FormFieldRenderer = ({ field, value, onChange }: FormFieldRendererProps) => {
   const { id, label, type, required, helpText, placeholder, options } = field;
+  
+  // For multi-value fields, ensure value is an array
+  const ensureArray = (val: any): string[] => {
+    if (Array.isArray(val)) return val;
+    return [];
+  };
   
   switch (type) {
     case "text":
@@ -120,20 +130,38 @@ const FormFieldRenderer = ({ field, value, onChange }: FormFieldRendererProps) =
     
     case "date":
       return (
-        <div className="space-y-2" key={id}>
-          <Label htmlFor={id}>
-            {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-          <Input
-            id={id}
-            type="date"
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            required={required}
-          />
-          {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
-        </div>
+        <DatePickerField 
+          field={field} 
+          value={value as string} 
+          onChange={(val) => onChange(val)} 
+        />
+      );
+    
+    case "checkbox-group":
+      return (
+        <CheckboxGroupField 
+          field={field} 
+          value={ensureArray(value)} 
+          onChange={(val) => onChange(val)} 
+        />
+      );
+    
+    case "multi-select":
+      return (
+        <MultiSelectField 
+          field={field} 
+          value={ensureArray(value)} 
+          onChange={(val) => onChange(val)} 
+        />
+      );
+    
+    case "file-upload":
+      return (
+        <FileUploadField 
+          field={field} 
+          value={ensureArray(value)}
+          onChange={(val) => onChange(val)} 
+        />
       );
     
     default:

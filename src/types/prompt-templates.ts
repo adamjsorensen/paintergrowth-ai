@@ -1,7 +1,7 @@
 
 import { Json } from "@/integrations/supabase/types";
 
-export type FieldType = 'text' | 'textarea' | 'select' | 'number' | 'toggle' | 'date';
+export type FieldType = 'text' | 'textarea' | 'select' | 'number' | 'toggle' | 'date' | 'checkbox-group' | 'multi-select' | 'file-upload';
 
 export interface FieldOption {
   value: string;
@@ -20,6 +20,15 @@ export interface FieldConfig {
   min?: number;
   max?: number;
   step?: number;
+  sectionId?: string; // Added to group fields into sections
+  icon?: string; // Added for field icons
+  colSpan?: 'full' | 'half'; // Added for layout control
+}
+
+export interface FormSection {
+  id: string;
+  title: string;
+  order: number;
 }
 
 export interface PromptTemplate {
