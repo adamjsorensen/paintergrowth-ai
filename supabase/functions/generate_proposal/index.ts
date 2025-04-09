@@ -56,17 +56,123 @@ serve(async (req) => {
       .eq('id', prompt_id)
       .maybeSingle();
     
-    if (promptError || !promptTemplate) {
+    if (promptError) {
       console.error('Error fetching prompt template:', promptError);
       
       // Update proposal status to failed
       await supabase
         .from('saved_proposals')
-        .update({ status: 'failed' })
+        .update({ status: 'failed', content: 'Failed to fetch prompt template: ' + promptError.message })
         .eq('id', proposal_id);
         
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch prompt template' }),
+        JSON.stringify({ error: 'Failed to fetch prompt template: ' + promptError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // If prompt not found but ID is the default placeholder, use a default system prompt
+    if (!promptTemplate && prompt_id === "00000000-0000-0000-0000-000000000000") {
+      console.log('Using default prompt template for placeholder ID');
+      
+      // Use a simple default system prompt
+      let systemPrompt = "You are a professional proposal writer for a painting contractor. " +
+        "Create a detailed painting proposal based on the provided information. " +
+        "Include an introduction, scope of work, pricing details, and a professional conclusion.";
+      
+      // Process field values directly
+      Object.entries(field_values).forEach(([key, value]) => {
+        systemPrompt += `\n- ${key}: ${JSON.stringify(value)}`;
+      });
+
+      console.log('Using default system prompt');
+
+      // Call OpenRouter API
+      const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'HTTP-Referer': 'https://lovable.dev',
+          'X-Title': 'Proposal Generator'
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: 'Generate a detailed proposal based on the information provided.' }
+          ],
+          temperature: 0.7,
+          max_tokens: 1500
+        }),
+      });
+
+      console.log('OpenRouter API response status:', openRouterResponse.status);
+
+      if (!openRouterResponse.ok) {
+        const errorData = await openRouterResponse.text();
+        console.error('OpenRouter API error:', errorData);
+        
+        // Update the proposal record to indicate failure
+        await supabase
+          .from('saved_proposals')
+          .update({ 
+            status: 'failed', 
+            content: 'Failed to generate content from OpenRouter: ' + errorData 
+          })
+          .eq('id', proposal_id);
+          
+        return new Response(
+          JSON.stringify({ error: 'Failed to generate content from OpenRouter' }),
+          { status: openRouterResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const data = await openRouterResponse.json();
+      console.log('OpenRouter API response received successfully');
+      
+      const generatedContent = data.choices[0].message.content;
+
+      // Update the proposal record with the generated content
+      const { error: updateError } = await supabase
+        .from('saved_proposals')
+        .update({
+          content: generatedContent,
+          status: 'completed'
+        })
+        .eq('id', proposal_id);
+
+      if (updateError) {
+        console.error('Error updating proposal:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to save generated proposal: ' + updateError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Proposal updated successfully with ID:', proposal_id);
+
+      return new Response(
+        JSON.stringify({ success: true, proposal_id }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // If no prompt template and not using the default, return error
+    if (!promptTemplate) {
+      console.error('No prompt template found for ID:', prompt_id);
+      
+      // Update proposal status to failed
+      await supabase
+        .from('saved_proposals')
+        .update({ 
+          status: 'failed',
+          content: `Prompt template with ID ${prompt_id} not found`
+        })
+        .eq('id', proposal_id);
+        
+      return new Response(
+        JSON.stringify({ error: `Prompt template with ID ${prompt_id} not found` }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -110,7 +216,10 @@ serve(async (req) => {
       // Update the proposal record to indicate failure
       await supabase
         .from('saved_proposals')
-        .update({ status: 'failed' })
+        .update({ 
+          status: 'failed',
+          content: 'Failed to generate content from OpenRouter: ' + errorData 
+        })
         .eq('id', proposal_id);
         
       return new Response(
@@ -136,7 +245,7 @@ serve(async (req) => {
     if (updateError) {
       console.error('Error updating proposal:', updateError);
       return new Response(
-        JSON.stringify({ error: 'Failed to save generated proposal' }),
+        JSON.stringify({ error: 'Failed to save generated proposal: ' + updateError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

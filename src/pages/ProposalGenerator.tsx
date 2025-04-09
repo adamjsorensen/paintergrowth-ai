@@ -11,7 +11,7 @@ import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 type FieldValue = string | number | boolean | string[];
 
-// Mock field configuration for demo
+// Mock field configuration as fallback
 const MOCK_FIELDS: FieldConfig[] = [
   {
     id: 'clientName',
@@ -137,17 +137,84 @@ const MOCK_FIELDS: FieldConfig[] = [
 const ProposalGenerator = () => {
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);
   const [fields, setFields] = useState<FieldConfig[]>(MOCK_FIELDS);
-  const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
   const [isLoadingGeneration, setIsLoadingGeneration] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { preferences } = useStylePreferences();
 
-  // Temporarily skipping API fetch for development
+  // Fetch the prompt template from the database
   useEffect(() => {
-    setIsLoadingTemplate(false);
-    // For development, we'll use the mock fields and skip the API fetch
-  }, []);
+    const fetchPromptTemplate = async () => {
+      try {
+        setIsLoadingTemplate(true);
+        
+        // Get active prompt template or fall back to the latest one
+        const { data, error } = await supabase
+          .from("prompt_templates")
+          .select("*")
+          .eq("active", true)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (error) throw error;
+        
+        // If no active template found, try to get any template
+        if (!data) {
+          const { data: anyTemplate, error: fallbackError } = await supabase
+            .from("prompt_templates")
+            .select("*")
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+            
+          if (fallbackError) throw fallbackError;
+          
+          if (anyTemplate) {
+            const parsedTemplate = {
+              ...anyTemplate,
+              field_config: parseFieldConfig(anyTemplate.field_config)
+            } as PromptTemplate;
+            
+            setPromptTemplate(parsedTemplate);
+            setFields(parseFieldConfig(anyTemplate.field_config));
+            console.log("Using fallback template:", parsedTemplate.name);
+          } else {
+            // Use mock fields if no templates exist
+            console.log("No templates found, using mock fields");
+            setPromptTemplate(null);
+            setFields(MOCK_FIELDS);
+          }
+        } else {
+          // Using active template
+          const parsedTemplate = {
+            ...data,
+            field_config: parseFieldConfig(data.field_config)
+          } as PromptTemplate;
+          
+          setPromptTemplate(parsedTemplate);
+          setFields(parseFieldConfig(data.field_config));
+          console.log("Using active template:", parsedTemplate.name);
+        }
+      } catch (error) {
+        console.error("Error fetching prompt template:", error);
+        // Fall back to mock fields on error
+        setFields(MOCK_FIELDS);
+        setPromptTemplate(null);
+        
+        toast({
+          title: "Error loading template",
+          description: "Using default field configuration",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingTemplate(false);
+      }
+    };
+
+    fetchPromptTemplate();
+  }, [toast]);
 
   const handleGenerate = async (values: Record<string, FieldValue>, proposalId: string) => {
     try {
@@ -174,7 +241,7 @@ const ProposalGenerator = () => {
       // Start the proposal generation in the background
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
-          // If no template is available, use a default template ID
+          // Use the actual template ID if available, otherwise use a default ID
           prompt_id: promptTemplate?.id || "00000000-0000-0000-0000-000000000000",
           field_values: valuesWithPreferences,
           proposal_id: proposalId
@@ -234,7 +301,7 @@ const ProposalGenerator = () => {
           fields={fields}
           isGenerating={isLoadingGeneration}
           onGenerate={handleGenerate}
-          templateName="Painting Proposal"
+          templateName={promptTemplate?.name || "Painting Proposal"}
         />
       </div>
     </PageLayout>
