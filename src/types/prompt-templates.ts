@@ -1,4 +1,6 @@
 
+import { Json } from "@/integrations/supabase/types";
+
 export type FieldType = 'text' | 'textarea' | 'select' | 'number' | 'toggle' | 'date';
 
 export interface FieldOption {
@@ -29,3 +31,22 @@ export interface PromptTemplate {
   created_at: string;
   updated_at: string;
 }
+
+// Utility functions to convert between database JSON and typed FieldConfig[]
+export const parseFieldConfig = (jsonData: Json): FieldConfig[] => {
+  if (!jsonData) return [];
+  
+  try {
+    if (typeof jsonData === 'string') {
+      return JSON.parse(jsonData);
+    }
+    return jsonData as unknown as FieldConfig[];
+  } catch (error) {
+    console.error("Error parsing field_config:", error);
+    return [];
+  }
+};
+
+export const stringifyFieldConfig = (fieldConfig: FieldConfig[]): Json => {
+  return fieldConfig as unknown as Json;
+};

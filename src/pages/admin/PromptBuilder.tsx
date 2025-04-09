@@ -1,11 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PromptTemplate, FieldConfig } from "@/types/prompt-templates";
+import { 
+  PromptTemplate, 
+  FieldConfig, 
+  parseFieldConfig, 
+  stringifyFieldConfig 
+} from "@/types/prompt-templates";
 import PageLayout from "@/components/PageLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,8 +60,13 @@ const PromptBuilder = () => {
         if (error) throw error;
 
         if (data) {
-          setPromptTemplate(data as PromptTemplate);
-          setFields(data.field_config);
+          const parsedTemplate = {
+            ...data,
+            field_config: parseFieldConfig(data.field_config)
+          } as PromptTemplate;
+          
+          setPromptTemplate(parsedTemplate);
+          setFields(parseFieldConfig(data.field_config));
           form.reset({
             name: data.name,
             active: data.active,
@@ -87,7 +96,7 @@ const PromptBuilder = () => {
         name: values.name,
         active: values.active,
         system_prompt: values.system_prompt,
-        field_config: fields,
+        field_config: stringifyFieldConfig(fields),
         updated_at: new Date().toISOString(),
       };
       
