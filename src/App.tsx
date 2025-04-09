@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProposalGenerator from "./pages/ProposalGenerator";
 import SavedProposals from "./pages/SavedProposals";
 import Profile from "./pages/Profile";
+import PromptBuilder from "./pages/admin/PromptBuilder";
+import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,11 @@ const App = () => (
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
+            } />
+            <Route path="/admin/prompt-builder" element={
+              <AdminRoute>
+                <PromptBuilder />
+              </AdminRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
