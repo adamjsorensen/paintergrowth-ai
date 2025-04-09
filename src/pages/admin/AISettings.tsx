@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, AISettings as AISettingsType } from "@/integrations/supabase/client";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,8 +47,10 @@ const AISettings = () => {
   useEffect(() => {
     const fetchAISettings = async () => {
       try {
+        // Since we're using the generic supabase client without type updates,
+        // we need to use 'any' for now
         const { data, error } = await supabase
-          .from("ai_settings")
+          .from('ai_settings')
           .select("*")
           .order("created_at", { ascending: false })
           .limit(1)
@@ -60,9 +62,9 @@ const AISettings = () => {
 
         if (data) {
           form.reset({
-            model: data.model,
-            temperature: data.temperature,
-            max_tokens: data.max_tokens,
+            model: data.model || "gpt-4o-mini",
+            temperature: data.temperature || 0.7,
+            max_tokens: data.max_tokens || 1024,
             default_system_prompt: data.default_system_prompt || "",
             default_user_prompt: data.default_user_prompt || ""
           });
@@ -86,18 +88,26 @@ const AISettings = () => {
       if (settingsId) {
         // Update existing settings
         operation = supabase
-          .from("ai_settings")
+          .from('ai_settings')
           .update({
-            ...values,
+            model: values.model,
+            temperature: values.temperature,
+            max_tokens: values.max_tokens,
+            default_system_prompt: values.default_system_prompt,
+            default_user_prompt: values.default_user_prompt,
             updated_at: new Date().toISOString()
           })
           .eq("id", settingsId);
       } else {
         // Create new settings
         operation = supabase
-          .from("ai_settings")
+          .from('ai_settings')
           .insert({
-            ...values,
+            model: values.model,
+            temperature: values.temperature,
+            max_tokens: values.max_tokens,
+            default_system_prompt: values.default_system_prompt,
+            default_user_prompt: values.default_user_prompt,
             updated_at: new Date().toISOString()
           });
       }

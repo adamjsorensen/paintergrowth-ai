@@ -49,13 +49,15 @@ const BreadcrumbItem = React.forwardRef<
 ))
 BreadcrumbItem.displayName = "BreadcrumbItem"
 
+// Fix the BreadcrumbLink component to properly handle the 'to' prop for react-router Link
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {
     asChild?: boolean;
     as?: React.ElementType;
+    to?: string; // Add the 'to' prop
   }
->(({ asChild, as: Comp, className, ...props }, ref) => {
+>(({ asChild, as: Comp, className, to, ...props }, ref) => {
   if (asChild) {
     // This allows passing react-router Link as children
     return React.cloneElement(props.children as React.ReactElement, {
@@ -65,11 +67,14 @@ const BreadcrumbLink = React.forwardRef<
   }
   
   const Component = Comp || "a";
+  // Pass the 'to' prop if it exists and Component is not 'a'
+  const componentProps = Component !== "a" && to ? { to, ...props } : props;
+  
   return (
     <Component
       ref={ref}
       className={cn("hover:text-foreground", className)}
-      {...props}
+      {...componentProps}
     />
   );
 })

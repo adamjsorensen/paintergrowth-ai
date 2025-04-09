@@ -36,6 +36,18 @@ interface CompanyFormValues {
   brand_keywords: string[];
 }
 
+interface CompanyProfile {
+  user_id: string;
+  business_name: string | null;
+  location: string | null;
+  services_offered: string | null;
+  team_size: string | null;
+  pricing_notes: string | null;
+  preferred_tone: string | null;
+  brand_keywords: string[] | null;
+  updated_at: string;
+}
+
 const CompanyProfile = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +72,7 @@ const CompanyProfile = () => {
       try {
         setIsLoading(true);
         const { data, error } = await supabase
-          .from("company_profiles")
+          .from('company_profiles')
           .select("*")
           .eq("user_id", user.id)
           .single();
@@ -70,14 +82,15 @@ const CompanyProfile = () => {
         }
         
         if (data) {
+          const profile = data as CompanyProfile;
           form.reset({
-            business_name: data.business_name || "",
-            location: data.location || "",
-            services_offered: data.services_offered || "",
-            team_size: data.team_size || "",
-            pricing_notes: data.pricing_notes || "",
-            preferred_tone: data.preferred_tone || "professional",
-            brand_keywords: data.brand_keywords || []
+            business_name: profile.business_name || "",
+            location: profile.location || "",
+            services_offered: profile.services_offered || "",
+            team_size: profile.team_size || "",
+            pricing_notes: profile.pricing_notes || "",
+            preferred_tone: profile.preferred_tone || "professional",
+            brand_keywords: profile.brand_keywords || []
           });
         }
       } catch (error) {
@@ -96,7 +109,7 @@ const CompanyProfile = () => {
     
     try {
       const { error } = await supabase
-        .from("company_profiles")
+        .from('company_profiles')
         .upsert({
           user_id: user.id,
           business_name: values.business_name,

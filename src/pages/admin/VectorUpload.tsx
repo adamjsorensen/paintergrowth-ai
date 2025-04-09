@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, Document as DocumentType } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -68,12 +68,12 @@ const VectorUpload = () => {
     queryKey: ["documents"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("documents")
+        .from('documents')
         .select("id, title, content, collection, content_type, created_at")
         .order("created_at", { ascending: false });
         
       if (error) throw error;
-      return data as Document[];
+      return (data || []) as Document[];
     }
   });
 
@@ -85,7 +85,7 @@ const VectorUpload = () => {
         
         // Insert document with embedding
         const { data, error } = await supabase
-          .from("documents")
+          .from('documents')
           .insert({
             title: values.title,
             content: values.content,
@@ -117,7 +117,7 @@ const VectorUpload = () => {
 
   const deleteDocumentMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("documents").delete().eq("id", id);
+      const { error } = await supabase.from('documents').delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
