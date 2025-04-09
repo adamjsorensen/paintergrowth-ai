@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
-import ProposalContent from "@/components/proposal-viewer/ProposalContent";
 import ProposalNotFound from "@/components/proposal-viewer/ProposalNotFound";
+import EditableProposalContent from "@/components/proposal-viewer/EditableProposalContent";
 import { useProposalFetch } from "@/hooks/useProposalFetch";
+import { supabase } from "@/integrations/supabase/client";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +21,7 @@ const ViewProposal = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   
   // Use our custom hook for fetching proposal data
-  const { proposal, loading, metadata } = useProposalFetch(id, user?.id);
+  const { proposal, loading, metadata, setProposal } = useProposalFetch(id, user?.id);
 
   const handleCopy = () => {
     if (proposal) {
@@ -38,6 +39,45 @@ const ViewProposal = () => {
 
   const handleBack = () => {
     navigate("/generate/proposal");
+  };
+
+  const handleUpdate = async (newContent: string) => {
+    if (!user || !id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save changes",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Update the local state immediately for a responsive feel
+      setProposal(newContent);
+
+      // Save to database
+      const { error } = await supabase
+        .from('saved_proposals')
+        .update({
+          content: newContent,
+          updated_at: new Date(),
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Changes saved",
+        description: "Your proposal has been updated",
+      });
+    } catch (error) {
+      console.error("Error updating proposal:", error);
+      toast({
+        title: "Error saving changes",
+        description: "There was a problem updating your proposal",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -61,10 +101,11 @@ const ViewProposal = () => {
         </Button>
         
         {proposal ? (
-          <ProposalContent 
+          <EditableProposalContent 
             proposal={proposal} 
             onCopy={handleCopy} 
             onSave={handleSave} 
+            onUpdate={handleUpdate}
           />
         ) : (
           <ProposalNotFound onBack={handleBack} />
