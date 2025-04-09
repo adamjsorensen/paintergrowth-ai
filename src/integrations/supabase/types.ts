@@ -82,6 +82,7 @@ export type Database = {
           created_at: string
           id: string
           job_type: string | null
+          status: string
           title: string
           user_id: string
         }
@@ -91,6 +92,7 @@ export type Database = {
           created_at?: string
           id?: string
           job_type?: string | null
+          status?: string
           title: string
           user_id: string
         }
@@ -100,6 +102,7 @@ export type Database = {
           created_at?: string
           id?: string
           job_type?: string | null
+          status?: string
           title?: string
           user_id?: string
         }

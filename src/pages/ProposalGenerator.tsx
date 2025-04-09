@@ -91,7 +91,9 @@ const ProposalGenerator = () => {
       if (user) {
         await supabase
           .from('saved_proposals')
-          .update({ status: "failed" })
+          .update({ 
+            status: "failed" 
+          })
           .eq('id', proposalId);
       }
       
