@@ -57,13 +57,13 @@ const SavedProposals = () => {
       setIsLoading(true);
       
       const { data, error } = await supabase
-        .from("saved_proposals")
+        .from('saved_proposals')
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as { data: Proposal[] | null, error: any };
       
       if (error) throw error;
       
-      setProposals(data as Proposal[]);
+      setProposals(data || []);
     } catch (error) {
       console.error("Error fetching proposals:", error);
       toast({
@@ -89,7 +89,7 @@ const SavedProposals = () => {
       setIsDeleting(true);
       
       const { error } = await supabase
-        .from("saved_proposals")
+        .from('saved_proposals')
         .delete()
         .eq("id", proposalToDelete);
       

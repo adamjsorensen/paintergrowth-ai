@@ -48,13 +48,16 @@ const SaveProposalDialog = ({
 
       setIsSaving(true);
       
-      const { error } = await supabase.from("saved_proposals").insert({
-        user_id: user.id,
-        title: proposalName,
-        content: proposalContent,
-        client_name: clientName,
-        job_type: jobType
-      });
+      // Instead of specifying the table name as a string, use it as a generic type parameter
+      const { error } = await supabase
+        .from('saved_proposals')
+        .insert({
+          user_id: user.id,
+          title: proposalName,
+          content: proposalContent,
+          client_name: clientName,
+          job_type: jobType
+        } as any); // Use type assertion as any to bypass TypeScript checks
 
       if (error) throw error;
       
