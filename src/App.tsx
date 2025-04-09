@@ -13,12 +13,17 @@ import ProposalGenerator from "./pages/ProposalGenerator";
 import ViewProposal from "./pages/ViewProposal";
 import SavedProposals from "./pages/SavedProposals";
 import Profile from "./pages/Profile";
-import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminRoute from "./components/AdminRoute";
 import ActivityLog from "./pages/admin/ActivityLog";
 import GenerateIndex from "./pages/GenerateIndex";
 import Dashboard from "./pages/Dashboard";
 import { StylePreferencesProvider } from "./context/StylePreferencesContext";
+import PromptBuilderHub from "./pages/admin/PromptBuilderHub";
+import PromptBuilder from "./pages/admin/PromptBuilder";
+import AdminHub from "./pages/admin/AdminHub";
+import AISettings from "./pages/admin/AISettings";
+import VectorUpload from "./pages/admin/VectorUpload";
+import CompanyProfile from "./pages/profile/CompanyProfile";
 
 const queryClient = new QueryClient();
 
@@ -63,9 +68,36 @@ const App = () => (
                   <Profile />
                 </ProtectedRoute>
               } />
+              <Route path="/profile/company" element={
+                <ProtectedRoute>
+                  <CompanyProfile />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminHub />
+                </AdminRoute>
+              } />
               <Route path="/admin/prompt-builder" element={
                 <AdminRoute>
+                  <PromptBuilderHub />
+                </AdminRoute>
+              } />
+              <Route path="/admin/prompt-builder/proposal-generator" element={
+                <AdminRoute>
                   <PromptBuilder />
+                </AdminRoute>
+              } />
+              <Route path="/admin/ai-settings" element={
+                <AdminRoute>
+                  <AISettings />
+                </AdminRoute>
+              } />
+              <Route path="/admin/vector-upload" element={
+                <AdminRoute>
+                  <VectorUpload />
                 </AdminRoute>
               } />
               <Route path="/admin/logs/activity" element={
@@ -73,6 +105,7 @@ const App = () => (
                   <ActivityLog />
                 </AdminRoute>
               } />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

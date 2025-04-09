@@ -1,255 +1,187 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/PageLayout";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogOut, User } from "lucide-react";
-
-interface ProfileData {
-  id: string;
-  business_name: string | null;
-  location: string | null;
-  created_at: string;
-  // Include other fields from the actual profiles table
-  full_name?: string | null;
-  avatar_url?: string | null;
-  company_name?: string | null;
-  updated_at?: string;
-  is_admin?: boolean | null;
-}
-
-interface ProfileFormValues {
-  business_name: string;
-  location: string;
-}
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileCompanyLink from "@/components/ProfileCompanyLink";
 
 const Profile = () => {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const navigate = useNavigate();
-  
-  const form = useForm<ProfileFormValues>({
-    defaultValues: {
-      business_name: "",
-      location: "",
-    },
-  });
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [location, setLocation] = useState("");
 
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!user) return;
-      
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+
       try {
+        setLoading(true);
         const { data, error } = await supabase
-          .from('profiles')
+          .from("profiles")
           .select("*")
-          .eq('id', user.id)
+          .eq("id", user.id)
           .single();
-          
+
         if (error) {
           throw error;
         }
-        
-        // Ensure data has the expected structure
-        const profileWithDefaults: ProfileData = {
-          id: data.id,
-          business_name: data.business_name || null,
-          location: data.location || null,
-          created_at: data.created_at || "",
-          full_name: data.full_name || null,
-          avatar_url: data.avatar_url || null,
-          company_name: data.company_name || null,
-          updated_at: data.updated_at || "",
-          is_admin: data.is_admin || null
-        };
-        
-        setProfileData(profileWithDefaults);
-        form.reset({
-          business_name: profileWithDefaults.business_name || "",
-          location: profileWithDefaults.location || "",
-        });
+
+        if (data) {
+          setFullName(data.full_name || "");
+          setAvatarUrl(data.avatar_url || "");
+          setBusinessName(data.business_name || "");
+          setLocation(data.location || "");
+        }
       } catch (error) {
-        console.error("Error fetching profile data:", error);
-        toast.error("Failed to load profile data");
+        console.error("Error loading profile data:", error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
-    fetchProfileData();
-  }, [user, form]);
-  
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast.success("Logged out successfully");
-      navigate("/auth");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out");
+
+    fetchProfile();
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your profile",
+        variant: "destructive",
+      });
+      return;
     }
-  };
-  
-  const onSubmit = async (values: ProfileFormValues) => {
-    if (!user) return;
-    
+
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          business_name: values.business_name,
-          location: values.location
-        })
-        .eq('id', user.id);
-        
-      if (error) throw error;
-      
-      if (profileData) {
-        setProfileData({
-          ...profileData,
-          business_name: values.business_name,
-          location: values.location
-        });
+      setLoading(true);
+
+      const updates = {
+        id: user.id,
+        full_name: fullName,
+        avatar_url: avatarUrl,
+        business_name: businessName,
+        location: location,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from("profiles").upsert(updates);
+
+      if (error) {
+        throw error;
       }
-      
-      toast.success("Profile updated successfully");
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
-  
-  if (isLoading) {
-    return (
-      <PageLayout title="Your Profile">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </PageLayout>
-    );
-  }
-  
+
+  const getInitials = () => {
+    if (fullName) {
+      const names = fullName.split(" ");
+      if (names.length >= 2) {
+        return `${names[0].charAt(0)}${names[1].charAt(0)}`.toUpperCase();
+      }
+      return fullName.charAt(0).toUpperCase();
+    }
+    return user?.email?.charAt(0).toUpperCase() || "U";
+  };
+
   return (
-    <PageLayout title="Your Profile">
-      <div className="max-w-2xl mx-auto">
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Account Information
-                </CardTitle>
-                <CardDescription>Your account details and profile information</CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout}
-                className="flex items-center gap-1"
-              >
-                <LogOut className="h-4 w-4" /> Log Out
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">Email Address</h3>
-                <p className="mt-1">{user?.email}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">Account Created</h3>
-                <p className="mt-1">
-                  {user?.created_at && format(new Date(user.created_at), "MMMM d, yyyy")}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
+    <PageLayout title="Profile">
+      <div className="container max-w-3xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Business Information</CardTitle>
-            <CardDescription>Update your business details</CardDescription>
+            <CardTitle>Your Profile</CardTitle>
+            <CardDescription>Manage your account information</CardDescription>
           </CardHeader>
           <CardContent>
-            {isEditing ? (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="business_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your business name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your location" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex gap-2">
-                    <Button type="submit">Save Changes</Button>
-                    <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                  </div>
-                </form>
-              </Form>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Business Name</h3>
-                  <p className="mt-1">{profileData?.business_name || "Not provided"}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Location</h3>
-                  <p className="mt-1">{profileData?.location || "Not provided"}</p>
-                </div>
-                
-                <Button onClick={() => setIsEditing(true)}>Edit Business Info</Button>
+            <div className="flex flex-col md:flex-row gap-6 mb-6">
+              <div className="flex justify-center">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={avatarUrl} />
+                  <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+                </Avatar>
               </div>
-            )}
+              <div className="flex-1 space-y-2">
+                <div className="text-xl font-semibold">{fullName || user?.email}</div>
+                <div className="text-muted-foreground">{user?.email}</div>
+                <div className="text-sm">{businessName && `${businessName}${location ? `, ${location}` : ""}`}</div>
+              </div>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName || ""}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="avatar">Avatar URL</Label>
+                  <Input
+                    id="avatar"
+                    value={avatarUrl || ""}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    placeholder="https://example.com/avatar.png"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="businessName">Business Name</Label>
+                  <Input
+                    id="businessName"
+                    value={businessName || ""}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Enter your business name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={location || ""}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="City, State"
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
+
+        {/* Company Profile Link */}
+        <ProfileCompanyLink />
       </div>
     </PageLayout>
   );

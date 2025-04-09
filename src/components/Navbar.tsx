@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
@@ -144,7 +143,16 @@ const Navbar = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-48">
                     <DropdownMenuItem asChild>
+                      <Link to="/admin" className="w-full">Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link to="/admin/prompt-builder" className="w-full">Prompt Builder</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/ai-settings" className="w-full">AI Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/vector-upload" className="w-full">Vector Upload</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/admin/logs/activity" className="w-full">Activity Logs</Link>
@@ -169,6 +177,9 @@ const Navbar = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile/company" className="cursor-pointer">Company Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     Log out
@@ -240,14 +251,44 @@ const Navbar = () => {
                     >
                       Profile
                     </Link>
+                    <Link 
+                      to="/profile/company" 
+                      className="text-lg py-2 hover:text-paintergrowth-600"
+                      onClick={() => setSheetOpen(false)}
+                    >
+                      Company Profile
+                    </Link>
                     {isAdmin && (
                       <>
+                        <div className="h-px bg-border my-2"></div>
+                        <p className="text-sm text-muted-foreground mb-2">Admin</p>
+                        <Link 
+                          to="/admin" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Admin Dashboard
+                        </Link>
                         <Link 
                           to="/admin/prompt-builder" 
                           className="text-lg py-2 hover:text-paintergrowth-600"
                           onClick={() => setSheetOpen(false)}
                         >
                           Prompt Builder
+                        </Link>
+                        <Link 
+                          to="/admin/ai-settings" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          AI Settings
+                        </Link>
+                        <Link 
+                          to="/admin/vector-upload" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Vector Upload
                         </Link>
                         <Link 
                           to="/admin/logs/activity" 
