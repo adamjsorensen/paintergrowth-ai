@@ -25,7 +25,7 @@ const ViewProposal = () => {
   }>({});
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [pollingCount, setPollingCount] = useState(0);
-  const maxPolls = 10; // Maximum number of polling attempts
+  const maxPolls = 30; // Increased from 10 to 30
 
   // Poll for proposal data
   useEffect(() => {
@@ -40,7 +40,11 @@ const ViewProposal = () => {
           .single();
 
         if (error) {
-          if (pollingCount >= maxPolls) {
+          // Use the current value of pollingCount from state
+          const currentCount = pollingCount + 1;
+          setPollingCount(currentCount);
+          
+          if (currentCount >= maxPolls) {
             clearInterval(pollInterval);
             setLoading(false);
             toast({
@@ -80,7 +84,8 @@ const ViewProposal = () => {
     }, 2000); // Poll every 2 seconds
 
     return () => clearInterval(pollInterval);
-  }, [id, user, pollingCount, toast]);
+    // Removed pollingCount from the dependency array to prevent restarting the interval
+  }, [id, user, toast, maxPolls]);
 
   const handleCopy = () => {
     if (proposal) {
