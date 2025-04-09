@@ -99,4 +99,53 @@
   .hero-gradient {
     background: linear-gradient(to bottom right, rgba(30, 64, 175, 0.05), rgba(59, 130, 246, 0.15));
   }
+  
+  /* TipTap Editor Styles */
+  .ProseMirror {
+    @apply p-4 min-h-[300px] focus:outline-none;
+  }
+  
+  .ProseMirror h1 {
+    @apply text-2xl font-bold mb-4 mt-6;
+  }
+  
+  .ProseMirror h2 {
+    @apply text-xl font-bold mb-3 mt-5;
+  }
+  
+  .ProseMirror h3 {
+    @apply text-lg font-bold mb-2 mt-4;
+  }
+  
+  .ProseMirror p {
+    @apply mb-4;
+  }
+  
+  .ProseMirror ul {
+    @apply list-disc pl-6 mb-4;
+  }
+  
+  .ProseMirror ol {
+    @apply list-decimal pl-6 mb-4;
+  }
+  
+  .ProseMirror table {
+    @apply w-full my-4 border-collapse border border-gray-300;
+  }
+  
+  .ProseMirror th {
+    @apply bg-gray-100 text-left p-2 border border-gray-300 font-medium;
+  }
+  
+  .ProseMirror td {
+    @apply p-2 border border-gray-300;
+  }
+  
+  .ProseMirror strong {
+    @apply font-bold;
+  }
+  
+  .ProseMirror em {
+    @apply italic;
+  }
 }
