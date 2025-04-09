@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -333,14 +334,14 @@ const ProposalGenerator = () => {
 
       console.log("Generating proposal with values:", valuesWithPreferences);
 
-      // Start the proposal generation in the background
+      // Start the proposal generation in the background - UPDATED parameter names to match edge function
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
           // Use the actual template ID if available, otherwise use a default ID
-          prompt_id: promptTemplate?.id || "00000000-0000-0000-0000-000000000000",
-          field_values: valuesWithPreferences,
-          proposal_id: proposalId,
-          user_email: user?.email || 'anonymous'
+          promptId: promptTemplate?.id || "00000000-0000-0000-0000-000000000000",
+          values: valuesWithPreferences,
+          proposalId: proposalId,
+          modelName: 'openai/gpt-4o-mini'
         }
       });
 
