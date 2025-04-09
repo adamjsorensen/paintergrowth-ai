@@ -9,7 +9,6 @@ import {
 } from "@/types/prompt-templates";
 import PageLayout from "@/components/PageLayout";
 import PromptBuilderForm from "@/components/prompt-builder/PromptBuilderForm";
-import { Card, CardContent } from "@/components/ui/card";
 
 const PromptBuilder = () => {
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);
@@ -66,14 +65,12 @@ const PromptBuilder = () => {
   return (
     <PageLayout title="Prompt Builder">
       <div className="container mx-auto max-w-5xl">
-        <Card className="shadow-lg border border-gray-100">
-          <CardContent className="p-6">
-            <PromptBuilderForm 
-              initialTemplate={promptTemplate} 
-              initialFields={fields}
-            />
-          </CardContent>
-        </Card>
+        <div className="p-6">
+          <PromptBuilderForm 
+            initialTemplate={promptTemplate} 
+            initialFields={fields}
+          />
+        </div>
       </div>
     </PageLayout>
   );

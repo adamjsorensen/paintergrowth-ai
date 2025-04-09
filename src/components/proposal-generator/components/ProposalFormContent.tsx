@@ -5,8 +5,13 @@ import FormSection from "../FormSection";
 import FormFieldRenderer from "../FormFieldRenderer";
 import { FORM_SECTIONS } from "../constants/formSections";
 
+interface EnhancedFieldConfig extends FieldConfig {
+  value: string | number | boolean | string[];
+  onChange: (value: any) => void;
+}
+
 interface ProposalFormContentProps {
-  fieldsBySection: Record<string, FieldConfig[]>;
+  fieldsBySection: Record<string, EnhancedFieldConfig[]>;
 }
 
 const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {

@@ -17,14 +17,19 @@ interface SystemPromptTabProps {
 const SystemPromptTab: React.FC<SystemPromptTabProps> = ({ form }) => {
   return (
     <div>
+      <h3 className="text-lg font-medium mb-4">System Prompt</h3>
+      <p className="text-sm text-muted-foreground mb-6">
+        Define the instructions that will guide the AI in generating proposals.
+      </p>
+      
       <FormField
         control={form.control}
         name="system_prompt"
         render={({ field }) => (
           <FormItem>
-            <FormDescription className="mb-2">
+            <FormDescription className="mb-4">
               Configure the system prompt that will be sent to the AI.
-              Use <code>{'{{field_key}}'}</code> syntax to insert field values.
+              Use <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{'{{field_key}}'}</code> syntax to insert field values.
             </FormDescription>
             <FormControl>
               <Textarea

@@ -11,13 +11,13 @@ import {
 } from "@/types/prompt-templates";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Info, FileText, Settings, Eye } from "lucide-react";
 import FieldBuilder from "@/components/prompt-builder/field-builder/FieldBuilder";
 import PromptInfoTab from "@/components/prompt-builder/tabs/PromptInfoTab";
 import SystemPromptTab from "@/components/prompt-builder/tabs/SystemPromptTab";
 import PreviewTab from "@/components/prompt-builder/tabs/PreviewTab";
 import { useToast } from "@/hooks/use-toast";
-import CollapsibleSection from "./CollapsibleSection";
-import { Info, FileText, Settings } from "lucide-react";
 
 const promptSchema = z.object({
   name: z.string().min(1, "Display name is required"),
@@ -35,6 +35,7 @@ interface PromptBuilderFormProps {
 const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, initialFields }) => {
   const [fields, setFields] = useState<FieldConfig[]>(initialFields);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic-info");
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -102,39 +103,47 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
           </Button>
         </div>
         
-        <CollapsibleSection 
-          title="Basic Information" 
-          icon={<Info className="h-5 w-5" />}
-          defaultOpen={true}
-        >
-          <PromptInfoTab form={form} />
-        </CollapsibleSection>
-        
-        <CollapsibleSection 
-          title="System Prompt" 
-          icon={<FileText className="h-5 w-5" />}
-          defaultOpen={false}
-        >
-          <SystemPromptTab form={form} />
-        </CollapsibleSection>
-        
-        <CollapsibleSection 
-          title="Input Fields" 
-          icon={<Settings className="h-5 w-5" />}
-          defaultOpen={false}
-        >
-          <FieldBuilder fields={fields} setFields={setFields} />
-        </CollapsibleSection>
-        
-        <CollapsibleSection 
-          title="Preview" 
-          defaultOpen={false}
-        >
-          <PreviewTab 
-            systemPrompt={form.watch("system_prompt")} 
-            fields={fields}
-          />
-        </CollapsibleSection>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-4 mb-8 w-full">
+            <TabsTrigger value="basic-info" className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              <span>Basic Information</span>
+            </TabsTrigger>
+            <TabsTrigger value="system-prompt" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span>System Prompt</span>
+            </TabsTrigger>
+            <TabsTrigger value="input-fields" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Input Fields</span>
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              <span>Preview</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <TabsContent value="basic-info" className="mt-0">
+              <PromptInfoTab form={form} />
+            </TabsContent>
+            
+            <TabsContent value="system-prompt" className="mt-0">
+              <SystemPromptTab form={form} />
+            </TabsContent>
+            
+            <TabsContent value="input-fields" className="mt-0">
+              <FieldBuilder fields={fields} setFields={setFields} />
+            </TabsContent>
+            
+            <TabsContent value="preview" className="mt-0">
+              <PreviewTab 
+                systemPrompt={form.watch("system_prompt")} 
+                fields={fields}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
       </form>
     </Form>
   );
