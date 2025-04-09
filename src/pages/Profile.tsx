@@ -13,7 +13,6 @@ import { format } from "date-fns";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,6 +26,12 @@ interface ProfileData {
   business_name: string | null;
   location: string | null;
   created_at: string;
+  // Include other fields from the actual profiles table
+  full_name?: string | null;
+  avatar_url?: string | null;
+  company_name?: string | null;
+  updated_at?: string;
+  is_admin?: boolean | null;
 }
 
 interface ProfileFormValues {
@@ -63,10 +68,23 @@ const Profile = () => {
           throw error;
         }
         
-        setProfileData(data as ProfileData);
+        // Ensure data has the expected structure
+        const profileWithDefaults: ProfileData = {
+          id: data.id,
+          business_name: data.business_name || null,
+          location: data.location || null,
+          created_at: data.created_at || "",
+          full_name: data.full_name || null,
+          avatar_url: data.avatar_url || null,
+          company_name: data.company_name || null,
+          updated_at: data.updated_at || "",
+          is_admin: data.is_admin || null
+        };
+        
+        setProfileData(profileWithDefaults);
         form.reset({
-          business_name: data.business_name || "",
-          location: data.location || "",
+          business_name: profileWithDefaults.business_name || "",
+          location: profileWithDefaults.location || "",
         });
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -106,11 +124,13 @@ const Profile = () => {
         
       if (error) throw error;
       
-      setProfileData({
-        ...(profileData as ProfileData),
-        business_name: values.business_name,
-        location: values.location
-      });
+      if (profileData) {
+        setProfileData({
+          ...profileData,
+          business_name: values.business_name,
+          location: values.location
+        });
+      }
       
       toast.success("Profile updated successfully");
       setIsEditing(false);
