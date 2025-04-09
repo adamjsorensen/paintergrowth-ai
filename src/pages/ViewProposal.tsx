@@ -11,7 +11,6 @@ import SaveProposalDialog from "@/components/SaveProposalDialog";
 import ProposalContent from "@/components/proposal-viewer/ProposalContent";
 import ProposalNotFound from "@/components/proposal-viewer/ProposalNotFound";
 import { useProposalFetch } from "@/hooks/useProposalFetch";
-import { supabase } from "@/integrations/supabase/client";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +20,7 @@ const ViewProposal = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   
   // Use our custom hook for fetching proposal data
-  const { proposal, loading, metadata, setProposal } = useProposalFetch(id, user?.id);
+  const { proposal, loading, metadata } = useProposalFetch(id, user?.id);
 
   const handleCopy = () => {
     if (proposal) {
@@ -33,34 +32,8 @@ const ViewProposal = () => {
     }
   };
 
-  const handleSave = async (updatedProposal?: string) => {
-    if (updatedProposal) {
-      try {
-        const { error } = await supabase
-          .from('saved_proposals')
-          .update({ content: updatedProposal })
-          .eq('id', id);
-          
-        if (error) throw error;
-        
-        // Update local state with the new content
-        setProposal(updatedProposal);
-        
-        toast({
-          title: "Proposal updated",
-          description: "Changes have been saved successfully",
-        });
-      } catch (error) {
-        console.error("Failed to update proposal:", error);
-        toast({
-          title: "Failed to save changes",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      }
-    } else {
-      setShowSaveDialog(true);
-    }
+  const handleSave = () => {
+    setShowSaveDialog(true);
   };
 
   const handleBack = () => {

@@ -133,5 +133,5 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
     };
   }, [id, userId, toast, maxPolls]);
 
-  return { proposal, loading, metadata, setProposal };
+  return { proposal, loading, metadata };
 };
