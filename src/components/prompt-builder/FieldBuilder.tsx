@@ -74,7 +74,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
       order: fields.length + 1,
     };
     
-    if (values.type === "select" && options.length > 0) {
+    // Handle options for select, checkbox-group, and multi-select field types
+    if (["select", "checkbox-group", "multi-select"].includes(values.type) && options.length > 0) {
       newField.options = [...options];
     }
     
@@ -99,7 +100,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
             placeholder: values.placeholder,
           };
           
-          if (values.type === "select") {
+          // Handle options for select, checkbox-group, and multi-select field types
+          if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
             updatedField.options = [...options];
           } else {
             delete updatedField.options;
@@ -169,6 +171,11 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setOptions((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const needsOptions = () => {
+    const currentType = form.watch("type");
+    return ["select", "checkbox-group", "multi-select"].includes(currentType);
+  };
+
   const renderFieldForm = () => {
     const isEditing = !!editingFieldId;
     
@@ -201,6 +208,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -214,6 +222,9 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
                           <SelectItem value="number">Number</SelectItem>
                           <SelectItem value="toggle">Toggle</SelectItem>
                           <SelectItem value="date">Date</SelectItem>
+                          <SelectItem value="checkbox-group">Checkbox Group</SelectItem>
+                          <SelectItem value="multi-select">Multi Select</SelectItem>
+                          <SelectItem value="file-upload">File Upload</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -268,7 +279,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
                 )}
               />
               
-              {form.watch("type") === "select" && (
+              {needsOptions() && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <FormLabel>Options</FormLabel>

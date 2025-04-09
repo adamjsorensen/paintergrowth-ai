@@ -11,8 +11,8 @@ import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 type FieldValue = string | number | boolean | string[];
 
-// Mock field configuration as fallback
-const MOCK_FIELDS: FieldConfig[] = [
+// Enhanced field configuration with all supported field types
+const ENHANCED_FIELDS: FieldConfig[] = [
   {
     id: 'clientName',
     label: 'Client Name',
@@ -20,6 +20,14 @@ const MOCK_FIELDS: FieldConfig[] = [
     required: true,
     order: 10,
     placeholder: 'Enter client name'
+  },
+  {
+    id: 'projectAddress',
+    label: 'Project Address',
+    type: 'textarea',
+    required: true,
+    order: 15,
+    placeholder: 'Enter the full project address'
   },
   {
     id: 'jobType',
@@ -42,14 +50,6 @@ const MOCK_FIELDS: FieldConfig[] = [
     required: false,
     order: 30,
     placeholder: 'Approx. square footage'
-  },
-  {
-    id: 'projectAddress',
-    label: 'Project Address',
-    type: 'textarea',
-    required: true,
-    order: 15,
-    placeholder: 'Enter the full project address'
   },
   {
     id: 'surfacesToPaint',
@@ -134,14 +134,82 @@ const MOCK_FIELDS: FieldConfig[] = [
   }
 ];
 
+// Improved system prompt that utilizes all field types
+const ENHANCED_SYSTEM_PROMPT = `You are a professional painting proposal writer for a painting contractor. Create a detailed, well-structured proposal for a {{jobType}} painting project for client {{clientName}} located at {{projectAddress}}.
+
+Project Details:
+- Square Footage: {{squareFootage}}
+- Surfaces to Paint: {{surfacesToPaint}}
+- Preparation Required: {{prepNeeds}}
+- Color Preferences: {{colorPalette}}
+- Timeline: {{timeline}}
+- Special Notes: {{specialNotes}}
+
+Include a professional introduction and background on your company. Then, describe the scope of work in detail.
+{{#if showDetailedScope}}Please provide a very detailed scope of work listing each area and exactly what will be done.{{/if}}
+{{#if breakoutQuote}}Include a detailed quote with line items for each component of the work.{{/if}}
+{{#if includeTerms}}Include a professional terms and conditions section.{{/if}}
+
+The proposal should be formatted professionally with clear sections for Introduction, Scope of Work, Price/Quote, Timeline, and {{#if includeTerms}}Terms & Conditions{{/if}}.
+
+Make the proposal persuasive and highlight the quality of materials and workmanship that will be provided.`;
+
 const ProposalGenerator = () => {
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);
-  const [fields, setFields] = useState<FieldConfig[]>(MOCK_FIELDS);
+  const [fields, setFields] = useState<FieldConfig[]>(ENHANCED_FIELDS);
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
   const [isLoadingGeneration, setIsLoadingGeneration] = useState(false);
+  const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { preferences } = useStylePreferences();
+
+  // Function to ensure the enhanced template exists in the database
+  const ensureEnhancedTemplateExists = async () => {
+    try {
+      setIsCreatingTemplate(true);
+      
+      // Check if any template exists
+      const { data: existingTemplates, error: checkError } = await supabase
+        .from("prompt_templates")
+        .select("id")
+        .eq("name", "Enhanced Proposal Generator")
+        .maybeSingle();
+        
+      if (checkError) throw checkError;
+      
+      // If the enhanced template doesn't exist, create it
+      if (!existingTemplates) {
+        console.log("Creating enhanced template...");
+        const { error: createError } = await supabase
+          .from("prompt_templates")
+          .insert([{
+            name: "Enhanced Proposal Generator",
+            active: true,
+            system_prompt: ENHANCED_SYSTEM_PROMPT,
+            field_config: ENHANCED_FIELDS,
+          }]);
+          
+        if (createError) throw createError;
+        
+        console.log("Enhanced template created successfully");
+        
+        // Deactivate other templates if this one is active
+        const { error: updateError } = await supabase
+          .from("prompt_templates")
+          .update({ active: false })
+          .neq("name", "Enhanced Proposal Generator");
+          
+        if (updateError) {
+          console.warn("Failed to deactivate other templates:", updateError);
+        }
+      }
+    } catch (error) {
+      console.error("Error ensuring enhanced template exists:", error);
+    } finally {
+      setIsCreatingTemplate(false);
+    }
+  };
 
   // Fetch the prompt template from the database
   useEffect(() => {
@@ -180,11 +248,17 @@ const ProposalGenerator = () => {
             setPromptTemplate(parsedTemplate);
             setFields(parseFieldConfig(anyTemplate.field_config));
             console.log("Using fallback template:", parsedTemplate.name);
+            
+            // If we're using a fallback template, ensure the enhanced template exists
+            await ensureEnhancedTemplateExists();
           } else {
-            // Use mock fields if no templates exist
-            console.log("No templates found, using mock fields");
+            // Use enhanced fields if no templates exist
+            console.log("No templates found, using enhanced fields");
             setPromptTemplate(null);
-            setFields(MOCK_FIELDS);
+            setFields(ENHANCED_FIELDS);
+            
+            // Create the enhanced template
+            await ensureEnhancedTemplateExists();
           }
         } else {
           // Using active template
@@ -196,11 +270,16 @@ const ProposalGenerator = () => {
           setPromptTemplate(parsedTemplate);
           setFields(parseFieldConfig(data.field_config));
           console.log("Using active template:", parsedTemplate.name);
+          
+          // If the active template is not the enhanced one, ensure it exists anyway
+          if (parsedTemplate.name !== "Enhanced Proposal Generator") {
+            await ensureEnhancedTemplateExists();
+          }
         }
       } catch (error) {
         console.error("Error fetching prompt template:", error);
-        // Fall back to mock fields on error
-        setFields(MOCK_FIELDS);
+        // Fall back to enhanced fields on error
+        setFields(ENHANCED_FIELDS);
         setPromptTemplate(null);
         
         toast({
@@ -284,7 +363,7 @@ const ProposalGenerator = () => {
     }
   };
 
-  if (isLoadingTemplate) {
+  if (isLoadingTemplate || isCreatingTemplate) {
     return (
       <PageLayout title="Generate Proposal">
         <div className="container mx-auto py-8 px-4 max-w-5xl">

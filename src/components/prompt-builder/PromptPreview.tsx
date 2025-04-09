@@ -14,6 +14,9 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { FileUpload, Upload, X } from "lucide-react";
 
 interface PromptPreviewProps {
   systemPrompt: string;
@@ -34,7 +37,8 @@ const PromptPreview: React.FC<PromptPreviewProps> = ({ systemPrompt, fields }) =
     // Replace all field variables with their values
     Object.entries(values).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, "g");
-      preview = preview.replace(regex, String(value || `[${key}]`));
+      const displayValue = Array.isArray(value) ? value.join(", ") : value;
+      preview = preview.replace(regex, String(displayValue || `[${key}]`));
     });
     
     // For any fields that haven't been filled, replace with placeholder
@@ -165,6 +169,133 @@ const PromptPreview: React.FC<PromptPreviewProps> = ({ systemPrompt, fields }) =
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={required}
             />
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+        
+      case "checkbox-group":
+        return (
+          <div className="space-y-3" key={id}>
+            <Label>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+            <div className="grid grid-cols-2 gap-2">
+              {options?.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`${id}-${option.value}`}
+                    checked={(values[id] || []).includes(option.value)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        handleInputChange(id, [...(values[id] || []), option.value]);
+                      } else {
+                        handleInputChange(
+                          id,
+                          (values[id] || []).filter((v: string) => v !== option.value)
+                        );
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`${id}-${option.value}`} className="text-sm font-normal">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+        
+      case "multi-select":
+        return (
+          <div className="space-y-2" key={id}>
+            <Label htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Select
+              value="placeholder"
+              onValueChange={(value) => {
+                const currentValues = values[id] || [];
+                if (!currentValues.includes(value)) {
+                  handleInputChange(id, [...currentValues, value]);
+                }
+              }}
+            >
+              <SelectTrigger id={id}>
+                <SelectValue placeholder={placeholder || "Select options..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {options?.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(values[id]?.length > 0) && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {(values[id] || []).map((value: string) => {
+                  const option = options?.find((o) => o.value === value);
+                  return (
+                    <Badge key={value} variant="secondary" className="px-2 py-1">
+                      {option?.label || value}
+                      <button
+                        type="button"
+                        className="ml-1"
+                        onClick={() => {
+                          handleInputChange(
+                            id,
+                            (values[id] || []).filter((v: string) => v !== value)
+                          );
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+            {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+          </div>
+        );
+        
+      case "file-upload":
+        return (
+          <div className="space-y-2" key={id}>
+            <Label htmlFor={id}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div 
+              className="border-2 border-dashed rounded-md p-6 cursor-pointer hover:border-blue-400 transition-colors flex flex-col items-center"
+              onClick={() => handleInputChange(id, ["file-1.jpg"])}
+            >
+              <Upload className="h-6 w-6 mb-2 text-gray-400" />
+              <p className="text-sm text-gray-600">Click to upload or drag files here</p>
+            </div>
+            {(values[id]?.length > 0) && (
+              <div className="text-sm mt-2">
+                {(values[id] || []).map((file: string, index: number) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <span>{file}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleInputChange(
+                          id,
+                          (values[id] || []).filter((_: string, i: number) => i !== index)
+                        );
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
           </div>
         );
