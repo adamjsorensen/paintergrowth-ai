@@ -11,7 +11,7 @@ import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 type FieldValue = string | number | boolean | string[];
 
-// Enhanced field configuration with all supported field types and complexity levels
+// Enhanced field configuration with updated complexity levels based on requirements
 const ENHANCED_FIELDS: FieldConfig[] = [
   {
     id: 'clientName',
@@ -20,7 +20,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     required: true,
     order: 10,
     placeholder: 'Enter client name',
-    complexity: 'basic'
+    complexity: 'basic' // Essential field
   },
   {
     id: 'projectAddress',
@@ -29,7 +29,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     required: true,
     order: 15,
     placeholder: 'Enter the full project address',
-    complexity: 'basic'
+    complexity: 'basic' // Essential field
   },
   {
     id: 'jobType',
@@ -44,7 +44,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'deck', label: 'Deck/Fence' },
       { value: 'commercial', label: 'Commercial' }
     ],
-    complexity: 'basic'
+    complexity: 'basic' // Essential field
   },
   {
     id: 'squareFootage',
@@ -53,7 +53,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 30,
     placeholder: 'Approx. square footage',
-    complexity: 'advanced'
+    complexity: 'advanced' // Advanced field
   },
   {
     id: 'surfacesToPaint',
@@ -68,7 +68,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'doors', label: 'Doors' },
       { value: 'cabinets', label: 'Cabinets' }
     ],
-    complexity: 'basic'
+    complexity: 'basic' // Essential field
   },
   {
     id: 'prepNeeds',
@@ -84,7 +84,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'patching', label: 'Patching' },
       { value: 'priming', label: 'Priming' }
     ],
-    complexity: 'advanced'
+    complexity: 'advanced' // Advanced field
   },
   {
     id: 'colorPalette',
@@ -93,7 +93,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 60,
     placeholder: 'Describe your color preferences',
-    complexity: 'basic'
+    complexity: 'advanced' // Advanced field - changed from basic
   },
   {
     id: 'timeline',
@@ -101,7 +101,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'date',
     required: false,
     order: 70,
-    complexity: 'basic'
+    complexity: 'basic' // Essential field
   },
   {
     id: 'specialNotes',
@@ -110,7 +110,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 80,
     placeholder: 'Any additional details or requirements',
-    complexity: 'advanced'
+    complexity: 'advanced' // Advanced field
   },
   {
     id: 'showDetailedScope',
@@ -118,7 +118,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'toggle',
     required: false,
     order: 90,
-    complexity: 'advanced'
+    complexity: 'advanced' // Advanced field
   },
   {
     id: 'breakoutQuote',
@@ -126,7 +126,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'toggle',
     required: false,
     order: 100,
-    complexity: 'advanced'
+    complexity: 'advanced' // Advanced field
   },
   {
     id: 'includeTerms',
@@ -134,7 +134,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     type: 'toggle',
     required: false,
     order: 110,
-    complexity: 'basic'
+    complexity: 'advanced' // Advanced field - changed from basic
   },
   {
     id: 'uploadFiles',
@@ -143,7 +143,7 @@ const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 120,
     helpText: 'Upload reference images or documents',
-    complexity: 'advanced'
+    complexity: 'advanced' // Advanced field
   }
 ];
 
