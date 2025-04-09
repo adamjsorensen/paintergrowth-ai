@@ -14,6 +14,7 @@ import SavedProposals from "./pages/SavedProposals";
 import Profile from "./pages/Profile";
 import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminRoute from "./components/AdminRoute";
+import GenerateIndex from "./pages/GenerateIndex";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/generate" element={
+              <ProtectedRoute>
+                <GenerateIndex />
+              </ProtectedRoute>
+            } />
+            <Route path="/generate/proposal" element={
               <ProtectedRoute>
                 <ProposalGenerator />
               </ProtectedRoute>
