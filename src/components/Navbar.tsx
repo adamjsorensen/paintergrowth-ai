@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
@@ -21,9 +20,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Building2, ChevronDown, Database, GanttChart, Menu, Settings, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Navbar = () => {
@@ -142,13 +142,45 @@ const Navbar = () => {
                       <ChevronDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuContent align="start" className="w-60">
+                    <DropdownMenuLabel>Admin Dashboard</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/admin/prompt-builder" className="w-full">Prompt Builder</Link>
+                      <Link to="/admin" className="flex items-center w-full">
+                        <GanttChart className="mr-2 h-4 w-4" />
+                        <span>Admin Hub</span>
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/logs/activity" className="w-full">Activity Logs</Link>
-                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                        Content Management
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/prompt-builder" className="flex items-center w-full">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Prompt Builder</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/ai-settings" className="flex items-center w-full">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>AI Settings</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/vector-upload" className="flex items-center w-full">
+                          <Database className="mr-2 h-4 w-4" />
+                          <span>Vector Upload</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/logs/activity" className="flex items-center w-full">
+                          <GanttChart className="mr-2 h-4 w-4" />
+                          <span>Activity Logs</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}   
@@ -168,8 +200,18 @@ const Navbar = () => {
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">Profile</Link>
+                    <Link to="/profile" className="cursor-pointer flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile/company" className="cursor-pointer flex items-center">
+                      <Building2 className="mr-2 h-4 w-4" />
+                      <span>Company Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     Log out
                   </DropdownMenuItem>
@@ -198,7 +240,7 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation Sheet */}
         <div className="md:hidden">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -240,14 +282,45 @@ const Navbar = () => {
                     >
                       Profile
                     </Link>
+                    <Link 
+                      to="/profile/company" 
+                      className="text-lg py-2 hover:text-paintergrowth-600"
+                      onClick={() => setSheetOpen(false)}
+                    >
+                      Company Profile
+                    </Link>
+                    
                     {isAdmin && (
                       <>
+                        <Separator className="my-2" />
+                        <p className="text-sm font-medium text-muted-foreground mt-2">Admin</p>
+                        <Link 
+                          to="/admin" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Admin Hub
+                        </Link>
                         <Link 
                           to="/admin/prompt-builder" 
                           className="text-lg py-2 hover:text-paintergrowth-600"
                           onClick={() => setSheetOpen(false)}
                         >
                           Prompt Builder
+                        </Link>
+                        <Link 
+                          to="/admin/ai-settings" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          AI Settings
+                        </Link>
+                        <Link 
+                          to="/admin/vector-upload" 
+                          className="text-lg py-2 hover:text-paintergrowth-600"
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          Vector Upload
                         </Link>
                         <Link 
                           to="/admin/logs/activity" 
@@ -258,6 +331,9 @@ const Navbar = () => {
                         </Link>
                       </>
                     )}
+                    
+                    <Separator className="my-2" />
+                    
                     <Button 
                       variant="ghost" 
                       className="justify-start p-0 text-lg py-2 hover:text-paintergrowth-600 hover:bg-transparent"

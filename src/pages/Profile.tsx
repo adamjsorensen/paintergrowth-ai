@@ -19,14 +19,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { LogOut, User } from "lucide-react";
+import { Building2, ChevronRight, LogOut, User } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface ProfileData {
   id: string;
   business_name: string | null;
   location: string | null;
   created_at: string;
-  // Include other fields from the actual profiles table
   full_name?: string | null;
   avatar_url?: string | null;
   company_name?: string | null;
@@ -35,8 +35,7 @@ interface ProfileData {
 }
 
 interface ProfileFormValues {
-  business_name: string;
-  location: string;
+  full_name: string;
 }
 
 const Profile = () => {
@@ -48,8 +47,7 @@ const Profile = () => {
   
   const form = useForm<ProfileFormValues>({
     defaultValues: {
-      business_name: "",
-      location: "",
+      full_name: "",
     },
   });
 
@@ -83,8 +81,7 @@ const Profile = () => {
         
         setProfileData(profileWithDefaults);
         form.reset({
-          business_name: profileWithDefaults.business_name || "",
-          location: profileWithDefaults.location || "",
+          full_name: profileWithDefaults.full_name || "",
         });
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -117,8 +114,7 @@ const Profile = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          business_name: values.business_name,
-          location: values.location
+          full_name: values.full_name,
         })
         .eq('id', user.id);
         
@@ -127,8 +123,7 @@ const Profile = () => {
       if (profileData) {
         setProfileData({
           ...profileData,
-          business_name: values.business_name,
-          location: values.location
+          full_name: values.full_name,
         });
       }
       
@@ -176,6 +171,38 @@ const Profile = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
+                <h3 className="font-medium text-sm text-muted-foreground">Full Name</h3>
+                {isEditing ? (
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-2">
+                      <FormField
+                        control={form.control}
+                        name="full_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Enter your full name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="flex gap-2">
+                        <Button type="submit" size="sm">Save</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                      </div>
+                    </form>
+                  </Form>
+                ) : (
+                  <div className="flex justify-between items-center mt-1">
+                    <p>{profileData?.full_name || "Not provided"}</p>
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>Edit</Button>
+                  </div>
+                )}
+              </div>
+              
+              <div>
                 <h3 className="font-medium text-sm text-muted-foreground">Email Address</h3>
                 <p className="mt-1">{user?.email}</p>
               </div>
@@ -192,62 +219,25 @@ const Profile = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Business Information</CardTitle>
-            <CardDescription>Update your business details</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Business Information
+            </CardTitle>
+            <CardDescription>Manage your company details for AI content generation</CardDescription>
           </CardHeader>
           <CardContent>
-            {isEditing ? (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="business_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your business name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your location" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex gap-2">
-                    <Button type="submit">Save Changes</Button>
-                    <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                  </div>
-                </form>
-              </Form>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Business Name</h3>
-                  <p className="mt-1">{profileData?.business_name || "Not provided"}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Location</h3>
-                  <p className="mt-1">{profileData?.location || "Not provided"}</p>
-                </div>
-                
-                <Button onClick={() => setIsEditing(true)}>Edit Business Info</Button>
+            <Link
+              to="/profile/company"
+              className="group flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors"
+            >
+              <div>
+                <h3 className="font-medium">Company Profile</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Manage your company information to improve AI-generated proposals
+                </p>
               </div>
-            )}
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </Link>
           </CardContent>
         </Card>
       </div>
