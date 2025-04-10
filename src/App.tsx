@@ -23,6 +23,7 @@ import PromptBuilder from "./pages/admin/PromptBuilder";
 import AdminHub from "./pages/admin/AdminHub";
 import AISettings from "./pages/admin/AISettings";
 import VectorUpload from "./pages/admin/VectorUpload";
+import DocumentManager from "./pages/admin/DocumentManager";
 import CompanyProfile from "./pages/profile/CompanyProfile";
 
 const queryClient = new QueryClient();
@@ -98,6 +99,11 @@ const App = () => (
               <Route path="/admin/vector-upload" element={
                 <AdminRoute>
                   <VectorUpload />
+                </AdminRoute>
+              } />
+              <Route path="/admin/vector-upload/manage" element={
+                <AdminRoute>
+                  <DocumentManager />
                 </AdminRoute>
               } />
               <Route path="/admin/logs/activity" element={
