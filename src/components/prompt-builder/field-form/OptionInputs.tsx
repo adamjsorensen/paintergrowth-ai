@@ -8,8 +8,8 @@ import { Plus } from "lucide-react";
 
 interface OptionInputsProps {
   options: FieldOption[];
-  optionInput: { value: string; label: string };
-  setOptionInput: React.Dispatch<React.SetStateAction<{ value: string; label: string }>>;
+  optionInput: FieldOption;
+  setOptionInput: React.Dispatch<React.SetStateAction<FieldOption>>;
   onAddOption: () => void;
   onRemoveOption: (index: number) => void;
 }
@@ -49,7 +49,7 @@ const OptionInputs: React.FC<OptionInputsProps> = ({
           <FormLabel className="block mb-2">Value</FormLabel>
           <Input
             value={optionInput.value}
-            onChange={(e) => setOptionInput({ ...optionInput, value: e.target.value })}
+            onChange={(e) => setOptionInput(prev => ({ ...prev, value: e.target.value }))}
             placeholder="option_value"
           />
         </div>
@@ -57,7 +57,7 @@ const OptionInputs: React.FC<OptionInputsProps> = ({
           <FormLabel className="block mb-2">Label</FormLabel>
           <Input
             value={optionInput.label}
-            onChange={(e) => setOptionInput({ ...optionInput, label: e.target.value })}
+            onChange={(e) => setOptionInput(prev => ({ ...prev, label: e.target.value }))}
             placeholder="Option Label"
           />
         </div>

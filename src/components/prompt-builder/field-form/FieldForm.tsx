@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,8 @@ const FieldForm: React.FC<FieldFormProps> = ({
 }) => {
   console.log("FieldForm rendering - isEditing:", isEditing);
   
+  const [optionInput, setOptionInput] = useState<FieldOption>({ value: "", label: "" });
+  
   useEffect(() => {
     console.log("FieldForm mounted");
     return () => {
@@ -55,6 +57,17 @@ const FieldForm: React.FC<FieldFormProps> = ({
     return false;
   };
 
+  const handleAddOption = () => {
+    if (optionInput.value && optionInput.label) {
+      setOptions([...options, { ...optionInput }]);
+      setOptionInput({ value: "", label: "" });
+    }
+  };
+
+  const handleRemoveOption = (index: number) => {
+    setOptions(options.filter((_, i) => i !== index));
+  };
+
   return (
     <Card className="my-4">
       <CardContent className="pt-6">
@@ -78,10 +91,10 @@ const FieldForm: React.FC<FieldFormProps> = ({
           {needsOptions() && (
             <OptionInputs 
               options={options}
-              optionInput={{ value: "", label: "" }}
-              setOptionInput={() => {}}
-              onAddOption={() => {}}
-              onRemoveOption={() => {}}
+              optionInput={optionInput}
+              setOptionInput={setOptionInput}
+              onAddOption={handleAddOption}
+              onRemoveOption={handleRemoveOption}
             />
           )}
           
