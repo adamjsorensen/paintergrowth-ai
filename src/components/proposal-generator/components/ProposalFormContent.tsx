@@ -21,11 +21,10 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
 
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        total += (field.value as any[]).reduce<number>((sum, item) => {
-          if (!item) return sum;  // Early return if item is nullish
-
-          // Use non-null assertion since we know item is not null here
-          const rawPrice = item!.price;
+        // Filter out any nullish items so that every remaining item is valid
+        const validItems = (field.value as any[]).filter((item) => item != null);
+        total += validItems.reduce<number>((sum, item) => {
+          const rawPrice = item.price; // No need for optional chaining now
           if (rawPrice == null) return sum;
 
           const price =
