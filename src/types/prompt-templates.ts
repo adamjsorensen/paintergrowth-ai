@@ -1,11 +1,30 @@
 
 import { Json } from "@/integrations/supabase/types";
 
-export type FieldType = 'text' | 'textarea' | 'select' | 'number' | 'toggle' | 'date' | 'checkbox-group' | 'multi-select' | 'file-upload';
+export type FieldType = 'text' | 'textarea' | 'select' | 'number' | 'toggle' | 'date' | 'checkbox-group' | 'multi-select' | 'file-upload' | 'quote-table' | 'upsell-table' | 'tax-calculator';
 
 export interface FieldOption {
   value: string;
   label: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  service: string;
+  price: number;
+  notes?: string;
+}
+
+export interface UpsellItem {
+  id: string;
+  label: string;
+  description: string;
+  price: number;
+}
+
+export interface TaxSettings {
+  includeTax: boolean;
+  taxRate: number;
 }
 
 export interface FieldConfig {

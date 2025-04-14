@@ -4,9 +4,10 @@ import { FieldConfig } from "@/types/prompt-templates";
 import FormSection from "../FormSection";
 import FormFieldRenderer from "../FormFieldRenderer";
 import { FORM_SECTIONS } from "../constants/formSections";
+import { useMemo } from "react";
 
 interface EnhancedFieldConfig extends FieldConfig {
-  value: string | number | boolean | string[];
+  value: string | number | boolean | string[] | any[];
   onChange: (value: any) => void;
 }
 
@@ -15,10 +16,32 @@ interface ProposalFormContentProps {
 }
 
 const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
-  const getFieldClass = (fieldId: string) => {
+  // Calculate subtotal from quote table for tax calculator
+  const subtotal = useMemo(() => {
+    let total = 0;
+    
+    // Find all quote table fields and sum their values
+    Object.values(fieldsBySection).flat().forEach(field => {
+      if (field.type === 'quote-table' && Array.isArray(field.value)) {
+        total += field.value.reduce((sum, item) => {
+          return sum + (Number(item.price) || 0);
+        }, 0);
+      }
+    });
+    
+    return total;
+  }, [fieldsBySection]);
+
+  const getFieldClass = (fieldId: string, type: string) => {
     if (['specialNotes', 'projectAddress', 'colorPalette'].includes(fieldId)) {
       return 'col-span-2';
     }
+    
+    // Make table fields full width
+    if (['quote-table', 'upsell-table', 'tax-calculator'].includes(type)) {
+      return 'col-span-2';
+    }
+    
     return 'col-span-2 sm:col-span-1';
   };
 
@@ -39,12 +62,13 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
           >
             <div className="grid grid-cols-2 gap-6">
               {sectionFields.map((field) => (
-                <div key={field.id} className={getFieldClass(field.id)}>
+                <div key={field.id} className={getFieldClass(field.id, field.type)}>
                   <FormFieldRenderer
                     field={field}
                     value={field.value}
                     onChange={field.onChange}
                     isAdvanced={field.complexity === 'advanced'}
+                    subtotal={field.type === 'tax-calculator' ? subtotal : undefined}
                   />
                 </div>
               ))}

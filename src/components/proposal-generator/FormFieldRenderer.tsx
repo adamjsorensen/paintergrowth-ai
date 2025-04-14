@@ -9,15 +9,19 @@ import DatePickerField from "./form-fields/DatePickerField";
 import CheckboxGroupField from "./form-fields/CheckboxGroupField";
 import MultiSelectField from "./form-fields/MultiSelectField";
 import FileUploadField from "./form-fields/FileUploadField";
+import QuoteTableField from "./form-fields/QuoteTableField";
+import UpsellTableField from "./form-fields/UpsellTableField";
+import TaxCalculatorField from "./form-fields/TaxCalculatorField";
 
 interface FormFieldRendererProps {
   field: FieldConfig;
-  value: string | number | boolean | string[];
+  value: string | number | boolean | string[] | any[];
   onChange: (value: any) => void;
   isAdvanced?: boolean;
+  subtotal?: number;
 }
 
-const FormFieldRenderer = ({ field, value, onChange, isAdvanced }: FormFieldRendererProps) => {
+const FormFieldRenderer = ({ field, value, onChange, isAdvanced, subtotal }: FormFieldRendererProps) => {
   // Handle different field types with appropriate components
   switch (field.type) {
     case "text":
@@ -106,6 +110,37 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced }: FormFieldRend
           field={field}
           value={value as string[]} 
           onChange={onChange}
+          isAdvanced={isAdvanced}
+        />
+      );
+    
+    case "quote-table":
+      return (
+        <QuoteTableField
+          field={field}
+          value={value as any[]}
+          onChange={onChange}
+          isAdvanced={isAdvanced}
+        />
+      );
+    
+    case "upsell-table":
+      return (
+        <UpsellTableField
+          field={field}
+          value={value as any[]}
+          onChange={onChange}
+          isAdvanced={isAdvanced}
+        />
+      );
+    
+    case "tax-calculator":
+      return (
+        <TaxCalculatorField
+          field={field}
+          value={value as any}
+          onChange={onChange}
+          subtotal={subtotal}
           isAdvanced={isAdvanced}
         />
       );

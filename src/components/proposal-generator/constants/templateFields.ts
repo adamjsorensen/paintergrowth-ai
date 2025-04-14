@@ -77,6 +77,33 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced' // Advanced field
   },
   {
+    id: 'quoteItems',
+    label: 'Quote Items',
+    type: 'quote-table',
+    required: true,
+    order: 55,
+    helpText: 'Add services and their costs to the quote',
+    complexity: 'basic' // Essential field for pricing
+  },
+  {
+    id: 'upsellOptions',
+    label: 'Optional Upgrades',
+    type: 'upsell-table',
+    required: false,
+    order: 56,
+    helpText: 'Add premium options your client might be interested in',
+    complexity: 'advanced' // Advanced field for upselling
+  },
+  {
+    id: 'taxSettings',
+    label: 'Tax Calculation',
+    type: 'tax-calculator',
+    required: false,
+    order: 57,
+    helpText: 'Configure tax settings for this quote',
+    complexity: 'advanced' // Advanced field for tax
+  },
+  {
     id: 'colorPalette',
     label: 'Preferred Colors / Palette',
     type: 'textarea',
