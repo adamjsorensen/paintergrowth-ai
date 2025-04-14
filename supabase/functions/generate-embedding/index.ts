@@ -2,12 +2,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// CORS headers for browser access
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from "./config.ts";
+import { generateEmbedding } from "./embedding.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -73,61 +69,12 @@ serve(async (req) => {
       );
     }
 
-    // Call the OpenAI API to generate an embedding
-    console.log("Generating embedding via OpenAI API");
-    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        input: document.content.trim(),
-        model: "text-embedding-3-small"
-      })
-    });
-
-    if (!embeddingResponse.ok) {
-      const errorData = await embeddingResponse.text();
-      console.error("OpenAI API error:", errorData);
-      return new Response(
-        JSON.stringify({ error: "Failed to generate embedding", details: errorData }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const embedData = await embeddingResponse.json();
-    const embedding = embedData.data?.[0]?.embedding;
-
-    if (!embedding) {
-      console.error("No embedding found in OpenAI response:", embedData);
-      return new Response(
-        JSON.stringify({ error: "No embedding returned from OpenAI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Store the embedding in the database
-    console.log("Storing embedding in database");
-    const { error: updateError } = await supabase
-      .from("documents")
-      .update({ embedding })
-      .eq("id", documentId);
-
-    if (updateError) {
-      console.error("Error updating document with embedding:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to update document with embedding" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Generate and store embedding
+    const result = await generateEmbedding(documentId, document.content, apiKey, supabase);
 
     // Success response
     return new Response(
-      JSON.stringify({
-        message: "Embedding successfully generated and stored",
-        documentId: document.id
-      }),
+      JSON.stringify(result),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
