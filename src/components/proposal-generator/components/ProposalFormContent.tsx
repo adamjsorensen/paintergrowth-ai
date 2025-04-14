@@ -21,15 +21,20 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
 
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        total += field.value.reduce((sum, item) => {
-          if (!item || typeof item !== 'object') return sum;
-          
-          const price = typeof item.price === 'string' 
-            ? parseFloat(item.price) || 0 
-            : typeof item.price === 'number'
-              ? item.price
+        total += (field.value as any[]).reduce<number>((sum, item) => {
+          if (!item) return sum;  // Early return if item is nullish
+
+          // Use non-null assertion since we know item is not null here
+          const rawPrice = item!.price;
+          if (rawPrice == null) return sum;
+
+          const price =
+            typeof rawPrice === 'string'
+              ? parseFloat(rawPrice) || 0
+              : typeof rawPrice === 'number'
+              ? rawPrice
               : 0;
-              
+
           return sum + price;
         }, 0);
       }
