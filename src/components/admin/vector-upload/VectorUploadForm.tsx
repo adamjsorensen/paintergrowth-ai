@@ -128,9 +128,10 @@ const VectorUploadForm = () => {
                   placeholder="Paste content here or upload a file"
                   disabled={isParsingFile}
                 />
-                <FormDescription>
+                {/* Fix: Removed FormDescription outside Form context */}
+                <p className="text-sm text-muted-foreground">
                   You can edit this content or paste new text manually.
-                </FormDescription>
+                </p>
               </div>
             </div>
           </div>
