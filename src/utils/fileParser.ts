@@ -1,6 +1,6 @@
 
 import * as XLSX from "xlsx";
-import { read, extractRawText } from "mammoth";
+import mammoth from "mammoth";
 
 export interface ParsedFile {
   content: string;
@@ -66,12 +66,12 @@ const parseWordFile = async (file: File): Promise<ParsedFile> => {
   const arrayBuffer = await file.arrayBuffer();
   
   try {
-    const result = await extractRawText({arrayBuffer});
+    const result = await mammoth.extractRawText({arrayBuffer});
     return { content: result.value };
   } catch (error) {
     // Fallback to another method if extraction fails
     try {
-      const fullResult = await read(arrayBuffer);
+      const fullResult = await mammoth.convert({arrayBuffer});
       return { content: fullResult.value };
     } catch (secondError) {
       console.error("Word parsing failed with both methods:", secondError);
