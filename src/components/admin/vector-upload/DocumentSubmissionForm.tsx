@@ -1,5 +1,5 @@
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -27,30 +27,19 @@ const DocumentSubmissionForm = ({
   const { toast } = useToast();
 
   const handleSubmit = async (values: FormValues) => {
-    try {
-      // Validate metadata JSON if provided
-      if (values.metadata) {
-        try {
-          JSON.parse(values.metadata);
-        } catch (e) {
-          toast({
-            title: "Invalid metadata format",
-            description: "Please enter valid JSON for metadata",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      await onSubmit(values);
-    } catch (error) {
+    if (!values.title || !values.summary) {
       toast({
-        title: "Error",
-        description: "Failed to save document. Please try again.",
+        title: "Missing required fields",
+        description: "Please fill in both title and summary",
         variant: "destructive",
       });
+      return;
     }
+
+    await onSubmit(values);
   };
+
+  const hasRequiredFields = form.watch("title") && form.watch("summary");
 
   return (
     <Form {...form}>
@@ -85,7 +74,7 @@ const DocumentSubmissionForm = ({
             <Button
               type="submit"
               className="w-full"
-              disabled={isSubmitting || !chunks.length}
+              disabled={isSubmitting || !chunks.length || !hasRequiredFields}
             >
               {isSubmitting ? (
                 <>

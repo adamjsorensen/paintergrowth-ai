@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,7 @@ import { EnhancedChunk } from "@/hooks/admin/useChunkMetadata";
 
 export type FormValues = {
   title: string;
+  summary: string;
   content: string;
   collection: CollectionOptions;
   content_type: ContentTypeOptions;
@@ -25,6 +25,7 @@ export const useVectorUpload = () => {
   const form = useForm<FormValues>({
     defaultValues: {
       title: "",
+      summary: "",
       content: "",
       collection: "general",
       content_type: "faq",

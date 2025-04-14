@@ -28,6 +28,25 @@ export const DocumentMetadataForm = ({ form }: DocumentMetadataFormProps) => {
         )}
       />
 
+      <FormField
+        control={form.control}
+        name="summary"
+        rules={{ required: "Summary is required" }}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Document Summary</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="A short 1-2 sentence overview of the document's purpose. Used in previews and search."
+                className="min-h-[80px]"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           control={form.control}
@@ -75,24 +94,6 @@ export const DocumentMetadataForm = ({ form }: DocumentMetadataFormProps) => {
           )}
         />
       </div>
-
-      <FormField
-        control={form.control}
-        name="metadata"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Metadata (JSON)</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder='{"author": "Admin User", "version": "1.0"}'
-                className="font-mono text-sm"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
   );
 };

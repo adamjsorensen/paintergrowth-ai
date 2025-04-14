@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useVectorUpload } from "@/hooks/admin/useVectorUpload";
 import { useChunkMetadata } from "@/hooks/admin/useChunkMetadata";
@@ -9,12 +8,18 @@ import FormNavigationButtons from "@/components/admin/vector-upload/FormNavigati
 import { ACCEPTED_FILE_TYPES, UPLOAD_STEPS } from "@/components/admin/vector-upload/uploadConstants";
 import { Bug } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import LoadingOverlay from "./LoadingOverlay";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const VectorUploadForm = () => {
   // State
   const [currentStep, setCurrentStep] = useState(1);
   const [manualContent, setManualContent] = useState("");
   const [debugMode, setDebugMode] = useState(false);
+  const [isProcessingContent, setIsProcessingContent] = useState(false);
+  const [currentChunk, setCurrentChunk] = useState<number>();
+  const [totalChunks, setTotalChunks] = useState<number>();
 
   // Hooks
   const { form, uploadDocument, handleContentChange, onSubmit } = useVectorUpload();
@@ -27,19 +32,40 @@ const VectorUploadForm = () => {
     clearChunks 
   } = useChunkMetadata(debugMode);
 
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
   // Event handlers
   const handleNextStep = async () => {
     if (currentStep === 1) {
       const content = manualContent;
       if (!content.trim()) {
-        return; // Prevent going to next step if no content
+        return;
       }
       
-      // Update form content and process chunks
-      form.setValue("content", content);
-      const rawChunks = handleContentChange(content);
-      await processChunks(rawChunks);
-      setCurrentStep(2);
+      setIsProcessingContent(true);
+      try {
+        form.setValue("content", content);
+        const rawChunks = handleContentChange(content);
+        setTotalChunks(rawChunks.length);
+        
+        for (let i = 0; i < rawChunks.length; i++) {
+          setCurrentChunk(i + 1);
+          await processChunks([rawChunks[i]]);
+        }
+        
+        setCurrentStep(2);
+      } catch (error) {
+        toast({
+          title: "Error processing content",
+          description: "Failed to analyze document. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessingContent(false);
+        setCurrentChunk(undefined);
+        setTotalChunks(undefined);
+      }
     } else if (currentStep === 2) {
       setCurrentStep(3);
     }
@@ -59,20 +85,31 @@ const VectorUploadForm = () => {
     setDebugMode(enabled);
   };
 
-  const handleSubmitForm = (values: any) => {
-    // Modify the onSubmit function to handle chunks with metadata
-    const enhancedValues = {
-      ...values,
-      chunks: chunks.map(chunk => ({
-        content: chunk.content,
-        chunk_metadata: chunk.metadata
-      }))
-    };
-    
-    onSubmit(enhancedValues);
-    
-    // Reset form and state
-    resetForm();
+  const handleSubmitForm = async (values: any) => {
+    try {
+      const enhancedValues = {
+        ...values,
+        chunks: chunks.map(chunk => ({
+          content: chunk.content,
+          chunk_metadata: chunk.metadata
+        }))
+      };
+      
+      await onSubmit(enhancedValues);
+      
+      toast({
+        title: "Success!",
+        description: "Document saved and embeddings generated successfully.",
+      });
+      
+      navigate("/admin/vector-upload/manage");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save document. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const resetForm = () => {
@@ -89,6 +126,10 @@ const VectorUploadForm = () => {
 
   return (
     <Card>
+      {isProcessingContent && (
+        <LoadingOverlay currentChunk={currentChunk} totalChunks={totalChunks} />
+      )}
+      
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
