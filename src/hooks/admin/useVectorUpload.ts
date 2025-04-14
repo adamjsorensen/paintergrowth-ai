@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +17,7 @@ export const useVectorUpload = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [chunks, setChunks] = useState<string[]>([]);
-  
+
   // Form setup
   const form = useForm<FormValues>({
     defaultValues: {
@@ -42,11 +41,10 @@ export const useVectorUpload = () => {
           throw new Error("Invalid metadata JSON format");
         }
       }
-      
-      // Simulate chunking and inserting documents
+
+      // Chunk content
       const chunks = chunkContent(values.content);
-      
-      // Insert each chunk as a separate document
+
       const results = [];
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
@@ -58,16 +56,14 @@ export const useVectorUpload = () => {
             collection: values.collection,
             content_type: values.content_type,
             metadata: parsedMetadata,
-            // Embedding will be added via the edge function
           })
           .select();
-          
+
         if (error) throw error;
         if (data) {
           results.push(data[0]);
-          // Generate embedding for the inserted document
           try {
-            await supabase.functions.invoke('generate-embedding', {
+            await supabase.functions.invoke("generate-embedding", {
               body: { documentId: data[0].id },
             });
           } catch (error) {
@@ -75,13 +71,14 @@ export const useVectorUpload = () => {
           }
         }
       }
-      
+
       return results;
     },
     onSuccess: () => {
       toast({
         title: "Document Uploaded",
-        description: "Content has been successfully uploaded and vectorization started.",
+        description:
+          "Content has been successfully uploaded and vectorization started.",
       });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       form.reset();
@@ -96,38 +93,43 @@ export const useVectorUpload = () => {
     },
   });
 
-  // Process content and show preview chunks
   const handleContentChange = (content: string) => {
     const newChunks = chunkContent(content);
     setChunks(newChunks);
   };
 
-  // Simple chunking function - in real implementation you'd use a more sophisticated approach
+  // Improved chunking function with markdown/semantic awareness
   const chunkContent = (content: string): string[] => {
     if (!content) return [];
-    
-    // Split on paragraphs (double newlines)
-    const paragraphs = content.split(/\n\s*\n/);
-    
-    // Group paragraphs into chunks of reasonable size
+
+    const MAX_CHUNK_LENGTH = 1000;
+    const paragraphs = content.split(/(?:\n{2,}|\r?\n(?=\s*[*#\-]))/g);
+
     const chunks: string[] = [];
     let currentChunk = "";
-    
+
     for (const paragraph of paragraphs) {
-      // If adding this paragraph would make the chunk too long, start a new chunk
-      if (currentChunk.length + paragraph.length > 1000 && currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-        currentChunk = paragraph;
+      const cleanParagraph = paragraph.trim();
+      if (!cleanParagraph) continue;
+
+      if (currentChunk.length + cleanParagraph.length + 2 > MAX_CHUNK_LENGTH) {
+        if (currentChunk.length > 0) {
+          chunks.push(currentChunk.trim());
+          currentChunk = cleanParagraph;
+        } else {
+          chunks.push(cleanParagraph);
+        }
       } else {
-        currentChunk = currentChunk ? `${currentChunk}\n\n${paragraph}` : paragraph;
+        currentChunk = currentChunk
+          ? `${currentChunk}\n\n${cleanParagraph}`
+          : cleanParagraph;
       }
     }
-    
-    // Add the last chunk if it's not empty
+
     if (currentChunk.trim()) {
       chunks.push(currentChunk.trim());
     }
-    
+
     return chunks;
   };
 
