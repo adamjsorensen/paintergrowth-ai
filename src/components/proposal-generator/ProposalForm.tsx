@@ -38,11 +38,17 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
   const getFieldsBySection = () => {
     const result: Record<string, EnhancedFieldConfig[]> = {};
     
+    // Initialize empty sections
     FORM_SECTIONS.forEach(section => {
-      const sectionFields = visibleFields
-        .filter(field => section.fields.includes(field.id))
-        .sort((a, b) => a.order - b.order)
-        .map(field => ({
+      result[section.id] = [];
+    });
+    
+    // Group fields by sectionId
+    visibleFields.forEach(field => {
+      const sectionId = field.sectionId || 'additional';
+      
+      if (result[sectionId]) {
+        result[sectionId].push({
           ...field,
           value: fieldValues[field.id] ?? (
             field.type === 'checkbox-group' || field.type === 'multi-select' || field.type === 'file-upload' 
@@ -52,31 +58,28 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
                 : ""
           ),
           onChange: (value: FieldValue) => handleFieldChange(field.id, value)
-        }));
-        
-      if (sectionFields.length > 0) {
-        result[section.id] = sectionFields;
+        });
+      } else {
+        // If sectionId doesn't match any predefined section, put in 'additional'
+        result['additional'] = result['additional'] || [];
+        result['additional'].push({
+          ...field,
+          value: fieldValues[field.id] ?? (
+            field.type === 'checkbox-group' || field.type === 'multi-select' || field.type === 'file-upload' 
+              ? [] 
+              : field.type === 'toggle' 
+                ? false 
+                : ""
+          ),
+          onChange: (value: FieldValue) => handleFieldChange(field.id, value)
+        });
       }
     });
-
-    const remainingFields = visibleFields
-      .filter(field => !Object.values(result).flat().some(f => f.id === field.id))
-      .sort((a, b) => a.order - b.order)
-      .map(field => ({
-        ...field,
-        value: fieldValues[field.id] ?? (
-          field.type === 'checkbox-group' || field.type === 'multi-select' || field.type === 'file-upload' 
-            ? [] 
-            : field.type === 'toggle' 
-              ? false 
-              : ""
-        ),
-        onChange: (value: FieldValue) => handleFieldChange(field.id, value)
-      }));
     
-    if (remainingFields.length > 0) {
-      result['other'] = remainingFields;
-    }
+    // Sort fields within each section by order
+    Object.keys(result).forEach(sectionId => {
+      result[sectionId].sort((a, b) => a.order - b.order);
+    });
     
     return result;
   };
