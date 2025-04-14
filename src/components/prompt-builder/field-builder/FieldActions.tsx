@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FieldType, FieldOption } from "@/types/prompt-templates";
+import { FieldType, FieldOption, FieldConfig } from "@/types/prompt-templates";
 import FieldForm from "../field-form/FieldForm";
 
 interface FieldActionsProps {
@@ -15,7 +16,7 @@ interface FieldActionsProps {
   onAddField: (values: any) => void;
   onUpdateField: (values: any) => void;
   onCancel: () => void;
-  fields: FieldType[];
+  fields: FieldConfig[]; // Changed from FieldType[] to FieldConfig[]
 }
 
 const fieldSchema = z.object({

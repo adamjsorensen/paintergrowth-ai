@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -156,7 +157,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
           onAddField={handleAddField}
           onUpdateField={handleUpdateField}
           onCancel={handleCancel}
-          fields={fields}
+          fields={fields} // Since we updated the type in FieldActions, this is now correct
         />
         
         <div className="space-y-4">
