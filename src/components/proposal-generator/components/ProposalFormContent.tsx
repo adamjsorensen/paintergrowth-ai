@@ -30,7 +30,6 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
         });
 
         total += validItems.reduce<number>((sum, item) => {
-          // Since we've validated item and item.price in the filter above, we can safely use it here
           const price = typeof item.price === 'string' 
             ? parseFloat(item.price) || 0 
             : item.price;
@@ -48,7 +47,6 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
       return 'col-span-2';
     }
     
-    // Make table fields full width
     if (['quote-table', 'upsell-table', 'tax-calculator'].includes(type)) {
       return 'col-span-2';
     }
@@ -56,9 +54,31 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
     return 'col-span-2 sm:col-span-1';
   };
 
+  // Group fields by their assigned sections
+  const groupedFields = useMemo(() => {
+    const grouped: Record<string, EnhancedFieldConfig[]> = {};
+    
+    // Initialize sections with empty arrays
+    FORM_SECTIONS.forEach(section => {
+      grouped[section.id] = [];
+    });
+
+    // Group fields by their sectionId
+    Object.values(fieldsBySection).flat().forEach(field => {
+      const sectionId = field.sectionId || 'additional';
+      if (grouped[sectionId]) {
+        grouped[sectionId].push(field);
+      } else {
+        grouped['additional'].push(field);
+      }
+    });
+
+    return grouped;
+  }, [fieldsBySection]);
+
   return (
     <CardContent className="p-6">
-      {Object.entries(fieldsBySection).map(([sectionId, sectionFields]) => {
+      {Object.entries(groupedFields).map(([sectionId, sectionFields]) => {
         if (sectionFields.length === 0) return null;
         
         const section = FORM_SECTIONS.find(s => s.id === sectionId);
