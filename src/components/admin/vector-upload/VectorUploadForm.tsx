@@ -7,6 +7,8 @@ import StepIndicator from "@/components/admin/vector-upload/StepIndicator";
 import StepRenderer from "@/components/admin/vector-upload/StepRenderer";
 import FormNavigationButtons from "@/components/admin/vector-upload/FormNavigationButtons";
 import { ACCEPTED_FILE_TYPES, UPLOAD_STEPS } from "@/components/admin/vector-upload/uploadConstants";
+import { Bug } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const VectorUploadForm = () => {
   // State
@@ -88,10 +90,23 @@ const VectorUploadForm = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upload Content</CardTitle>
-        <CardDescription>
-          Add content to the vector database for AI retrieval
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Upload Content</CardTitle>
+            <CardDescription>
+              Add content to the vector database for AI retrieval
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Bug className="h-4 w-4 text-amber-500" />
+            <span className="text-sm">Debug Mode</span>
+            <Switch 
+              checked={debugMode} 
+              onCheckedChange={handleDebugModeChange}
+              aria-label="Toggle debug mode"
+            />
+          </div>
+        </div>
         <div className="mt-4">
           <StepIndicator currentStep={currentStep} steps={UPLOAD_STEPS} />
         </div>

@@ -32,7 +32,6 @@ const StepRenderer = ({
   removeChunk,
   updateChunkMetadata,
   debugMode,
-  handleDebugModeChange,
   form,
   isSubmitting,
   handleSubmitForm,
@@ -56,7 +55,6 @@ const StepRenderer = ({
           onRemoveChunk={removeChunk}
           onUpdateChunkMetadata={updateChunkMetadata}
           debugMode={debugMode}
-          onDebugModeChange={handleDebugModeChange}
         />
       );
     

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -17,6 +18,13 @@ const debugLog = {
     const debugHeader = req.headers.get('x-debug');
     
     return debugParam === 'true' || debugHeader === 'true';
+  },
+
+  log: (isDebug: boolean, type: string, message: string, details?: any): void => {
+    if (isDebug) {
+      console.log(`🔍 [${type}]: ${message}`);
+      if (details) console.log(details);
+    }
   },
 
   prompt: (isDebug: boolean, prompt: string): void => {
@@ -56,6 +64,11 @@ serve(async (req) => {
     // Determine if we're in debug mode from any source
     const isDebugMode = debug === true || debugLog.isDebugMode(req);
     
+    debugLog.log(isDebugMode, "REQUEST", "Processing chunk metadata request", { 
+      chunkPreview: chunk ? chunk.substring(0, 100) + (chunk?.length > 100 ? '...' : '') : null,
+      debugMode: isDebugMode
+    });
+    
     if (!chunk || typeof chunk !== 'string' || chunk.trim().length === 0) {
       if (isDebugMode) {
         debugLog.error(isDebugMode, 'Invalid input', { chunk: chunk?.substring(0, 100) + (chunk?.length > 100 ? '...' : '') });
@@ -90,6 +103,11 @@ ${chunk}`;
     let responseData;
     
     try {
+      debugLog.log(isDebugMode, "API_CALL", "Calling OpenRouter API", {
+        model: "google/gemini-2-flash",
+        contentLength: chunk.length
+      });
+      
       openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -164,12 +182,11 @@ ${chunk}`;
       const jsonMatch = generatedContent.match(/\{[\s\S]*\}/);
       const jsonString = jsonMatch ? jsonMatch[0] : generatedContent;
       
-      if (isDebugMode) {
-        console.log('🔍 Attempting to parse JSON:');
-        console.log(jsonString);
-      }
+      debugLog.log(isDebugMode, "PARSING", 'Attempting to parse JSON:', jsonString);
       
       const metadata = JSON.parse(jsonString);
+      
+      debugLog.log(isDebugMode, "SUCCESS", 'Metadata generated successfully', metadata);
       
       return new Response(
         JSON.stringify({ metadata }),
