@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +15,7 @@ interface FieldActionsProps {
   onAddField: (values: any) => void;
   onUpdateField: (values: any) => void;
   onCancel: () => void;
+  fields: FieldType[];
 }
 
 const fieldSchema = z.object({
@@ -38,9 +38,8 @@ const FieldActions: React.FC<FieldActionsProps> = ({
   onAddField,
   onUpdateField,
   onCancel,
+  fields,
 }) => {
-  console.log("FieldActions rendering - isAddingField:", isAddingField, "editingFieldId:", editingFieldId);
-  
   const form = useForm<z.infer<typeof fieldSchema>>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
@@ -54,25 +53,49 @@ const FieldActions: React.FC<FieldActionsProps> = ({
     },
   });
 
+  // Reset form when switching between add/edit modes
+  useEffect(() => {
+    if (editingFieldId) {
+      // Get the field being edited from the parent component
+      const field = fields.find(f => f.id === editingFieldId);
+      if (field) {
+        form.reset({
+          label: field.label,
+          type: field.type,
+          sectionId: field.sectionId || "client",
+          required: field.required || false,
+          complexity: field.complexity || "basic",
+          helpText: field.helpText || "",
+          placeholder: field.placeholder || "",
+        });
+        setOptions(field.options || []);
+      }
+    } else {
+      form.reset({
+        label: "",
+        type: "text",
+        sectionId: "client",
+        required: false,
+        complexity: "basic",
+        helpText: "",
+        placeholder: "",
+      });
+      setOptions([]);
+    }
+  }, [editingFieldId, form, setOptions, fields]);
+
   const handleSubmit = (values: z.infer<typeof fieldSchema>) => {
-    console.log("FieldActions handleSubmit called with values:", values);
-    
     try {
       if (editingFieldId) {
-        console.log("Calling onUpdateField");
-        onUpdateField(values);
+        onUpdateField({ ...values, options });
       } else {
-        console.log("Calling onAddField");
-        onAddField(values);
+        onAddField({ ...values, options });
       }
-      console.log("handleSubmit completed successfully");
     } catch (error) {
       console.error("Error in handleSubmit:", error);
     }
   };
 
-  console.log("FieldActions about to render FieldForm");
-  
   return (
     <>
       {(isAddingField || editingFieldId) && (

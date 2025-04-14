@@ -79,23 +79,11 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setFields((prev) =>
       prev.map((field) => {
         if (field.id === editingFieldId) {
-          const updatedField: FieldConfig = {
+          return {
             ...field,
-            label: values.label,
-            type: values.type,
-            required: values.required,
-            helpText: values.helpText,
-            placeholder: values.placeholder,
-            complexity: field.complexity || 'basic',
+            ...values,
+            options: values.options
           };
-          
-          if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
-            updatedField.options = [...options];
-          } else {
-            delete updatedField.options;
-          }
-          
-          return updatedField;
         }
         return field;
       })
@@ -103,6 +91,11 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     
     setEditingFieldId(null);
     setOptions([]);
+    
+    toast({
+      title: "Success",
+      description: "Field updated successfully"
+    });
   };
 
   const handleEditField = (field: FieldConfig) => {
@@ -163,6 +156,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
           onAddField={handleAddField}
           onUpdateField={handleUpdateField}
           onCancel={handleCancel}
+          fields={fields}
         />
         
         <div className="space-y-4">
