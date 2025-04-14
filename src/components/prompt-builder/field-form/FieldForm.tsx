@@ -71,14 +71,8 @@ const FieldForm: React.FC<FieldFormProps> = ({
   return (
     <Card className="my-4">
       <CardContent className="pt-6">
-        <form 
-          onSubmit={(e) => {
-            console.log("Form submit event triggered");
-            e.preventDefault();
-            form.handleSubmit(handleFormSubmit)(e);
-          }} 
-          className="space-y-4"
-        >
+        {/* Changed from <form> to <div> to avoid nested forms */}
+        <div className="space-y-4">
           <FormSectionFields form={form} />
           
           <div className="grid grid-cols-2 gap-4">
@@ -109,11 +103,17 @@ const FieldForm: React.FC<FieldFormProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button 
+              type="button" 
+              onClick={() => {
+                console.log("Submit button clicked");
+                form.handleSubmit(handleFormSubmit)();
+              }}
+            >
               {isEditing ? "Update Field" : "Add Field"}
             </Button>
           </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
