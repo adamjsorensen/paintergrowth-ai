@@ -104,6 +104,9 @@ const FieldForm: React.FC<FieldFormProps> = ({
                         <SelectItem value="checkbox-group">Checkbox Group</SelectItem>
                         <SelectItem value="multi-select">Multi Select</SelectItem>
                         <SelectItem value="file-upload">File Upload</SelectItem>
+                        <SelectItem value="quote-table">Quote Table</SelectItem>
+                        <SelectItem value="upsell-table">Upsell Table</SelectItem>
+                        <SelectItem value="tax-calculator">Tax Calculator</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

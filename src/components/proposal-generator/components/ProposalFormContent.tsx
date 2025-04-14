@@ -1,4 +1,3 @@
-
 import { CardContent } from "@/components/ui/card";
 import { FieldConfig } from "@/types/prompt-templates";
 import FormSection from "../FormSection";
@@ -17,28 +16,30 @@ interface ProposalFormContentProps {
 
 const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
   // Calculate subtotal from quote table for tax calculator
-const subtotal = useMemo(() => {
-  let total = 0;
+  const subtotal = useMemo(() => {
+    let total = 0;
 
-  Object.values(fieldsBySection).flat().forEach((field) => {
-    if (field.type === 'quote-table' && Array.isArray(field.value)) {
-      total += field.value.reduce((sum, item) => {
-        if (!item || typeof item !== 'object' || item.price == null) return sum;
+    Object.values(fieldsBySection).flat().forEach((field) => {
+      if (field.type === 'quote-table' && Array.isArray(field.value)) {
+        total += field.value.reduce((sum, item) => {
+          if (!item) return sum;
+          
+          const rawPrice = item?.price;
+          if (rawPrice == null) return sum;
 
-        const rawPrice = item.price;
-        const price = typeof rawPrice === 'string'
-          ? parseFloat(rawPrice) || 0
-          : typeof rawPrice === 'number'
-            ? rawPrice
-            : 0;
+          const price = typeof rawPrice === 'string'
+            ? parseFloat(rawPrice) || 0
+            : typeof rawPrice === 'number'
+              ? rawPrice
+              : 0;
 
-        return sum + price;
-      }, 0);
-    }
-  });
+          return sum + price;
+        }, 0);
+      }
+    });
 
-  return total;
-}, [fieldsBySection]);
+    return total;
+  }, [fieldsBySection]);
 
   const getFieldClass = (fieldId: string, type: string) => {
     if (['specialNotes', 'projectAddress', 'colorPalette'].includes(fieldId)) {
