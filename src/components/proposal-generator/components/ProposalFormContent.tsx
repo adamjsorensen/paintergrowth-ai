@@ -17,26 +17,28 @@ interface ProposalFormContentProps {
 
 const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
   // Calculate subtotal from quote table for tax calculator
-  const subtotal = useMemo(() => {
-    let total = 0;
-    
-    // Find all quote table fields and sum their values
-    Object.values(fieldsBySection).flat().forEach(field => {
-      if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        total += field.value.reduce((sum, item) => {
-          // Safely handle any type of price value
-          let itemPrice = 0;
-          if (item && typeof item === 'object' && 'price' in item) {
-            const rawPrice = item.price;
-            itemPrice = typeof rawPrice === 'string' ? parseFloat(rawPrice) || 0 : Number(rawPrice) || 0;
-          }
-          return sum + itemPrice;
-        }, 0);
-      }
-    });
-    
-    return total;
-  }, [fieldsBySection]);
+const subtotal = useMemo(() => {
+  let total = 0;
+
+  Object.values(fieldsBySection).flat().forEach((field) => {
+    if (field.type === 'quote-table' && Array.isArray(field.value)) {
+      total += field.value.reduce((sum, item) => {
+        if (!item || typeof item !== 'object' || item.price == null) return sum;
+
+        const rawPrice = item.price;
+        const price = typeof rawPrice === 'string'
+          ? parseFloat(rawPrice) || 0
+          : typeof rawPrice === 'number'
+            ? rawPrice
+            : 0;
+
+        return sum + price;
+      }, 0);
+    }
+  });
+
+  return total;
+}, [fieldsBySection]);
 
   const getFieldClass = (fieldId: string, type: string) => {
     if (['specialNotes', 'projectAddress', 'colorPalette'].includes(fieldId)) {
