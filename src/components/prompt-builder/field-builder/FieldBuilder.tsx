@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import FieldBuilderHeader from "./FieldBuilderHeader";
 import FieldActions from "./FieldActions";
 import FieldList from "./FieldList";
 import EmptyState from "./EmptyState";
+import { useToast } from "@/hooks/use-toast";
 
 interface FieldBuilderProps {
   fields: FieldConfig[];
@@ -16,29 +16,44 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   const [isAddingField, setIsAddingField] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [options, setOptions] = useState<FieldOption[]>([]);
+  const { toast } = useToast();
 
   const handleAddField = (values: any) => {
-    const fieldId = values.label.toLowerCase().replace(/\s+/g, "_");
-    
-    const newField: FieldConfig = {
-      id: fieldId,
-      label: values.label,
-      type: values.type,
-      required: values.required,
-      helpText: values.helpText,
-      placeholder: values.placeholder,
-      order: fields.length + 1,
-      complexity: 'basic', // Set default complexity to basic for new fields
-    };
-    
-    // Handle options for select, checkbox-group, and multi-select field types
-    if (["select", "checkbox-group", "multi-select"].includes(values.type) && options.length > 0) {
-      newField.options = [...options];
+    try {
+      const fieldId = values.label.toLowerCase().replace(/\s+/g, "_");
+      
+      const newField: FieldConfig = {
+        id: fieldId,
+        label: values.label,
+        type: values.type,
+        required: values.required,
+        helpText: values.helpText || "",
+        placeholder: values.placeholder || "",
+        order: fields.length + 1,
+        sectionId: values.sectionId,
+        complexity: values.complexity || 'basic',
+      };
+      
+      if (["select", "checkbox-group", "multi-select"].includes(values.type) && options.length > 0) {
+        newField.options = [...options];
+      }
+      
+      setFields((prev) => [...prev, newField]);
+      setIsAddingField(false);
+      setOptions([]);
+      
+      toast({
+        title: "Success",
+        description: "Field added successfully",
+      });
+    } catch (error) {
+      console.error("Error adding field:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add field",
+        variant: "destructive",
+      });
     }
-    
-    setFields((prev) => [...prev, newField]);
-    setIsAddingField(false);
-    setOptions([]);
   };
 
   const handleUpdateField = (values: any) => {
@@ -54,11 +69,9 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
             required: values.required,
             helpText: values.helpText,
             placeholder: values.placeholder,
-            // Preserve existing complexity or default to basic if not present
             complexity: field.complexity || 'basic',
           };
           
-          // Handle options for select, checkbox-group, and multi-select field types
           if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
             updatedField.options = [...options];
           } else {
@@ -95,16 +108,13 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
       const newFields = [...prev];
       
       if (direction === "up" && fieldIndex > 0) {
-        // Swap with previous field
         [newFields[fieldIndex - 1], newFields[fieldIndex]] = 
           [newFields[fieldIndex], newFields[fieldIndex - 1]];
       } else if (direction === "down" && fieldIndex < newFields.length - 1) {
-        // Swap with next field
         [newFields[fieldIndex], newFields[fieldIndex + 1]] = 
           [newFields[fieldIndex + 1], newFields[fieldIndex]];
       }
       
-      // Update order
       return newFields.map((field, index) => ({ ...field, order: index + 1 }));
     });
   };
