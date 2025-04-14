@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +39,8 @@ const FieldActions: React.FC<FieldActionsProps> = ({
   onUpdateField,
   onCancel,
 }) => {
+  console.log("FieldActions rendering - isAddingField:", isAddingField, "editingFieldId:", editingFieldId);
+  
   const form = useForm<z.infer<typeof fieldSchema>>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
@@ -52,13 +55,24 @@ const FieldActions: React.FC<FieldActionsProps> = ({
   });
 
   const handleSubmit = (values: z.infer<typeof fieldSchema>) => {
-    if (editingFieldId) {
-      onUpdateField(values);
-    } else {
-      onAddField(values);
+    console.log("FieldActions handleSubmit called with values:", values);
+    
+    try {
+      if (editingFieldId) {
+        console.log("Calling onUpdateField");
+        onUpdateField(values);
+      } else {
+        console.log("Calling onAddField");
+        onAddField(values);
+      }
+      console.log("handleSubmit completed successfully");
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
     }
   };
 
+  console.log("FieldActions about to render FieldForm");
+  
   return (
     <>
       {(isAddingField || editingFieldId) && (

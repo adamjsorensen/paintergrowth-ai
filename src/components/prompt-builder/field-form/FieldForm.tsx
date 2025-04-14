@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +40,15 @@ const FieldForm: React.FC<FieldFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  console.log("FieldForm rendering - isEditing:", isEditing);
   const [optionInput, setOptionInput] = useState({ value: "", label: "" });
+  
+  useEffect(() => {
+    console.log("FieldForm mounted");
+    return () => {
+      console.log("FieldForm unmounted");
+    };
+  }, []);
 
   const handleAddOption = () => {
     if (!optionInput.value || !optionInput.label) return;
@@ -59,11 +66,37 @@ const FieldForm: React.FC<FieldFormProps> = ({
     return ["select", "checkbox-group", "multi-select"].includes(currentType);
   };
 
+  const handleFormSubmit = (values: any) => {
+    console.log("FieldForm handleFormSubmit called with values:", values);
+    
+    try {
+      // Prevent default form submission behavior
+      // that might cause page reloads
+      
+      console.log("Calling onSubmit with values");
+      onSubmit(values);
+      console.log("onSubmit called successfully");
+    } catch (error) {
+      console.error("Error in handleFormSubmit:", error);
+    }
+    
+    // Return false to prevent default form behavior
+    return false;
+  };
+
   return (
     <Card className="my-4">
       <CardContent className="pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          {/* Removed the nested Form component to avoid DOM nesting errors */}
+          <form 
+            onSubmit={(e) => {
+              console.log("Form submit event triggered");
+              e.preventDefault();
+              form.handleSubmit(handleFormSubmit)(e);
+            }} 
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="label"
@@ -86,7 +119,10 @@ const FieldForm: React.FC<FieldFormProps> = ({
                   <FormItem>
                     <FormLabel>Field Type</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        console.log("Field type changed to:", value);
+                        field.onChange(value);
+                      }}
                       defaultValue={field.value}
                       value={field.value}
                     >
@@ -122,7 +158,10 @@ const FieldForm: React.FC<FieldFormProps> = ({
                   <FormItem>
                     <FormLabel>Form Section</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        console.log("Section changed to:", value);
+                        field.onChange(value);
+                      }}
                       defaultValue={field.value}
                       value={field.value}
                     >
@@ -157,7 +196,10 @@ const FieldForm: React.FC<FieldFormProps> = ({
                     <FormControl>
                       <Switch
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => {
+                          console.log("Required changed to:", checked);
+                          field.onChange(checked);
+                        }}
                       />
                     </FormControl>
                   </FormItem>
@@ -175,7 +217,11 @@ const FieldForm: React.FC<FieldFormProps> = ({
                     <FormControl>
                       <Switch
                         checked={field.value === 'advanced'}
-                        onCheckedChange={(checked) => field.onChange(checked ? 'advanced' : 'basic')}
+                        onCheckedChange={(checked) => {
+                          const value = checked ? 'advanced' : 'basic';
+                          console.log("Complexity changed to:", value);
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                   </FormItem>
@@ -225,16 +271,25 @@ const FieldForm: React.FC<FieldFormProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={onCancel}
+                onClick={() => {
+                  console.log("Cancel button clicked");
+                  onCancel();
+                }}
               >
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button 
+                type="submit"
+                onClick={(e) => {
+                  console.log("Submit button clicked");
+                  // Additional click handler to ensure we capture the event
+                }}
+              >
                 {isEditing ? "Update Field" : "Add Field"}
               </Button>
             </div>
           </form>
-        </Form>
+        </div>
       </CardContent>
     </Card>
   );

@@ -20,7 +20,11 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
 
   const handleAddField = (values: any) => {
     try {
+      console.log("handleAddField called with values:", values);
       const fieldId = values.label.toLowerCase().replace(/\s+/g, "_");
+      
+      console.log("Field ID generated:", fieldId);
+      console.log("Current fields count:", fields.length);
       
       const newField: FieldConfig = {
         id: fieldId,
@@ -34,18 +38,31 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
         complexity: values.complexity || 'basic',
       };
       
+      console.log("New field object created:", newField);
+      
       if (["select", "checkbox-group", "multi-select"].includes(values.type) && options.length > 0) {
         newField.options = [...options];
+        console.log("Options added to field:", newField.options);
       }
       
-      setFields((prev) => [...prev, newField]);
+      console.log("About to update fields state with new field");
+      setFields((prev) => {
+        const updatedFields = [...prev, newField];
+        console.log("Updated fields:", updatedFields);
+        return updatedFields;
+      });
+      
+      console.log("About to reset form state");
       setIsAddingField(false);
       setOptions([]);
       
+      console.log("Displaying success toast");
       toast({
         title: "Success",
         description: "Field added successfully",
       });
+      
+      console.log("handleAddField completed successfully");
     } catch (error) {
       console.error("Error adding field:", error);
       toast({
@@ -125,6 +142,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setOptions([]);
   };
 
+  console.log("FieldBuilder rendering, isAddingField:", isAddingField, "editingFieldId:", editingFieldId);
+  
   return (
     <Card>
       <CardContent className="pt-6">
