@@ -1,114 +1,95 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { ChunkMetadata } from "@/components/admin/vector-upload/ChunkPreview";
 import { v4 as uuidv4 } from "uuid";
 
 export interface EnhancedChunk {
   id: string;
   content: string;
-  metadata?: ChunkMetadata;
-  isProcessing?: boolean;
-  error?: string;
+  metadata: any | null;
 }
 
-export const useChunkMetadata = () => {
+export const useChunkMetadata = (debugMode: boolean = false) => {
   const [chunks, setChunks] = useState<EnhancedChunk[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
 
   const processChunks = async (rawChunks: string[]) => {
     if (!rawChunks.length) return;
-
+    
     setIsProcessing(true);
     
-    // Initialize with basic chunk data
-    const initialChunks: EnhancedChunk[] = rawChunks.map(content => ({
-      id: uuidv4(),
-      content,
-      isProcessing: true
-    }));
-    
-    setChunks(initialChunks);
-
-    // Process each chunk to get metadata
-    const enhancedChunks = [...initialChunks];
-    
-    for (let i = 0; i < enhancedChunks.length; i++) {
-      try {
-        const { data, error } = await supabase.functions.invoke('generate-chunk-metadata', {
-          body: { chunk: enhancedChunks[i].content }
-        });
-
-        if (error) {
-          console.error("Error generating metadata for chunk:", error);
-          enhancedChunks[i] = {
-            ...enhancedChunks[i],
-            isProcessing: false,
-            error: error.message
-          };
-        } else {
-          enhancedChunks[i] = {
-            ...enhancedChunks[i],
-            metadata: data.metadata,
-            isProcessing: false
-          };
+    try {
+      // Convert raw chunks to enhanced chunks with IDs
+      const enhancedChunks: EnhancedChunk[] = rawChunks.map((content) => ({
+        id: uuidv4(),
+        content,
+        metadata: null,
+      }));
+      
+      setChunks(enhancedChunks);
+      
+      // Process each chunk to generate metadata
+      const updatedChunks = [...enhancedChunks];
+      
+      for (let i = 0; i < enhancedChunks.length; i++) {
+        const chunk = enhancedChunks[i];
+        try {
+          const { data, error } = await supabase.functions.invoke(
+            "generate-chunk-metadata",
+            { 
+              body: { chunk: chunk.content },
+              // Add debug parameter if debug mode is enabled
+              query: debugMode ? { debug: 'true' } : undefined
+            }
+          );
+          
+          if (error) {
+            console.error(`Error generating metadata for chunk ${i}:`, error);
+            continue;
+          }
+          
+          if (data?.metadata) {
+            updatedChunks[i] = {
+              ...chunk,
+              metadata: data.metadata
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to process chunk ${i}:`, error);
         }
-        
-        // Update state after each chunk is processed
-        setChunks([...enhancedChunks]);
-      } catch (err) {
-        console.error("Exception in metadata generation:", err);
-        enhancedChunks[i] = {
-          ...enhancedChunks[i],
-          isProcessing: false,
-          error: err instanceof Error ? err.message : "Unknown error"
-        };
-        setChunks([...enhancedChunks]);
       }
+      
+      setChunks(updatedChunks);
+      
+    } catch (error) {
+      console.error("Error processing chunks:", error);
+    } finally {
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
-    
-    if (enhancedChunks.some(chunk => chunk.error)) {
-      toast({
-        title: "Some chunks had metadata errors",
-        description: "You can still proceed, but some chunks may need manual updates.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Metadata generated",
-        description: `Successfully processed ${enhancedChunks.length} chunks.`,
-      });
-    }
-
-    return enhancedChunks;
   };
-
-  const updateChunkMetadata = (id: string, metadata: ChunkMetadata) => {
-    setChunks(prevChunks => 
-      prevChunks.map(chunk => 
+  
+  const updateChunkMetadata = (id: string, metadata: any) => {
+    setChunks(prev => 
+      prev.map(chunk => 
         chunk.id === id ? { ...chunk, metadata } : chunk
       )
     );
   };
-
+  
   const removeChunk = (id: string) => {
-    setChunks(prevChunks => prevChunks.filter(chunk => chunk.id !== id));
+    setChunks(prev => prev.filter(chunk => chunk.id !== id));
   };
-
+  
   const clearChunks = () => {
     setChunks([]);
   };
-
+  
   return {
     chunks,
     isProcessing,
     processChunks,
     updateChunkMetadata,
     removeChunk,
-    clearChunks
+    clearChunks,
   };
 };

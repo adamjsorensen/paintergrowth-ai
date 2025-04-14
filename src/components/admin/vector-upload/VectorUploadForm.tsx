@@ -24,6 +24,7 @@ const VectorUploadForm = () => {
   // State
   const [currentStep, setCurrentStep] = useState(1);
   const [manualContent, setManualContent] = useState("");
+  const [debugMode, setDebugMode] = useState(false);
 
   // Hooks
   const { form, uploadDocument, handleContentChange, onSubmit } = useVectorUpload();
@@ -34,7 +35,7 @@ const VectorUploadForm = () => {
     updateChunkMetadata, 
     removeChunk, 
     clearChunks 
-  } = useChunkMetadata();
+  } = useChunkMetadata(debugMode);
 
   // Event handlers
   const handleNextStep = async () => {
@@ -62,6 +63,10 @@ const VectorUploadForm = () => {
 
   const handleContentUpdate = (content: string) => {
     setManualContent(content);
+  };
+
+  const handleDebugModeChange = (enabled: boolean) => {
+    setDebugMode(enabled);
   };
 
   const handleSubmitForm = (values: any) => {
@@ -105,6 +110,8 @@ const VectorUploadForm = () => {
             isProcessing={isProcessing}
             onRemoveChunk={removeChunk}
             onUpdateChunkMetadata={updateChunkMetadata}
+            debugMode={debugMode}
+            onDebugModeChange={handleDebugModeChange}
           />
         );
       
