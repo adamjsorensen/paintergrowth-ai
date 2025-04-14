@@ -6,7 +6,41 @@ const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-debug',
+};
+
+// Debug logging helper functions
+const debugLog = {
+  isDebugMode: (req: Request): boolean => {
+    // Check for debug mode via URL param or header
+    const url = new URL(req.url);
+    const debugParam = url.searchParams.get('debug');
+    const debugHeader = req.headers.get('x-debug');
+    return debugParam === 'true' || debugHeader === 'true';
+  },
+
+  prompt: (isDebug: boolean, prompt: string): void => {
+    if (isDebug) {
+      console.log('🔍 Prompt sent to OpenRouter:');
+      console.log(prompt);
+    }
+  },
+
+  response: (isDebug: boolean, status: number, headers: Headers, body: any): void => {
+    if (isDebug) {
+      console.log('📨 Response from OpenRouter:');
+      console.log(`status: ${status}`);
+      console.log('headers:', Object.fromEntries(headers.entries()));
+      console.log('body:', body);
+    }
+  },
+
+  error: (isDebug: boolean, message: string, details?: any): void => {
+    if (isDebug) {
+      console.error(`❌ ${message}:`);
+      if (details) console.error(details);
+    }
+  }
 };
 
 serve(async (req) => {
@@ -15,10 +49,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const isDebugMode = debugLog.isDebugMode(req);
+
   try {
     const { chunk } = await req.json();
     
     if (!chunk || typeof chunk !== 'string' || chunk.trim().length === 0) {
+      if (isDebugMode) {
+        debugLog.error(isDebugMode, 'Invalid input', { chunk: chunk?.substring(0, 100) + (chunk?.length > 100 ? '...' : '') });
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Invalid or missing chunk content' }),
         { 
@@ -40,29 +80,60 @@ Respond with JSON only.
 Text:
 ${chunk}`;
 
+    // Log the prompt if in debug mode
+    debugLog.prompt(isDebugMode, prompt);
+
     // Call OpenRouter to access Gemini 2.0 Flash
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://lovable.ai",
-        "X-Title": "Vector Upload Metadata Generator"
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2-flash",
-        messages: [
-          { role: "user", content: prompt }
-        ]
-      })
-    });
+    let openRouterResponse;
+    let responseData;
+    
+    try {
+      openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://lovable.ai",
+          "X-Title": "Vector Upload Metadata Generator"
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2-flash",
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        })
+      });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error("Error from OpenRouter:", result);
+      responseData = await openRouterResponse.json();
+      
+      // Log the full response in debug mode
+      if (isDebugMode) {
+        debugLog.response(isDebugMode, 
+                          openRouterResponse.status, 
+                          openRouterResponse.headers, 
+                          responseData);
+      }
+    } catch (fetchError) {
+      debugLog.error(isDebugMode, 'OpenRouter Fetch Error', fetchError);
+      
       return new Response(
-        JSON.stringify({ error: result.error?.message || "Failed to generate metadata" }),
+        JSON.stringify({ error: 'Failed to connect to OpenRouter' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    if (!openRouterResponse.ok) {
+      debugLog.error(isDebugMode, 'Error from OpenRouter', {
+        status: openRouterResponse.status,
+        statusText: openRouterResponse.statusText,
+        result: responseData
+      });
+      
+      return new Response(
+        JSON.stringify({ error: responseData.error?.message || "Failed to generate metadata" }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -71,9 +142,11 @@ ${chunk}`;
     }
 
     // Extract the generated content
-    const generatedContent = result.choices[0]?.message?.content;
+    const generatedContent = responseData.choices[0]?.message?.content;
     
     if (!generatedContent) {
+      debugLog.error(isDebugMode, 'No content in response', responseData);
+      
       return new Response(
         JSON.stringify({ error: "No metadata generated" }),
         { 
@@ -89,6 +162,11 @@ ${chunk}`;
       const jsonMatch = generatedContent.match(/\{[\s\S]*\}/);
       const jsonString = jsonMatch ? jsonMatch[0] : generatedContent;
       
+      if (isDebugMode) {
+        console.log('🔍 Attempting to parse JSON:');
+        console.log(jsonString);
+      }
+      
       const metadata = JSON.parse(jsonString);
       
       return new Response(
@@ -96,7 +174,16 @@ ${chunk}`;
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } catch (parseError) {
-      console.error("Error parsing JSON:", parseError, "Content:", generatedContent);
+      debugLog.error(
+        isDebugMode, 
+        'JSON Parse Error', 
+        {
+          error: parseError.message,
+          rawContent: generatedContent,
+          extractedJsonString: generatedContent.match(/\{[\s\S]*\}/)?.[0] || 'No JSON pattern found'
+        }
+      );
+      
       return new Response(
         JSON.stringify({ 
           error: "Failed to parse metadata JSON", 
@@ -109,7 +196,8 @@ ${chunk}`;
       );
     }
   } catch (error) {
-    console.error("Error in generate-chunk-metadata function:", error);
+    debugLog.error(isDebugMode, 'General function error', error);
+    
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
