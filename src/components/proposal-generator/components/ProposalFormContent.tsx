@@ -24,7 +24,9 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
     Object.values(fieldsBySection).flat().forEach(field => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
         total += field.value.reduce((sum, item) => {
-          return sum + (Number(item.price) || 0);
+          // Convert price to a number explicitly to avoid type issues
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) || 0 : Number(item.price) || 0;
+          return sum + itemPrice;
         }, 0);
       }
     });
