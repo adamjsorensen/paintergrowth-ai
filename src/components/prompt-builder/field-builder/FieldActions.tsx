@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,8 +19,10 @@ interface FieldActionsProps {
 
 const fieldSchema = z.object({
   label: z.string().min(1, "Label is required"),
-  type: z.enum(["text", "textarea", "select", "number", "toggle", "date", "checkbox-group", "multi-select", "file-upload"]),
+  type: z.enum(["text", "textarea", "select", "number", "toggle", "date", "checkbox-group", "multi-select", "file-upload", "quote-table", "upsell-table", "tax-calculator"]),
+  sectionId: z.string().min(1, "Section is required"),
   required: z.boolean().default(false),
+  complexity: z.enum(["basic", "advanced"]).default("basic"),
   helpText: z.string().optional(),
   placeholder: z.string().optional(),
 });
@@ -42,7 +43,9 @@ const FieldActions: React.FC<FieldActionsProps> = ({
     defaultValues: {
       label: "",
       type: "text",
+      sectionId: "client",
       required: false,
+      complexity: "basic",
       helpText: "",
       placeholder: "",
     },

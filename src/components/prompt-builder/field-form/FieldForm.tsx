@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import OptionInputs from "./OptionInputs";
+import { FORM_SECTIONS } from "@/components/proposal-generator/constants/formSections";
 
 interface FieldFormProps {
   form: UseFormReturn<any>;
@@ -113,12 +114,43 @@ const FieldForm: React.FC<FieldFormProps> = ({
                   </FormItem>
                 )}
               />
-              
+
+              <FormField
+                control={form.control}
+                name="sectionId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Form Section</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select section" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {FORM_SECTIONS.map(section => (
+                          <SelectItem key={section.id} value={section.id}>
+                            {section.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="required"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-6">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
                       <FormLabel>Required Field</FormLabel>
                     </div>
@@ -126,6 +158,24 @@ const FieldForm: React.FC<FieldFormProps> = ({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="complexity"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Advanced Field</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value === 'advanced'}
+                        onCheckedChange={(checked) => field.onChange(checked ? 'advanced' : 'basic')}
                       />
                     </FormControl>
                   </FormItem>

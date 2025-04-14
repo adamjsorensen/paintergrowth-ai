@@ -22,17 +22,14 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
         total += field.value.reduce((sum, item) => {
-          if (!item) return sum;
+          if (!item || typeof item !== 'object') return sum;
           
-          const rawPrice = item?.price;
-          if (rawPrice == null) return sum;
-
-          const price = typeof rawPrice === 'string'
-            ? parseFloat(rawPrice) || 0
-            : typeof rawPrice === 'number'
-              ? rawPrice
+          const price = typeof item.price === 'string' 
+            ? parseFloat(item.price) || 0 
+            : typeof item.price === 'number'
+              ? item.price
               : 0;
-
+              
           return sum + price;
         }, 0);
       }
