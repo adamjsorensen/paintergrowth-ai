@@ -1,3 +1,4 @@
+
 import { CardContent } from "@/components/ui/card";
 import { FieldConfig } from "@/types/prompt-templates";
 import FormSection from "../FormSection";
@@ -21,17 +22,20 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
 
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        // Filter out any nullish items so that every remaining item is valid
-        const validItems = (field.value as any[]).filter((item) => item != null);
-        total += validItems.reduce<number>((sum, item) => {
-          const rawPrice = item.price; // No need for optional chaining now
-          if (rawPrice == null) return sum;
+        // Filter out any nullish values and ensure items have valid prices
+        const validItems = field.value.filter((item): item is { price: number | string } => {
+          return item !== null && 
+                 item !== undefined && 
+                 typeof item === 'object' &&
+                 ('price' in item);
+        });
 
-          const price =
-            typeof rawPrice === 'string'
-              ? parseFloat(rawPrice) || 0
-              : typeof rawPrice === 'number'
-              ? rawPrice
+        total += validItems.reduce<number>((sum, item) => {
+          // Convert price to number, defaulting to 0 for invalid values
+          const price = typeof item.price === 'string' 
+            ? parseFloat(item.price) || 0 
+            : typeof item.price === 'number' 
+              ? item.price 
               : 0;
 
           return sum + price;
@@ -39,7 +43,8 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
       }
     });
 
-    return total;
+    // Ensure we return a string for the tax calculator field
+    return total.toString();
   }, [fieldsBySection]);
 
   const getFieldClass = (fieldId: string, type: string) => {
