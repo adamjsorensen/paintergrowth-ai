@@ -71,7 +71,8 @@ const parseWordFile = async (file: File): Promise<ParsedFile> => {
   } catch (error) {
     // Fallback to another method if extraction fails
     try {
-      const fullResult = await mammoth.convert({arrayBuffer});
+      // Fix: Use the correct method from mammoth for document conversion
+      const fullResult = await mammoth.convertToHtml({arrayBuffer});
       return { content: fullResult.value };
     } catch (secondError) {
       console.error("Word parsing failed with both methods:", secondError);
