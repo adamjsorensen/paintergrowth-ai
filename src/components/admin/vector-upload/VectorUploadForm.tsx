@@ -3,22 +3,10 @@ import { useState } from "react";
 import { useVectorUpload } from "@/hooks/admin/useVectorUpload";
 import { useChunkMetadata } from "@/hooks/admin/useChunkMetadata";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import StepIndicator from "@/components/admin/vector-upload/StepIndicator";
-import ContentUploadSection from "@/components/admin/vector-upload/ContentUploadSection";
-import ChunkReviewSection from "@/components/admin/vector-upload/ChunkReviewSection";
-import DocumentSubmissionForm from "@/components/admin/vector-upload/DocumentSubmissionForm";
-import { ArrowRight } from "lucide-react";
-
-const ACCEPTED_FILE_TYPES = [
-  ".txt", ".doc", ".docx", ".csv", ".xlsx", ".md", ".json", ".css"
-];
-
-const UPLOAD_STEPS = [
-  { id: 1, name: "Upload Content" },
-  { id: 2, name: "Review Chunks" },
-  { id: 3, name: "Submit" },
-];
+import StepRenderer from "@/components/admin/vector-upload/StepRenderer";
+import FormNavigationButtons from "@/components/admin/vector-upload/FormNavigationButtons";
+import { ACCEPTED_FILE_TYPES, UPLOAD_STEPS } from "@/components/admin/vector-upload/uploadConstants";
 
 const VectorUploadForm = () => {
   // State
@@ -92,43 +80,10 @@ const VectorUploadForm = () => {
     form.reset();
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <ContentUploadSection 
-            onContentChange={handleContentUpdate} 
-            initialContent={manualContent}
-            acceptedFileTypes={ACCEPTED_FILE_TYPES}
-          />
-        );
-      
-      case 2:
-        return (
-          <ChunkReviewSection
-            chunks={chunks}
-            isProcessing={isProcessing}
-            onRemoveChunk={removeChunk}
-            onUpdateChunkMetadata={updateChunkMetadata}
-            debugMode={debugMode}
-            onDebugModeChange={handleDebugModeChange}
-          />
-        );
-      
-      case 3:
-        return (
-          <DocumentSubmissionForm
-            form={form}
-            chunks={chunks}
-            isSubmitting={uploadDocument.isPending}
-            onSubmit={handleSubmitForm}
-          />
-        );
-      
-      default:
-        return null;
-    }
-  };
+  // Calculate if Next button should be disabled
+  const isNextDisabled = 
+    (currentStep === 1 && !manualContent.trim()) ||
+    (currentStep === 2 && chunks.length === 0);
 
   return (
     <Card>
@@ -143,33 +98,32 @@ const VectorUploadForm = () => {
       </CardHeader>
       
       <CardContent>
-        {renderStepContent()}
+        <StepRenderer
+          currentStep={currentStep}
+          manualContent={manualContent}
+          handleContentUpdate={handleContentUpdate}
+          chunks={chunks}
+          isProcessing={isProcessing}
+          removeChunk={removeChunk}
+          updateChunkMetadata={updateChunkMetadata}
+          debugMode={debugMode}
+          handleDebugModeChange={handleDebugModeChange}
+          form={form}
+          isSubmitting={uploadDocument.isPending}
+          handleSubmitForm={handleSubmitForm}
+          acceptedFileTypes={ACCEPTED_FILE_TYPES}
+        />
       </CardContent>
       
-      <CardFooter className="flex justify-between border-t p-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePrevStep}
-          disabled={currentStep === 1 || uploadDocument.isPending || isProcessing}
-        >
-          Back
-        </Button>
-        
-        {currentStep < 3 ? (
-          <Button
-            type="button"
-            onClick={handleNextStep}
-            disabled={
-              (currentStep === 1 && !manualContent.trim()) ||
-              isProcessing ||
-              (currentStep === 2 && chunks.length === 0)
-            }
-            className="gap-1"
-          >
-            Next <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        ) : null}
+      <CardFooter>
+        <FormNavigationButtons
+          currentStep={currentStep}
+          handlePrevStep={handlePrevStep}
+          handleNextStep={handleNextStep}
+          isNextDisabled={isNextDisabled}
+          isProcessing={isProcessing}
+          isSubmitting={uploadDocument.isPending}
+        />
       </CardFooter>
     </Card>
   );

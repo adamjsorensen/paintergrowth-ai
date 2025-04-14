@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -12,10 +11,11 @@ const corsHeaders = {
 // Debug logging helper functions
 const debugLog = {
   isDebugMode: (req: Request): boolean => {
-    // Check for debug mode via URL param or header
+    // Check for debug mode via URL param, header, or request body
     const url = new URL(req.url);
     const debugParam = url.searchParams.get('debug');
     const debugHeader = req.headers.get('x-debug');
+    
     return debugParam === 'true' || debugHeader === 'true';
   },
 
@@ -49,10 +49,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const isDebugMode = debugLog.isDebugMode(req);
-
   try {
-    const { chunk } = await req.json();
+    const reqData = await req.json();
+    const { chunk, debug } = reqData;
+    
+    // Determine if we're in debug mode from any source
+    const isDebugMode = debug === true || debugLog.isDebugMode(req);
     
     if (!chunk || typeof chunk !== 'string' || chunk.trim().length === 0) {
       if (isDebugMode) {
@@ -196,6 +198,7 @@ ${chunk}`;
       );
     }
   } catch (error) {
+    const isDebugMode = debugLog.isDebugMode(req);
     debugLog.error(isDebugMode, 'General function error', error);
     
     return new Response(

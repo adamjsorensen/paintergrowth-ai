@@ -34,13 +34,15 @@ export const useChunkMetadata = (debugMode: boolean = false) => {
       for (let i = 0; i < enhancedChunks.length; i++) {
         const chunk = enhancedChunks[i];
         try {
+          // Fixed the error by correctly using the body property instead of query
+          const body: any = { chunk: chunk.content };
+          if (debugMode) {
+            body.debug = true;
+          }
+          
           const { data, error } = await supabase.functions.invoke(
             "generate-chunk-metadata",
-            { 
-              body: { chunk: chunk.content },
-              // Add debug parameter if debug mode is enabled
-              query: debugMode ? { debug: 'true' } : undefined
-            }
+            { body }
           );
           
           if (error) {
