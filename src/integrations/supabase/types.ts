@@ -80,6 +80,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          chunk_metadata: Json | null
           collection: string
           content: string
           content_type: string
@@ -90,6 +91,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          chunk_metadata?: Json | null
           collection: string
           content: string
           content_type: string
@@ -100,6 +102,7 @@ export type Database = {
           title: string
         }
         Update: {
+          chunk_metadata?: Json | null
           collection?: string
           content?: string
           content_type?: string

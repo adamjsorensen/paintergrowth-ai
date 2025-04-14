@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CollectionOptions, ContentTypeOptions } from "@/types/supabase";
+import { EnhancedChunk } from "@/hooks/admin/useChunkMetadata";
 
 export type FormValues = {
   title: string;
@@ -11,6 +13,7 @@ export type FormValues = {
   collection: CollectionOptions;
   content_type: ContentTypeOptions;
   metadata: string;
+  chunks?: { content: string; chunk_metadata: any }[];
 };
 
 export const useVectorUpload = () => {
@@ -42,20 +45,27 @@ export const useVectorUpload = () => {
         }
       }
 
-      // Chunk content
-      const chunks = chunkContent(values.content);
+      // Handle the chunks
+      const chunksToProcess = values.chunks || [];
+      if (!chunksToProcess.length) {
+        // Fall back to original chunking method if no chunks provided
+        const contentChunks = chunkContent(values.content);
+        chunksToProcess.push(...contentChunks.map(content => ({ content, chunk_metadata: null })));
+      }
 
       const results = [];
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
+      for (let i = 0; i < chunksToProcess.length; i++) {
+        const { content, chunk_metadata } = chunksToProcess[i];
+        
         const { data, error } = await supabase
           .from("documents")
           .insert({
-            title: `${values.title} (${i + 1}/${chunks.length})`,
-            content: chunk,
+            title: `${values.title} (${i + 1}/${chunksToProcess.length})`,
+            content: content,
             collection: values.collection,
             content_type: values.content_type,
             metadata: parsedMetadata,
+            chunk_metadata: chunk_metadata || null
           })
           .select();
 
@@ -96,6 +106,7 @@ export const useVectorUpload = () => {
   const handleContentChange = (content: string) => {
     const newChunks = chunkContent(content);
     setChunks(newChunks);
+    return newChunks;
   };
 
   // Improved chunking function with markdown/semantic awareness

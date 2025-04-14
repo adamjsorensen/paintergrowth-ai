@@ -71,3 +71,6 @@ url = ""
 [functions]
 [functions.match-documents]
 verify_jwt = true
+[functions.generate-chunk-metadata]
+verify_jwt = true
+
