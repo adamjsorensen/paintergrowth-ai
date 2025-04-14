@@ -1,3 +1,4 @@
+
 import { CardContent } from "@/components/ui/card";
 import { FieldConfig } from "@/types/prompt-templates";
 import FormSection from "../FormSection";
@@ -21,19 +22,18 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
 
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        const validItems = field.value.filter((item): item is { price: number | string } => {
+        const validItems = field.value.filter((item): item is { price: string | number } => {
           return item !== null && 
                  item !== undefined && 
                  typeof item === 'object' &&
-                 ('price' in item);
+                 'price' in item;
         });
 
         total += validItems.reduce<number>((sum, item) => {
+          // Since we've validated item and item.price in the filter above, we can safely use it here
           const price = typeof item.price === 'string' 
             ? parseFloat(item.price) || 0 
-            : typeof item.price === 'number' 
-              ? item.price 
-              : 0;
+            : item.price;
 
           return sum + price;
         }, 0);
