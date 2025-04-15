@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
+import { useCompanyProfile } from "@/hooks/useCompanyProfile";
 
 type FieldValue = string | number | boolean | string[];
 
@@ -15,6 +16,27 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const { preferences } = useStylePreferences();
+  const { data: companyProfile, isLoading: isLoadingProfile } = useCompanyProfile(user?.id);
+
+  const validatePlaceholders = (prompt: string, values: Record<string, any>) => {
+    const placeholderRegex = /{{([^{}]+)}}/g;
+    const matches = [...prompt.matchAll(placeholderRegex)];
+    
+    const unresolvedPlaceholders = matches
+      .map(match => match[1])
+      .filter(placeholder => {
+        // Ignore conditional blocks
+        if (placeholder.startsWith('#if')) return false;
+        // Check if value exists and is not undefined/null
+        return values[placeholder] === undefined || values[placeholder] === null;
+      });
+
+    if (unresolvedPlaceholders.length > 0) {
+      console.warn('Unresolved placeholders:', unresolvedPlaceholders);
+    }
+
+    return unresolvedPlaceholders;
+  };
 
   const generateProposal = async (values: Record<string, FieldValue>, proposalId: string) => {
     try {
@@ -30,20 +52,20 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
           .eq('id', proposalId);
       }
 
-      // Add style preferences to the values
-      const valuesWithPreferences = {
-        ...values,
+      // Merge company profile with form values
+      const mergedValues = {
+        ...companyProfile, // Company defaults
+        ...values, // Form values take precedence
         _stylePreferences: preferences
       };
 
-      console.log("Generating proposal with values:", valuesWithPreferences);
+      console.log("Generating proposal with merged values:", mergedValues);
 
       // Start the proposal generation in the background
       const response = await supabase.functions.invoke('generate_proposal', {
         body: {
-          // Use the actual template ID if available, otherwise use a default ID
           promptId: templateId || "00000000-0000-0000-0000-000000000000",
-          values: valuesWithPreferences,
+          values: mergedValues,
           proposalId: proposalId,
           modelName: 'openai/gpt-4o-mini'
         }
@@ -89,6 +111,7 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
 
   return {
     isGenerating,
+    isLoadingProfile,
     generateProposal
   };
 };

@@ -1,4 +1,3 @@
-
 import { createErrorResponse, createSuccessResponse, callOpenRouterAPI } from "./api.ts";
 import { createSupabaseClient, updateProposalStatus, getProposalUserId, fetchPromptTemplate, logGeneration } from "./utils.ts";
 
@@ -60,7 +59,24 @@ export async function handleGenerateProposal(req: Request) {
     // Prepare system prompt
     let systemPrompt = promptTemplate.system_prompt;
     
-    // If there are placeholders in the system prompt, replace them with actual values
+    // Helper function to validate unresolved placeholders
+    const findUnresolvedPlaceholders = (prompt: string): string[] => {
+      const placeholderRegex = /{{([^{}]+)}}/g;
+      const matches = [...prompt.matchAll(placeholderRegex)];
+      const unresolvedPlaceholders = [];
+
+      for (const match of matches) {
+        const placeholder = match[1];
+        // Skip conditional blocks
+        if (!placeholder.startsWith('#if') && !values[placeholder]) {
+          unresolvedPlaceholders.push(placeholder);
+        }
+      }
+
+      return unresolvedPlaceholders;
+    };
+    
+    // Replace all placeholders in the system prompt
     if (systemPrompt.includes('{{') && systemPrompt.includes('}}')) {
       Object.entries(values).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
@@ -71,6 +87,12 @@ export async function handleGenerateProposal(req: Request) {
           );
         }
       });
+
+      // Check for any unresolved placeholders
+      const unresolvedPlaceholders = findUnresolvedPlaceholders(systemPrompt);
+      if (unresolvedPlaceholders.length > 0) {
+        console.warn('Warning: Unresolved placeholders:', unresolvedPlaceholders);
+      }
     }
 
     // Get API key from environment
@@ -97,7 +119,7 @@ export async function handleGenerateProposal(req: Request) {
         proposal_id: proposalId,
         model_used: modelName,
         system_prompt: systemPrompt,
-        final_prompt: systemPrompt, // In this case they're the same
+        final_prompt: systemPrompt,
         user_input: values,
         status: 'failed',
         ai_response: null,
@@ -145,7 +167,7 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to save generated proposal');
     }
 
-    // Log the successful generation
+    // Log the successful generation with extended information
     await logGeneration(supabase, {
       user_id: user.id,
       user_email: user.email || 'unknown',
@@ -154,7 +176,10 @@ export async function handleGenerateProposal(req: Request) {
       model_used: modelName,
       system_prompt: systemPrompt,
       final_prompt: systemPrompt,
-      user_input: values,
+      user_input: {
+        ...values,
+        _unresolved_placeholders: findUnresolvedPlaceholders(systemPrompt)
+      },
       status: 'success',
       ai_response: generatedText,
       rag_context: null
