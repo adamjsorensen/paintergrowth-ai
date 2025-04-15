@@ -4,13 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, Mail } from "lucide-react";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
 import ProposalNotFound from "@/components/proposal-viewer/ProposalNotFound";
 import EditableProposalContent from "@/components/proposal-viewer/EditableProposalContent";
 import { useProposalFetch } from "@/hooks/useProposalFetch";
 import { supabase } from "@/integrations/supabase/client";
+import { constructMailtoLink } from "@/utils/emailUtils";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -80,6 +81,15 @@ const ViewProposal = () => {
     }
   };
 
+  const handleEmailShare = async () => {
+    if (!id) return;
+    
+    await handlePrint();
+    
+    const mailtoUrl = constructMailtoLink(id);
+    window.location.href = mailtoUrl;
+  };
+
   if (loading) {
     return (
       <PageLayout title="Generating Proposal">
@@ -101,13 +111,22 @@ const ViewProposal = () => {
           </Button>
 
           {proposal && (
-            <Button
-              variant="secondary"
-              onClick={handlePrint}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Download PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEmailShare}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Share via Email
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handlePrint}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+            </div>
           )}
         </div>
         
