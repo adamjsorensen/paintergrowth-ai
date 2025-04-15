@@ -1,5 +1,6 @@
+
 import { createErrorResponse, createSuccessResponse, callOpenRouterAPI } from "./api.ts";
-import { createSupabaseClient, updateProposalStatus, getProposalUserId, fetchPromptTemplate, logGeneration } from "./utils.ts";
+import { createSupabaseClient, updateProposalStatus, getProposalUserId, fetchPromptTemplate, fetchPromptFields, logGeneration } from "./utils.ts";
 import { findUnresolvedPlaceholders } from "./validation.ts";
 
 export async function handleGenerateProposal(req: Request) {
@@ -49,7 +50,7 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to update proposal status');
     }
 
-    // Get prompt template
+    // Get prompt template for system prompt
     const { data: promptTemplate, error: promptError } = await fetchPromptTemplate(supabase, promptId);
     if (promptError || !promptTemplate) {
       console.error('Failed to fetch prompt template:', promptError);

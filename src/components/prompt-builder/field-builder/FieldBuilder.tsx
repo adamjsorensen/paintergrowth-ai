@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import FieldActions from "./FieldActions";
 import FieldList from "./FieldList";
 import FallbackFields from "./FallbackFields";
 import EmptyState from "./EmptyState";
+import { usePromptFields } from "@/hooks/usePromptFields";
 import { useToast } from "@/hooks/use-toast";
 
 interface FieldBuilderProps {
@@ -17,6 +19,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   const [isAddingField, setIsAddingField] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [options, setOptions] = useState<FieldOption[]>([]);
+  const { createField, updateField, deleteField } = usePromptFields();
   const { toast } = useToast();
 
   const databaseFields = fields.filter(field => !field.id.startsWith('enhanced-'));
@@ -25,10 +28,24 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   const handleAddField = (values: any) => {
     try {
       console.log("handleAddField called with values:", values);
-      const fieldId = values.label.toLowerCase().replace(/\s+/g, "_");
       
-      console.log("Field ID generated:", fieldId);
-      console.log("Current fields count:", fields.length);
+      // Create field in prompt_fields table
+      createField.mutate({
+        name: values.name,
+        label: values.label,
+        type: values.type,
+        section: values.sectionId,
+        required: values.required || false,
+        complexity: values.complexity || 'basic',
+        help_text: values.helpText || "",
+        placeholder: values.placeholder || "",
+        options: values.options?.length > 0 ? values.options : undefined,
+        order_position: fields.length + 1,
+        active: true
+      });
+      
+      // Also update local state for immediate UI update
+      const fieldId = values.name.toLowerCase().replace(/\s+/g, "_");
       
       const newField: FieldConfig = {
         id: fieldId,
@@ -43,31 +60,14 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
         complexity: values.complexity || 'basic',
       };
       
-      console.log("New field object created:", newField);
-      
       if (["select", "checkbox-group", "multi-select"].includes(values.type) && options.length > 0) {
         newField.options = [...options];
-        console.log("Options added to field:", newField.options);
       }
       
-      console.log("About to update fields state with new field");
-      setFields((prev) => {
-        const updatedFields = [...prev, newField];
-        console.log("Updated fields:", updatedFields);
-        return updatedFields;
-      });
-      
-      console.log("About to reset form state");
+      setFields((prev) => [...prev, newField]);
       setIsAddingField(false);
       setOptions([]);
       
-      console.log("Displaying success toast");
-      toast({
-        title: "Success",
-        description: "Field added successfully",
-      });
-      
-      console.log("handleAddField completed successfully");
     } catch (error) {
       console.error("Error adding field:", error);
       toast({
@@ -81,26 +81,45 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   const handleUpdateField = (values: any) => {
     if (!editingFieldId) return;
     
-    setFields((prev) =>
-      prev.map((field) => {
-        if (field.id === editingFieldId) {
-          return {
-            ...field,
-            ...values,
-            options: values.options
-          };
-        }
-        return field;
-      })
-    );
-    
-    setEditingFieldId(null);
-    setOptions([]);
-    
-    toast({
-      title: "Success",
-      description: "Field updated successfully"
-    });
+    try {
+      // Update in database
+      updateField.mutate({
+        id: editingFieldId,
+        name: values.name,
+        label: values.label,
+        type: values.type,
+        section: values.sectionId,
+        required: values.required || false,
+        complexity: values.complexity || 'basic',
+        help_text: values.helpText || "",
+        placeholder: values.placeholder || "",
+        options: values.options?.length > 0 ? values.options : undefined,
+      });
+      
+      // Update local state
+      setFields((prev) =>
+        prev.map((field) => {
+          if (field.id === editingFieldId) {
+            return {
+              ...field,
+              ...values,
+              options: values.options
+            };
+          }
+          return field;
+        })
+      );
+      
+      setEditingFieldId(null);
+      setOptions([]);
+    } catch (error) {
+      console.error("Error updating field:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update field",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditField = (field: FieldConfig) => {
@@ -109,6 +128,12 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   };
 
   const handleDeleteField = (fieldId: string) => {
+    // Delete from database if not an enhanced field
+    if (!fieldId.startsWith('enhanced-')) {
+      deleteField.mutate(fieldId);
+    }
+    
+    // Update local state
     setFields((prev) => 
       prev.filter((field) => field.id !== fieldId)
         .map((field, index) => ({ ...field, order: index + 1 }))
@@ -139,8 +164,6 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setEditingFieldId(null);
     setOptions([]);
   };
-
-  console.log("FieldBuilder rendering, isAddingField:", isAddingField, "editingFieldId:", editingFieldId);
   
   return (
     <Card>

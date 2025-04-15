@@ -9,12 +9,13 @@ import {
 } from "@/types/prompt-templates";
 import PageLayout from "@/components/PageLayout";
 import PromptBuilderForm from "@/components/prompt-builder/PromptBuilderForm";
+import { usePromptFields } from "@/hooks/usePromptFields";
 
 const PromptBuilder = () => {
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);
-  const [fields, setFields] = useState<FieldConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { fields: promptFields, isLoading: isLoadingFields, convertToFieldConfig } = usePromptFields();
 
   useEffect(() => {
     const fetchPromptTemplate = async () => {
@@ -35,7 +36,6 @@ const PromptBuilder = () => {
           } as PromptTemplate;
           
           setPromptTemplate(parsedTemplate);
-          setFields(parseFieldConfig(data.field_config));
         }
       } catch (error) {
         console.error("Error fetching prompt template:", error);
@@ -52,7 +52,12 @@ const PromptBuilder = () => {
     fetchPromptTemplate();
   }, [toast]);
 
-  if (loading) {
+  // Merge prompt fields with template fields, prioritizing prompt fields
+  const combinedFields = promptFields.length > 0 
+    ? convertToFieldConfig(promptFields)
+    : promptTemplate?.field_config || [];
+
+  if (loading || isLoadingFields) {
     return (
       <PageLayout title="Prompt Builder">
         <div className="flex justify-center items-center h-64">
@@ -68,7 +73,7 @@ const PromptBuilder = () => {
         <div className="p-6">
           <PromptBuilderForm 
             initialTemplate={promptTemplate} 
-            initialFields={fields}
+            initialFields={combinedFields}
           />
         </div>
       </div>

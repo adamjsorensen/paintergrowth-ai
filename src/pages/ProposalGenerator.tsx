@@ -13,11 +13,16 @@ import { FieldConfig } from "@/types/prompt-templates";
 
 const ProposalGenerator = () => {
   // Get prompt fields from the database
-  const { fields: promptFields, isLoading: isLoadingFields } = usePromptFields();
+  const { 
+    fields: promptFields, 
+    isLoading: isLoadingFields,
+    convertToFieldConfig 
+  } = usePromptFields();
   
+  // Get template information (for system prompt)
   const { 
     promptTemplate, 
-    fields, 
+    fields: templateFields, 
     isLoading: isLoadingTemplate, 
     isCreating, 
     ensureEnhancedTemplateExists, 
@@ -30,22 +35,12 @@ const ProposalGenerator = () => {
     templateId: promptTemplate?.id
   });
 
-  // Convert prompt fields to field config format
-  const convertedFields: FieldConfig[] = promptFields
+  // Convert database fields to FieldConfig format for the form
+  const formFields = promptFields
     .filter(field => field.active)
-    .map(field => ({
-      id: field.id,
-      name: field.name || field.id, // Use name if available, otherwise use id
-      label: field.label,
-      type: field.type,
-      required: field.required,
-      complexity: field.complexity,
-      order: field.order_position,
-      helpText: field.help_text,
-      placeholder: field.placeholder,
-      options: field.options || [],
-      sectionId: field.section
-    }));
+    .length > 0 
+      ? convertToFieldConfig(promptFields.filter(field => field.active))
+      : templateFields;
 
   // Fetch template and ensure enhanced template exists
   useEffect(() => {
@@ -81,7 +76,7 @@ const ProposalGenerator = () => {
     <PageLayout title="Generate Proposal">
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <ProposalForm 
-          fields={convertedFields.length > 0 ? convertedFields : fields}
+          fields={formFields}
           isGenerating={isGenerating}
           onGenerate={generateProposal}
           templateName={promptTemplate?.name || "Painting Proposal"}

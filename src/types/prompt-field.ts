@@ -25,7 +25,9 @@ export type SectionType =
   | 'notes'
   | 'terms'
   | 'warranty'
-  | 'meta';
+  | 'meta'
+  | 'project'  // Match the database enums
+  | 'surfaces'; // Match the database enums
 
 export type ComplexityLevel = 'basic' | 'advanced';
 

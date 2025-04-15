@@ -43,6 +43,15 @@ export async function fetchPromptTemplate(supabase, promptId) {
     .maybeSingle();
 }
 
+export async function fetchPromptFields(supabase) {
+  return supabase
+    .from('prompt_fields')
+    .select('*')
+    .eq('active', true)
+    .order('section')
+    .order('order_position');
+}
+
 export async function logGeneration(supabase, {
   user_id,
   user_email,

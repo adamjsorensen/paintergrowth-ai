@@ -11,5 +11,7 @@ export const SECTION_LABELS: Record<SectionType, string> = {
   notes: 'Special Instructions',
   terms: 'Terms & Conditions',
   warranty: 'Warranty',
-  meta: 'Prompt Metadata'
+  meta: 'Prompt Metadata',
+  project: 'Project Details',
+  surfaces: 'Surfaces & Preparation'
 };

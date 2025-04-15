@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import PromptInfoTab from "@/components/prompt-builder/tabs/PromptInfoTab";
 import SystemPromptTab from "@/components/prompt-builder/tabs/SystemPromptTab";
 import PreviewTab from "@/components/prompt-builder/tabs/PreviewTab";
 import { useToast } from "@/hooks/use-toast";
+import { usePromptFields } from "@/hooks/usePromptFields";
 
 const promptSchema = z.object({
   name: z.string().min(1, "Display name is required"),
@@ -37,6 +38,7 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("basic-info");
   const { toast } = useToast();
+  const { convertToFieldConfig } = usePromptFields();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(promptSchema),
