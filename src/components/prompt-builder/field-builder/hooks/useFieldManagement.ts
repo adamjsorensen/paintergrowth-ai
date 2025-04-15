@@ -17,7 +17,7 @@ export const useFieldManagement = (
 
   const handleAddField = (values: any) => {
     try {
-      const newFieldData = {
+      const newFieldData: any = {
         name: values.name,
         label: values.label,
         type: values.type,
@@ -69,7 +69,7 @@ export const useFieldManagement = (
     if (!editingFieldId) return;
     
     try {
-      const fieldUpdateData = {
+      const fieldUpdateData: any = {
         id: editingFieldId,
         name: values.name,
         label: values.label,

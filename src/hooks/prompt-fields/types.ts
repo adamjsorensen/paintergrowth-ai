@@ -63,5 +63,5 @@ export interface PromptField extends PromptFieldBase {
 // Helper function to convert field options to the correct Json format
 export const formatFieldOptions = (options: FieldOption[]): Json => {
   if (!options || options.length === 0) return null;
-  return { options } as Json;
+  return { options } as unknown as Json;
 };

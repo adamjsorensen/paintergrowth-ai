@@ -11,7 +11,7 @@ export const usePromptFieldCreate = () => {
   return useMutation({
     mutationFn: async (field: PromptFieldInput) => {
       // Prepare field data for database insertion
-      const fieldData = {
+      const fieldData: any = {
         name: field.name,
         label: field.label,
         type: field.type,
