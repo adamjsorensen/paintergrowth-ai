@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const corsHeaders = {
@@ -80,4 +79,19 @@ export async function logGeneration(supabase, {
       ai_response,
       rag_context
     });
+}
+
+export async function fetchAISettings(supabase) {
+  const { data } = await supabase
+    .from('ai_settings')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  return {
+    temperature: data?.temperature ?? 0.7,
+    model: data?.model ?? 'openai/gpt-4o-mini',
+    max_tokens: data?.max_tokens ?? 1500
+  };
 }

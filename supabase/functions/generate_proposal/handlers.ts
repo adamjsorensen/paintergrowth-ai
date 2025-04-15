@@ -1,18 +1,12 @@
-
 import { createErrorResponse, createSuccessResponse, callOpenRouterAPI } from "./api.ts";
-import { createSupabaseClient, updateProposalStatus, getProposalUserId, fetchPromptTemplate, fetchPromptFields, logGeneration } from "./utils.ts";
+import { createSupabaseClient, updateProposalStatus, fetchPromptTemplate, fetchAISettings, logGeneration } from "./utils.ts";
 import { findUnresolvedPlaceholders } from "./validation.ts";
 
 export async function handleGenerateProposal(req: Request) {
   try {
     // Parse request body
     const body = await req.json();
-    const { 
-      proposalId, 
-      promptId, 
-      values, 
-      modelName = 'openai/gpt-4o-mini'
-    } = body;
+    const { proposalId, promptId, values } = body;
 
     if (!proposalId) {
       return createErrorResponse('Proposal ID is required');
@@ -58,6 +52,10 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to fetch prompt template');
     }
 
+    // Fetch AI settings
+    const aiSettings = await fetchAISettings(supabase);
+    console.log('Using AI settings:', aiSettings);
+
     // Prepare system prompt
     let systemPrompt = promptTemplate.system_prompt;
     
@@ -88,10 +86,10 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('API key not configured');
     }
 
-    // Call OpenRouter API
+    // Call OpenRouter API with settings
     let response;
     try {
-      response = await callOpenRouterAPI(systemPrompt, openRouterApiKey);
+      response = await callOpenRouterAPI(systemPrompt, openRouterApiKey, aiSettings);
     } catch (apiError) {
       console.error('OpenRouter API error:', apiError);
       await updateProposalStatus(supabase, proposalId, 'failed');
@@ -102,7 +100,7 @@ export async function handleGenerateProposal(req: Request) {
         user_email: user.email || 'unknown',
         prompt_id: promptId,
         proposal_id: proposalId,
-        model_used: modelName,
+        model_used: aiSettings.model,
         system_prompt: systemPrompt,
         final_prompt: systemPrompt,
         user_input: values,
@@ -126,7 +124,7 @@ export async function handleGenerateProposal(req: Request) {
         user_email: user.email || 'unknown',
         prompt_id: promptId,
         proposal_id: proposalId,
-        model_used: modelName,
+        model_used: aiSettings.model,
         system_prompt: systemPrompt,
         final_prompt: systemPrompt,
         user_input: values,
@@ -158,7 +156,7 @@ export async function handleGenerateProposal(req: Request) {
       user_email: user.email || 'unknown',
       prompt_id: promptId,
       proposal_id: proposalId,
-      model_used: modelName,
+      model_used: aiSettings.model,
       system_prompt: systemPrompt,
       final_prompt: systemPrompt,
       user_input: {
