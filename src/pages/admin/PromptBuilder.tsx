@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,7 @@ import {
 } from "@/types/prompt-templates";
 import PageLayout from "@/components/PageLayout";
 import PromptBuilderForm from "@/components/prompt-builder/PromptBuilderForm";
-import { usePromptFields } from "@/hooks/usePromptFields";
+import { usePromptFields } from '@/hooks/prompt-fields/usePromptFields';
 
 const PromptBuilder = () => {
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplate | null>(null);

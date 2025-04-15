@@ -1,8 +1,7 @@
-
 import { useEffect } from "react";
 import { usePromptTemplate } from "@/hooks/usePromptTemplate";
 import { useAuth } from "@/components/AuthProvider";
-import { usePromptFields } from "@/hooks/usePromptFields";
+import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
 import PageLayout from "@/components/PageLayout";
 import { TemplateLoading } from "@/components/proposal-generator/LoadingStates";
 import ProposalForm from "@/components/proposal-generator/ProposalForm";

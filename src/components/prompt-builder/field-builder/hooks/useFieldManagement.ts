@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
-import { usePromptFields } from "@/hooks/usePromptFields";
+import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
 import { useToast } from "@/hooks/use-toast";
 
 export const useFieldManagement = (
