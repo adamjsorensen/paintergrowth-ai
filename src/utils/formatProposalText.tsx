@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { isValidTable, parseTableRows } from './tableUtils';
 
@@ -32,7 +33,7 @@ function TableRenderer({ raw }: { raw: string }) {
       </thead>
       <tbody>
         {data.map((row, i) => (
-          <tr key={i}>
+          <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
             {row.map((cell, j) => (
               <td key={j} className="p-2 border-b border-gray-200">{cell}</td>
             ))}
