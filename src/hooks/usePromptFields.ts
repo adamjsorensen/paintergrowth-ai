@@ -1,8 +1,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { PromptField } from '@/types/prompt-field';
+import { PromptField, parseFieldOptions } from '@/types/prompt-field';
 import { useToast } from '@/hooks/use-toast';
+import { Json } from '@/integrations/supabase/types';
 
 export const usePromptFields = () => {
   const queryClient = useQueryClient();
@@ -22,15 +23,28 @@ export const usePromptFields = () => {
         .order('order_position');
 
       if (error) throw error;
-      return data as PromptField[];
+      
+      // Transform the data to match our PromptField type
+      return data.map(field => ({
+        ...field,
+        options: field.options ? parseFieldOptions(field.options) : undefined
+      })) as PromptField[];
     },
   });
 
   const updateField = useMutation({
     mutationFn: async (field: Partial<PromptField> & { id: string }) => {
+      // Convert FieldOption[] to Json format for Supabase
+      const fieldToUpdate = {
+        ...field,
+        options: field.options && Array.isArray(field.options) 
+          ? { options: field.options } as Json 
+          : field.options
+      };
+      
       const { data, error } = await supabase
         .from('prompt_fields')
-        .update(field)
+        .update(fieldToUpdate)
         .eq('id', field.id)
         .select()
         .single();
