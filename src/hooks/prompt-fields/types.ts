@@ -29,6 +29,11 @@ export type SectionType =
   | "project"
   | "surfaces";
 
+export interface FieldOption {
+  label: string;
+  value: string;
+}
+
 export interface PromptFieldBase {
   name: string;
   label: string;
@@ -44,10 +49,19 @@ export interface PromptFieldBase {
   prompt_snippet?: string;
 }
 
-export interface PromptFieldInput extends PromptFieldBase {}
+export interface PromptFieldInput extends PromptFieldBase {
+  // Helper method to convert options array to the correct Json format
+  formatOptions?: (options: FieldOption[]) => Json;
+}
 
 export interface PromptField extends PromptFieldBase {
   id: string;
   created_at?: string;
   updated_at?: string;
 }
+
+// Helper function to convert field options to the correct Json format
+export const formatFieldOptions = (options: FieldOption[]): Json => {
+  if (!options || options.length === 0) return null;
+  return { options } as Json;
+};

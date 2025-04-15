@@ -2,17 +2,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PromptField, PromptFieldInput } from './types';
+import { PromptField, PromptFieldInput, FieldOption, formatFieldOptions } from './types';
 
 export const usePromptFieldUpdate = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, ...field }: Partial<PromptFieldInput> & { id: string }) => {
+    mutationFn: async ({ id, ...fieldData }: Partial<PromptFieldInput> & { id: string }) => {
+      // Ensure we're sending data in the format the database expects
       const { data, error } = await supabase
         .from('prompt_fields')
-        .update(field)
+        .update(fieldData)
         .eq('id', id)
         .select()
         .single();
