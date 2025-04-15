@@ -3,7 +3,7 @@ import { FieldConfig } from "@/types/prompt-templates";
 
 export const ENHANCED_FIELDS: FieldConfig[] = [
   {
-    id: 'client-name',
+    id: 'enhanced-client-name',
     name: 'clientName',
     label: 'Client Name',
     type: 'text',
@@ -13,7 +13,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'basic'
   },
   {
-    id: 'project-address',
+    id: 'enhanced-project-address',
     name: 'projectAddress',
     label: 'Project Address',
     type: 'textarea',
@@ -23,7 +23,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'basic'
   },
   {
-    id: 'job-type',
+    id: 'enhanced-job-type',
     name: 'jobType',
     label: 'Job Type',
     type: 'select',
@@ -39,7 +39,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'basic'
   },
   {
-    id: 'square-footage',
+    id: 'enhanced-square-footage',
     name: 'squareFootage',
     label: 'Square Footage',
     type: 'number',
@@ -49,7 +49,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'surfaces-to-paint',
+    id: 'enhanced-surfaces-to-paint',
     name: 'surfacesToPaint',
     label: 'Surfaces to Paint',
     type: 'multi-select',
@@ -65,7 +65,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'basic'
   },
   {
-    id: 'prep-needs',
+    id: 'enhanced-prep-needs',
     name: 'prepNeeds',
     label: 'Preparation Needs',
     type: 'checkbox-group',
@@ -82,7 +82,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'quote-items',
+    id: 'enhanced-quote-items',
     name: 'quoteItems',
     label: 'Quote Items',
     type: 'quote-table',
@@ -92,7 +92,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'basic'
   },
   {
-    id: 'upsell-options',
+    id: 'enhanced-upsell-options',
     name: 'upsellOptions',
     label: 'Optional Upgrades',
     type: 'upsell-table',
@@ -102,7 +102,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'tax-settings',
+    id: 'enhanced-tax-settings',
     name: 'taxSettings',
     label: 'Tax Calculation',
     type: 'tax-calculator',
@@ -112,7 +112,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'color-palette',
+    id: 'enhanced-color-palette',
     name: 'colorPalette',
     label: 'Preferred Colors / Palette',
     type: 'textarea',
@@ -122,7 +122,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'timeline',
+    id: 'enhanced-timeline',
     name: 'timeline',
     label: 'Timeline or Start Date',
     type: 'date',
@@ -131,7 +131,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'basic'
   },
   {
-    id: 'special-notes',
+    id: 'enhanced-special-notes',
     name: 'specialNotes',
     label: 'Special Notes',
     type: 'textarea',
@@ -141,7 +141,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'show-detailed-scope',
+    id: 'enhanced-show-detailed-scope',
     name: 'showDetailedScope',
     label: 'Show detailed scope of work',
     type: 'toggle',
@@ -150,7 +150,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'breakout-quote',
+    id: 'enhanced-breakout-quote',
     name: 'breakoutQuote',
     label: 'Break out quote summary',
     type: 'toggle',
@@ -159,7 +159,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'include-terms',
+    id: 'enhanced-include-terms',
     name: 'includeTerms',
     label: 'Include terms & conditions',
     type: 'toggle',
@@ -168,7 +168,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   },
   {
-    id: 'upload-files',
+    id: 'enhanced-upload-files',
     name: 'uploadFiles',
     label: 'Upload Files/Images',
     type: 'file-upload',
@@ -178,3 +178,4 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     complexity: 'advanced'
   }
 ];
+
