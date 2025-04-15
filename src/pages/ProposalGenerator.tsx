@@ -2,18 +2,23 @@
 import { useEffect } from "react";
 import { usePromptTemplate } from "@/hooks/usePromptTemplate";
 import { useAuth } from "@/components/AuthProvider";
+import { usePromptFields } from "@/hooks/usePromptFields";
 import PageLayout from "@/components/PageLayout";
 import { TemplateLoading } from "@/components/proposal-generator/LoadingStates";
 import ProposalForm from "@/components/proposal-generator/ProposalForm";
 import { useProposalGeneration } from "@/components/proposal-generator/hooks/useProposalGeneration";
 import { ENHANCED_FIELDS } from "@/components/proposal-generator/constants/templateFields";
 import { ENHANCED_SYSTEM_PROMPT } from "@/components/proposal-generator/constants/templatePrompts";
+import { FieldConfig } from "@/types/prompt-templates";
 
 const ProposalGenerator = () => {
+  // Get prompt fields from the database
+  const { fields: promptFields, isLoading: isLoadingFields } = usePromptFields();
+  
   const { 
     promptTemplate, 
     fields, 
-    isLoading, 
+    isLoading: isLoadingTemplate, 
     isCreating, 
     ensureEnhancedTemplateExists, 
     fetchPromptTemplate 
@@ -24,6 +29,22 @@ const ProposalGenerator = () => {
     user,
     templateId: promptTemplate?.id
   });
+
+  // Convert prompt fields to field config format
+  const convertedFields: FieldConfig[] = promptFields
+    .filter(field => field.active)
+    .map(field => ({
+      id: field.id,
+      label: field.label,
+      type: field.type,
+      required: field.required,
+      complexity: field.complexity,
+      order: field.order_position,
+      helpText: field.help_text,
+      placeholder: field.placeholder,
+      options: field.options || [],
+      sectionId: field.section
+    }));
 
   // Fetch template and ensure enhanced template exists
   useEffect(() => {
@@ -43,7 +64,9 @@ const ProposalGenerator = () => {
     initializeTemplates();
   }, []);
 
-  if (isLoading || isCreating) {
+  const isLoading = isLoadingTemplate || isCreating || isLoadingFields;
+
+  if (isLoading) {
     return (
       <PageLayout title="Generate Proposal">
         <div className="container mx-auto py-8 px-4 max-w-5xl">
@@ -57,7 +80,7 @@ const ProposalGenerator = () => {
     <PageLayout title="Generate Proposal">
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <ProposalForm 
-          fields={fields}
+          fields={convertedFields.length > 0 ? convertedFields : fields}
           isGenerating={isGenerating}
           onGenerate={generateProposal}
           templateName={promptTemplate?.name || "Painting Proposal"}

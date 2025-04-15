@@ -12,7 +12,8 @@ export type FieldType =
   | 'checkbox-group'
   | 'multi-select'
   | 'date'
-  | 'file-upload';
+  | 'file-upload'
+  | 'tax-calculator';
 
 export type SectionType = 
   | 'client'
@@ -24,7 +25,8 @@ export type SectionType =
   | 'notes'
   | 'terms'
   | 'warranty'
-  | 'meta';
+  | 'meta'
+  | 'additional';
 
 export type ComplexityLevel = 'basic' | 'advanced';
 
@@ -56,9 +58,9 @@ export function parseFieldOptions(options: Json | null | undefined): FieldOption
   if (!options) return [];
   
   try {
-    // If options is already an array of FieldOption objects
+    // Case 1: If options is already an array of FieldOption objects
     if (Array.isArray(options)) {
-      // Type cast the array to FieldOption[] after validation
+      // Type cast the array to any[] first to avoid direct type errors
       return (options as any[]).map(opt => {
         if (typeof opt === 'object' && opt !== null && 'label' in opt && 'value' in opt) {
           return {
@@ -71,7 +73,7 @@ export function parseFieldOptions(options: Json | null | undefined): FieldOption
       });
     }
     
-    // If options is a JSON object with an "options" property (from our DB structure)
+    // Case 2: If options is a JSON object with an "options" property (from our DB structure)
     if (typeof options === 'object' && options !== null && 'options' in options) {
       const optionsArray = (options as {options: any}).options;
       if (Array.isArray(optionsArray)) {
