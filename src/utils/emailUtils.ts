@@ -16,3 +16,23 @@ export const constructMailtoLink = (proposalId: string, baseUrl?: string) => {
   
   return `mailto:?subject=${subject}&body=${body}`;
 };
+
+/**
+ * Opens the mailto link without opening a new tab
+ * @param proposalId - The ID of the proposal to share
+ * @param baseUrl - Optional base URL for the proposal
+ */
+export const shareProposalViaEmail = async (
+  proposalId: string, 
+  onPrint: () => Promise<void>, 
+  baseUrl?: string
+) => {
+  // First ensure the print view is generated
+  await onPrint();
+  
+  // Create the mailto link
+  const mailtoUrl = constructMailtoLink(proposalId, baseUrl);
+  
+  // Use window.location.href to open email client without a new tab
+  window.location.href = mailtoUrl;
+};

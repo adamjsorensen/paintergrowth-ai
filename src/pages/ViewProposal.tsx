@@ -11,7 +11,7 @@ import ProposalNotFound from "@/components/proposal-viewer/ProposalNotFound";
 import EditableProposalContent from "@/components/proposal-viewer/EditableProposalContent";
 import { useProposalFetch } from "@/hooks/useProposalFetch";
 import { supabase } from "@/integrations/supabase/client";
-import { constructMailtoLink } from "@/utils/emailUtils";
+import { shareProposalViaEmail } from "@/utils/emailUtils";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,10 +84,7 @@ const ViewProposal = () => {
   const handleEmailShare = async () => {
     if (!id) return;
     
-    await handlePrint();
-    
-    const mailtoUrl = constructMailtoLink(id);
-    window.location.href = mailtoUrl;
+    await shareProposalViaEmail(id, handlePrint);
   };
 
   if (loading) {
