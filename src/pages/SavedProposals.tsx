@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -49,8 +50,14 @@ const SavedProposals = () => {
     }
   };
 
-  const handlePrint = (id: string) => {
-    window.open(`/proposal/print/${id}`, '_blank');
+  const handlePrint = async (id: string): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      const printWindow = window.open(`/proposal/print/${id}`, '_blank');
+      // We need to wait a bit to ensure the window is fully opened
+      setTimeout(() => {
+        resolve();
+      }, 500);
+    });
   };
 
   if (isLoading) {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -40,8 +41,16 @@ const ViewProposal = () => {
     navigate("/generate/proposal");
   };
 
-  const handlePrint = () => {
-    window.open(`/proposal/print/${id}`, '_blank');
+  const handlePrint = async (): Promise<void> => {
+    if (!id) return Promise.resolve();
+    
+    return new Promise<void>((resolve) => {
+      window.open(`/proposal/print/${id}`, '_blank');
+      // We need to wait a bit to ensure the window is fully opened
+      setTimeout(() => {
+        resolve();
+      }, 500);
+    });
   };
 
   const handleUpdate = async (newContent: string) => {
@@ -118,7 +127,7 @@ const ViewProposal = () => {
               </Button>
               <Button
                 variant="secondary"
-                onClick={handlePrint}
+                onClick={() => handlePrint()}
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Download PDF
