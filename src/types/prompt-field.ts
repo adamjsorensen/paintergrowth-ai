@@ -46,7 +46,7 @@ export interface PromptField {
   order_position: number;
   prompt_snippet?: string;
   active: boolean;
-  options?: FieldOption[] | Json;
+  options?: FieldOption[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -58,14 +58,33 @@ export function parseFieldOptions(options: Json | null | undefined): FieldOption
   try {
     // If options is already an array of FieldOption objects
     if (Array.isArray(options)) {
-      return options as FieldOption[];
+      // Type cast the array to FieldOption[] after validation
+      return (options as any[]).map(opt => {
+        if (typeof opt === 'object' && opt !== null && 'label' in opt && 'value' in opt) {
+          return {
+            label: String(opt.label),
+            value: String(opt.value)
+          };
+        }
+        // Default values if structure doesn't match
+        return { label: 'Unknown', value: 'unknown' };
+      });
     }
     
     // If options is a JSON object with an "options" property (from our DB structure)
     if (typeof options === 'object' && options !== null && 'options' in options) {
       const optionsArray = (options as {options: any}).options;
       if (Array.isArray(optionsArray)) {
-        return optionsArray as FieldOption[];
+        return optionsArray.map(opt => {
+          if (typeof opt === 'object' && opt !== null && 'label' in opt && 'value' in opt) {
+            return {
+              label: String(opt.label),
+              value: String(opt.value)
+            };
+          }
+          // Default values if structure doesn't match
+          return { label: 'Unknown', value: 'unknown' };
+        });
       }
     }
     

@@ -37,6 +37,7 @@ export const usePromptFields = () => {
       // Convert FieldOption[] to Json format for Supabase
       const fieldToUpdate = {
         ...field,
+        // If options exists and is an array, convert it to the format Supabase expects
         options: field.options && Array.isArray(field.options) 
           ? { options: field.options } as Json 
           : field.options
