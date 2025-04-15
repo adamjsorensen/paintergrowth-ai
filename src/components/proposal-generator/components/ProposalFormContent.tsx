@@ -15,6 +15,11 @@ interface ProposalFormContentProps {
   fieldsBySection: Record<string, EnhancedFieldConfig[]>;
 }
 
+interface QuoteItem {
+  price: string | number;
+  [key: string]: any;
+}
+
 const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
   // Calculate subtotal from quote table for tax calculator
   const subtotal = useMemo(() => {
@@ -22,7 +27,8 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
 
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        const validItems = field.value.filter((item) => {
+        // First ensure we have valid items that match our required structure
+        const validItems = field.value.filter((item): item is QuoteItem => {
           return item !== null && 
                  item !== undefined && 
                  typeof item === 'object' &&
@@ -30,6 +36,7 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
                  (typeof item.price === 'string' || typeof item.price === 'number');
         });
 
+        // Now we can safely process the validItems which are guaranteed to have price
         total += validItems.reduce<number>((sum, item) => {
           const price = typeof item.price === 'string' 
             ? parseFloat(item.price) || 0 
