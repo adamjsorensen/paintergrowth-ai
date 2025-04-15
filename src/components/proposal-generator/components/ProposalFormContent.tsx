@@ -15,8 +15,12 @@ interface ProposalFormContentProps {
   fieldsBySection: Record<string, EnhancedFieldConfig[]>;
 }
 
+// Define the QuoteItem interface
 interface QuoteItem {
+  id: string;
   price: string | number;
+  service?: string;
+  notes?: string;
   [key: string]: any;
 }
 
@@ -27,16 +31,18 @@ const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
 
     Object.values(fieldsBySection).flat().forEach((field) => {
       if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        // First ensure we have valid items that match our required structure
-        const validItems = field.value.filter((item): item is QuoteItem => {
+        // Type guard function to check if an item is a valid QuoteItem
+        const isValidQuoteItem = (item: any): item is QuoteItem => {
           return item !== null && 
                  item !== undefined && 
                  typeof item === 'object' &&
                  'price' in item &&
                  (typeof item.price === 'string' || typeof item.price === 'number');
-        });
+        };
 
-        // Now we can safely process the validItems which are guaranteed to have price
+        // Now we can safely process items that pass the type guard
+        const validItems = field.value.filter(isValidQuoteItem);
+
         total += validItems.reduce<number>((sum, item) => {
           const price = typeof item.price === 'string' 
             ? parseFloat(item.price) || 0 

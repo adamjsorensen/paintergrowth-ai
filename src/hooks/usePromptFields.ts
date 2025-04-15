@@ -34,14 +34,13 @@ export const usePromptFields = () => {
 
   const updateField = useMutation({
     mutationFn: async (field: Partial<PromptField> & { id: string }) => {
-      // Convert FieldOption[] to Json format for Supabase
-      const fieldToUpdate = {
-        ...field,
-        // If options exists and is an array, convert it to the format Supabase expects
-        options: field.options && Array.isArray(field.options) 
-          ? { options: field.options } as Json 
-          : field.options
-      };
+      // We need to convert FieldOption[] to the format Supabase expects
+      const fieldToUpdate: Record<string, any> = { ...field };
+      
+      // Handle options conversion to JSON format for Supabase
+      if (field.options && Array.isArray(field.options)) {
+        fieldToUpdate.options = { options: field.options } as unknown as Json;
+      }
       
       const { data, error } = await supabase
         .from('prompt_fields')
