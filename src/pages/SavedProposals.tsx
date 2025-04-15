@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -8,6 +7,7 @@ import { useSavedProposals, Proposal } from "@/hooks/useSavedProposals";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
 import EditableProposalContent from "@/components/proposal-viewer/EditableProposalContent";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const SavedProposals = () => {
   const { proposals, isLoading, deleteProposal, updateProposal } = useSavedProposals();
