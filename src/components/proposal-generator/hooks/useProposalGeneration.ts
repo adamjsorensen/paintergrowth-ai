@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 import { useCompanyProfile } from "@/hooks/useCompanyProfile";
+import { validatePlaceholders } from "@/utils/placeholderValidation";
 
 type FieldValue = string | number | boolean | string[];
 
@@ -17,26 +18,6 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
   const { toast } = useToast();
   const { preferences } = useStylePreferences();
   const { data: companyProfile, isLoading: isLoadingProfile } = useCompanyProfile(user?.id);
-
-  const validatePlaceholders = (prompt: string, values: Record<string, any>) => {
-    const placeholderRegex = /{{([^{}]+)}}/g;
-    const matches = [...prompt.matchAll(placeholderRegex)];
-    
-    const unresolvedPlaceholders = matches
-      .map(match => match[1])
-      .filter(placeholder => {
-        // Ignore conditional blocks
-        if (placeholder.startsWith('#if')) return false;
-        // Check if value exists and is not undefined/null
-        return values[placeholder] === undefined || values[placeholder] === null;
-      });
-
-    if (unresolvedPlaceholders.length > 0) {
-      console.warn('Unresolved placeholders:', unresolvedPlaceholders);
-    }
-
-    return unresolvedPlaceholders;
-  };
 
   const generateProposal = async (values: Record<string, FieldValue>, proposalId: string) => {
     try {
