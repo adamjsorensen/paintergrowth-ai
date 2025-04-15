@@ -213,6 +213,60 @@ export type Database = {
         }
         Relationships: []
       }
+      prompt_fields: {
+        Row: {
+          active: boolean | null
+          complexity: Database["public"]["Enums"]["complexity_level"] | null
+          created_at: string | null
+          help_text: string | null
+          id: string
+          label: string
+          name: string
+          options: Json | null
+          order_position: number
+          placeholder: string | null
+          prompt_snippet: string | null
+          required: boolean | null
+          section: Database["public"]["Enums"]["section_type"]
+          type: Database["public"]["Enums"]["field_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          complexity?: Database["public"]["Enums"]["complexity_level"] | null
+          created_at?: string | null
+          help_text?: string | null
+          id?: string
+          label: string
+          name: string
+          options?: Json | null
+          order_position: number
+          placeholder?: string | null
+          prompt_snippet?: string | null
+          required?: boolean | null
+          section: Database["public"]["Enums"]["section_type"]
+          type: Database["public"]["Enums"]["field_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          complexity?: Database["public"]["Enums"]["complexity_level"] | null
+          created_at?: string | null
+          help_text?: string | null
+          id?: string
+          label?: string
+          name?: string
+          options?: Json | null
+          order_position?: number
+          placeholder?: string | null
+          prompt_snippet?: string | null
+          required?: boolean | null
+          section?: Database["public"]["Enums"]["section_type"]
+          type?: Database["public"]["Enums"]["field_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       prompt_templates: {
         Row: {
           active: boolean
@@ -394,7 +448,30 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      complexity_level: "basic" | "advanced"
+      field_type:
+        | "text"
+        | "textarea"
+        | "quote-table"
+        | "upsell-table"
+        | "number"
+        | "select"
+        | "toggle"
+        | "checkbox-group"
+        | "multi-select"
+        | "date"
+        | "file-upload"
+      section_type:
+        | "client"
+        | "estimator"
+        | "scope"
+        | "pricing"
+        | "tone"
+        | "colors"
+        | "notes"
+        | "terms"
+        | "warranty"
+        | "meta"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -509,6 +586,33 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      complexity_level: ["basic", "advanced"],
+      field_type: [
+        "text",
+        "textarea",
+        "quote-table",
+        "upsell-table",
+        "number",
+        "select",
+        "toggle",
+        "checkbox-group",
+        "multi-select",
+        "date",
+        "file-upload",
+      ],
+      section_type: [
+        "client",
+        "estimator",
+        "scope",
+        "pricing",
+        "tone",
+        "colors",
+        "notes",
+        "terms",
+        "warranty",
+        "meta",
+      ],
+    },
   },
 } as const
