@@ -9,6 +9,7 @@ import FallbackFields from "./FallbackFields";
 import EmptyState from "./EmptyState";
 import { usePromptFields } from "@/hooks/usePromptFields";
 import { useToast } from "@/hooks/use-toast";
+import { PromptField } from "@/types/prompt-field";
 
 interface FieldBuilderProps {
   fields: FieldConfig[];
@@ -29,8 +30,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     try {
       console.log("handleAddField called with values:", values);
       
-      // Create field in prompt_fields table
-      createField.mutate({
+      // Create field in prompt_fields table with proper structure
+      const newFieldData: Omit<PromptField, 'id' | 'created_at' | 'updated_at'> = {
         name: values.name,
         label: values.label,
         type: values.type,
@@ -42,7 +43,10 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
         options: values.options?.length > 0 ? values.options : undefined,
         order_position: fields.length + 1,
         active: true
-      });
+      };
+      
+      // Create the field in the database
+      createField.mutate(newFieldData);
       
       // Also update local state for immediate UI update
       const fieldId = values.name.toLowerCase().replace(/\s+/g, "_");
@@ -82,8 +86,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     if (!editingFieldId) return;
     
     try {
-      // Update in database
-      updateField.mutate({
+      // Update field in the database with proper structure
+      const fieldUpdateData: Partial<PromptField> & { id: string } = {
         id: editingFieldId,
         name: values.name,
         label: values.label,
@@ -94,7 +98,10 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
         options: values.options?.length > 0 ? values.options : undefined,
-      });
+      };
+      
+      // Update in database
+      updateField.mutate(fieldUpdateData);
       
       // Update local state
       setFields((prev) =>
