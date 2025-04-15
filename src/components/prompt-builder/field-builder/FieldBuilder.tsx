@@ -29,6 +29,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
       
       const newField: FieldConfig = {
         id: fieldId,
+        name: values.name,
         label: values.label,
         type: values.type,
         required: values.required,
@@ -157,7 +158,7 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
           onAddField={handleAddField}
           onUpdateField={handleUpdateField}
           onCancel={handleCancel}
-          fields={fields} // Since we updated the type in FieldActions, this is now correct
+          fields={fields}
         />
         
         <div className="space-y-4">

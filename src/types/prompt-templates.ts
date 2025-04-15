@@ -30,6 +30,7 @@ export interface TaxSettings {
 export interface FieldConfig {
   id: string;
   label: string;
+  name: string;  // Added the name property
   type: FieldType;
   required: boolean;
   helpText?: string;
@@ -39,10 +40,10 @@ export interface FieldConfig {
   min?: number;
   max?: number;
   step?: number;
-  sectionId?: string; // Added to group fields into sections
-  icon?: string; // Added for field icons
-  colSpan?: 'full' | 'half'; // Added for layout control
-  complexity: 'basic' | 'advanced'; // Added for streamlined vs. advanced mode
+  sectionId?: string;
+  icon?: string;
+  colSpan?: 'full' | 'half';
+  complexity: 'basic' | 'advanced';
 }
 
 export interface FormSection {
@@ -71,6 +72,7 @@ export const parseFieldConfig = (jsonData: Json): FieldConfig[] => {
       // Add complexity if not present (backward compatibility)
       return parsed.map((field: any) => ({
         ...field,
+        name: field.name || field.id, // Default to id if name is missing
         complexity: field.complexity || 'basic',
         // Ensure options is always an array for multi-select and checkbox-group fields
         options: (field.type === 'multi-select' || field.type === 'select' || field.type === 'checkbox-group') 
@@ -83,6 +85,7 @@ export const parseFieldConfig = (jsonData: Json): FieldConfig[] => {
     const fields = jsonData as unknown as FieldConfig[];
     return fields.map(field => ({
       ...field,
+      name: field.name || field.id, // Default to id if name is missing
       complexity: field.complexity || 'basic',
       // Ensure options is always an array for multi-select and checkbox-group fields
       options: (field.type === 'multi-select' || field.type === 'select' || field.type === 'checkbox-group') 

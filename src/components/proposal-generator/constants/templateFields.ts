@@ -1,3 +1,4 @@
+
 import { FieldConfig } from "@/types/prompt-templates";
 
 export const ENHANCED_FIELDS: FieldConfig[] = [

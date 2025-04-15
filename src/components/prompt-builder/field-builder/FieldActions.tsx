@@ -16,7 +16,7 @@ interface FieldActionsProps {
   onAddField: (values: any) => void;
   onUpdateField: (values: any) => void;
   onCancel: () => void;
-  fields: FieldConfig[]; // Changed from FieldType[] to FieldConfig[]
+  fields: FieldConfig[];
 }
 
 const fieldSchema = z.object({
@@ -49,6 +49,7 @@ const FieldActions: React.FC<FieldActionsProps> = ({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
       label: "",
+      name: "",
       type: "text",
       sectionId: "client",
       required: false,
@@ -66,6 +67,7 @@ const FieldActions: React.FC<FieldActionsProps> = ({
       if (field) {
         form.reset({
           label: field.label,
+          name: field.name || "", // Use name if it exists
           type: field.type,
           sectionId: field.sectionId || "client",
           required: field.required || false,
@@ -78,6 +80,7 @@ const FieldActions: React.FC<FieldActionsProps> = ({
     } else {
       form.reset({
         label: "",
+        name: "",
         type: "text",
         sectionId: "client",
         required: false,

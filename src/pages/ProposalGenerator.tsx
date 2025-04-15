@@ -35,6 +35,7 @@ const ProposalGenerator = () => {
     .filter(field => field.active)
     .map(field => ({
       id: field.id,
+      name: field.name || field.id, // Use name if available, otherwise use id
       label: field.label,
       type: field.type,
       required: field.required,
