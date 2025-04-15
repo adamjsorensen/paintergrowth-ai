@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
 import ProposalNotFound from "@/components/proposal-viewer/ProposalNotFound";
@@ -20,7 +19,6 @@ const ViewProposal = () => {
   const navigate = useNavigate();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   
-  // Use our custom hook for fetching proposal data
   const { proposal, loading, metadata, setProposal } = useProposalFetch(id, user?.id);
 
   const handleCopy = () => {
@@ -41,6 +39,10 @@ const ViewProposal = () => {
     navigate("/generate/proposal");
   };
 
+  const handlePrint = () => {
+    window.open(`/proposal/print/${id}`, '_blank');
+  };
+
   const handleUpdate = async (newContent: string) => {
     if (!user || !id) {
       toast({
@@ -52,10 +54,8 @@ const ViewProposal = () => {
     }
 
     try {
-      // Update the local state immediately for a responsive feel
       setProposal(newContent);
 
-      // Save to database
       const { error } = await supabase
         .from('saved_proposals')
         .update({
@@ -91,14 +91,25 @@ const ViewProposal = () => {
   return (
     <PageLayout title="Your Proposal">
       <div className="container mx-auto max-w-5xl py-8 px-4">
-        <Button 
-          variant="outline" 
-          className="mb-4"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Form
-        </Button>
+        <div className="flex justify-between items-center mb-4">
+          <Button 
+            variant="outline"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Form
+          </Button>
+
+          {proposal && (
+            <Button
+              variant="secondary"
+              onClick={handlePrint}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+          )}
+        </div>
         
         {proposal ? (
           <EditableProposalContent 
@@ -112,7 +123,6 @@ const ViewProposal = () => {
         )}
       </div>
 
-      {/* Save Dialog */}
       {showSaveDialog && proposal && (
         <SaveProposalDialog
           open={showSaveDialog}

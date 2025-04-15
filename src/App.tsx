@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +24,7 @@ import AISettings from "./pages/admin/AISettings";
 import VectorUpload from "./pages/admin/VectorUpload";
 import DocumentManager from "./pages/admin/DocumentManager";
 import CompanyProfile from "./pages/profile/CompanyProfile";
+import PrintProposal from "./pages/PrintProposal";
 
 const queryClient = new QueryClient();
 
@@ -75,7 +75,12 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Admin Routes */}
+              <Route path="/proposal/print/:id" element={
+                <ProtectedRoute>
+                  <PrintProposal />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/admin" element={
                 <AdminRoute>
                   <AdminHub />
@@ -112,7 +117,6 @@ const App = () => (
                 </AdminRoute>
               } />
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
