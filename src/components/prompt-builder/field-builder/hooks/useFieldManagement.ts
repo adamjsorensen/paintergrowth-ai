@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
@@ -24,7 +25,7 @@ export const useFieldManagement = (
         complexity: values.complexity || 'basic',
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
-        options: values.options?.length > 0 ? values.options : undefined,
+        options: options?.length > 0 ? { options: options } : undefined,
         order_position: fields.length + 1,
         active: true
       };
@@ -77,7 +78,7 @@ export const useFieldManagement = (
         complexity: values.complexity || 'basic',
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
-        options: values.options?.length > 0 ? values.options : undefined,
+        options: options?.length > 0 ? { options: options } : undefined,
       };
       
       updateField.mutate(fieldUpdateData);
@@ -88,7 +89,7 @@ export const useFieldManagement = (
             return {
               ...field,
               ...values,
-              options: values.options
+              options: options
             };
           }
           return field;

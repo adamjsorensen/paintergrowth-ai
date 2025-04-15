@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,7 @@ import PromptInfoTab from "@/components/prompt-builder/tabs/PromptInfoTab";
 import SystemPromptTab from "@/components/prompt-builder/tabs/SystemPromptTab";
 import PreviewTab from "@/components/prompt-builder/tabs/PreviewTab";
 import { useToast } from "@/hooks/use-toast";
-import { usePromptFields } from "@/hooks/usePromptFields";
+import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
 
 const promptSchema = z.object({
   name: z.string().min(1, "Display name is required"),
@@ -64,13 +63,11 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
       let response;
       
       if (initialTemplate) {
-        // Update existing template
         response = await supabase
           .from("prompt_templates")
           .update(updatedTemplate)
           .eq("id", initialTemplate.id);
       } else {
-        // Create new template
         response = await supabase
           .from("prompt_templates")
           .insert([updatedTemplate]);
