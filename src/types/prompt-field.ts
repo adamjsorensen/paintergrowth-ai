@@ -25,8 +25,7 @@ export type SectionType =
   | 'notes'
   | 'terms'
   | 'warranty'
-  | 'meta'
-  | 'additional';
+  | 'meta';
 
 export type ComplexityLevel = 'basic' | 'advanced';
 

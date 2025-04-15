@@ -410,6 +410,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      migrate_template_fields: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sparsevec_out: {
         Args: { "": unknown }
         Returns: unknown
@@ -472,6 +476,8 @@ export type Database = {
         | "terms"
         | "warranty"
         | "meta"
+        | "project"
+        | "surfaces"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -612,6 +618,8 @@ export const Constants = {
         "terms",
         "warranty",
         "meta",
+        "project",
+        "surfaces",
       ],
     },
   },
