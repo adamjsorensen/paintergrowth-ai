@@ -24,4 +24,4 @@ export type ContentTypeOptions = "faq" | "template" | "terminology";
 export type CollectionOptions = "general" | "proposal" | "user";
 
 // Model options
-export type ModelOptions = "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-4o";
+export type ModelOptions = | "gpt-4o-mini" | "gpt-4o-mini-search-preview" | "gpt-4.1-nano" | "gpt-4.1-mini" | "google/gemini-2.5-pro-exp-03-25:free" | "anthropic/claude-3.5-haiku-20241022" | "x-ai/grok-3-mini-beta" | "gpt-3.5-turbo" | "gpt-4o";

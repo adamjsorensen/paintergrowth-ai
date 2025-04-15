@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,7 @@ const AISettingsPage = () => {
   // Form setup
   const form = useForm<FormValues>({
     defaultValues: {
-      model: "gpt-4o-mini",
+      model: "gpt-4o-mini", // Make sure this default exists among your new options if needed
       temperature: 0.7,
       max_tokens: 1024,
       default_system_prompt: "",
@@ -49,7 +48,7 @@ const AISettingsPage = () => {
         .limit(1)
         .single();
         
-      if (error && error.code !== "PGRST116") { // PGRST116 is "no rows returned"
+      if (error && error.code !== "PGRST116") {
         console.error("Error fetching AI settings:", error);
         return null;
       }
@@ -95,7 +94,7 @@ const AISettingsPage = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["aiSettings"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: `Failed to update settings: ${error.message}`,
@@ -171,6 +170,13 @@ const AISettingsPage = () => {
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="gpt-4o-mini">OpenAI GPT-4o-mini</SelectItem>
+                              <SelectItem value="gpt-4o-mini-search-preview">OpenAI GPT-4o-mini Search Preview</SelectItem>
+                              <SelectItem value="gpt-4.1-nano">OpenAI GPT-4.1 Nano</SelectItem>
+                              <SelectItem value="gpt-4.1-mini">OpenAI GPT-4.1 Mini</SelectItem>
+                              <SelectItem value="google/gemini-2.5-pro-exp-03-25:free">Google Gemini-2.5 Pro Exp (Free)</SelectItem>
+                              <SelectItem value="anthropic/claude-3.5-haiku-20241022">Anthropic Claude-3.5 Haiku (20241022)</SelectItem>
+                              <SelectItem value="x-ai/grok-3-mini-beta">X-AI Grok-3 Mini Beta</SelectItem>
+                              {/* You can keep or adjust the existing legacy options as needed */}
                               <SelectItem value="gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</SelectItem>
                               <SelectItem value="gpt-4o">OpenAI GPT-4o</SelectItem>
                             </SelectContent>
