@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { FieldConfig, FieldOption } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
 import FieldBuilderHeader from "./FieldBuilderHeader";
 import FieldActions from "./FieldActions";
 import FieldList from "./FieldList";
+import FallbackFields from "./FallbackFields";
 import EmptyState from "./EmptyState";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,6 +18,9 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [options, setOptions] = useState<FieldOption[]>([]);
   const { toast } = useToast();
+
+  const databaseFields = fields.filter(field => !field.id.startsWith('enhanced-'));
+  const fallbackFields = fields.filter(field => field.id.startsWith('enhanced-'));
 
   const handleAddField = (values: any) => {
     try {
@@ -162,10 +165,26 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
         />
         
         <div className="space-y-4">
-          {fields.length === 0 && !isAddingField && <EmptyState />}
+          {databaseFields.length === 0 && !isAddingField && <EmptyState />}
           
-          <FieldList
-            fields={fields}
+          {databaseFields.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-foreground">
+                  Input Fields ({databaseFields.length})
+                </h3>
+              </div>
+              <FieldList
+                fields={databaseFields}
+                onEditField={handleEditField}
+                onDeleteField={handleDeleteField}
+                onMoveField={handleMoveField}
+              />
+            </div>
+          )}
+          
+          <FallbackFields
+            fields={fallbackFields}
             onEditField={handleEditField}
             onDeleteField={handleDeleteField}
             onMoveField={handleMoveField}
