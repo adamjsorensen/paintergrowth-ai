@@ -1,28 +1,29 @@
-
 import { FieldConfig } from "@/types/prompt-templates";
 
-// Enhanced field configuration with updated complexity levels based on requirements
 export const ENHANCED_FIELDS: FieldConfig[] = [
   {
-    id: 'clientName',
+    id: 'client-name',
+    name: 'clientName',
     label: 'Client Name',
     type: 'text',
     required: true,
     order: 10,
     placeholder: 'Enter client name',
-    complexity: 'basic' // Essential field
+    complexity: 'basic'
   },
   {
-    id: 'projectAddress',
+    id: 'project-address',
+    name: 'projectAddress',
     label: 'Project Address',
     type: 'textarea',
     required: true,
     order: 15,
     placeholder: 'Enter the full project address',
-    complexity: 'basic' // Essential field
+    complexity: 'basic'
   },
   {
-    id: 'jobType',
+    id: 'job-type',
+    name: 'jobType',
     label: 'Job Type',
     type: 'select',
     required: true,
@@ -34,19 +35,21 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'deck', label: 'Deck/Fence' },
       { value: 'commercial', label: 'Commercial' }
     ],
-    complexity: 'basic' // Essential field
+    complexity: 'basic'
   },
   {
-    id: 'squareFootage',
+    id: 'square-footage',
+    name: 'squareFootage',
     label: 'Square Footage',
     type: 'number',
     required: false,
     order: 30,
     placeholder: 'Approx. square footage',
-    complexity: 'advanced' // Advanced field
+    complexity: 'advanced'
   },
   {
-    id: 'surfacesToPaint',
+    id: 'surfaces-to-paint',
+    name: 'surfacesToPaint',
     label: 'Surfaces to Paint',
     type: 'multi-select',
     required: true,
@@ -58,10 +61,11 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'doors', label: 'Doors' },
       { value: 'cabinets', label: 'Cabinets' }
     ],
-    complexity: 'basic' // Essential field
+    complexity: 'basic'
   },
   {
-    id: 'prepNeeds',
+    id: 'prep-needs',
+    name: 'prepNeeds',
     label: 'Preparation Needs',
     type: 'checkbox-group',
     required: false,
@@ -74,92 +78,102 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'patching', label: 'Patching' },
       { value: 'priming', label: 'Priming' }
     ],
-    complexity: 'advanced' // Advanced field
+    complexity: 'advanced'
   },
   {
-    id: 'quoteItems',
+    id: 'quote-items',
+    name: 'quoteItems',
     label: 'Quote Items',
     type: 'quote-table',
     required: true,
     order: 55,
     helpText: 'Add services and their costs to the quote',
-    complexity: 'basic' // Essential field for pricing
+    complexity: 'basic'
   },
   {
-    id: 'upsellOptions',
+    id: 'upsell-options',
+    name: 'upsellOptions',
     label: 'Optional Upgrades',
     type: 'upsell-table',
     required: false,
     order: 56,
     helpText: 'Add premium options your client might be interested in',
-    complexity: 'advanced' // Advanced field for upselling
+    complexity: 'advanced'
   },
   {
-    id: 'taxSettings',
+    id: 'tax-settings',
+    name: 'taxSettings',
     label: 'Tax Calculation',
     type: 'tax-calculator',
     required: false,
     order: 57,
     helpText: 'Configure tax settings for this quote',
-    complexity: 'advanced' // Advanced field for tax
+    complexity: 'advanced'
   },
   {
-    id: 'colorPalette',
+    id: 'color-palette',
+    name: 'colorPalette',
     label: 'Preferred Colors / Palette',
     type: 'textarea',
     required: false,
     order: 60,
     placeholder: 'Describe your color preferences',
-    complexity: 'advanced' // Advanced field - changed from basic
+    complexity: 'advanced'
   },
   {
     id: 'timeline',
+    name: 'timeline',
     label: 'Timeline or Start Date',
     type: 'date',
     required: false,
     order: 70,
-    complexity: 'basic' // Essential field
+    complexity: 'basic'
   },
   {
-    id: 'specialNotes',
+    id: 'special-notes',
+    name: 'specialNotes',
     label: 'Special Notes',
     type: 'textarea',
     required: false,
     order: 80,
     placeholder: 'Any additional details or requirements',
-    complexity: 'advanced' // Advanced field
+    complexity: 'advanced'
   },
   {
-    id: 'showDetailedScope',
+    id: 'show-detailed-scope',
+    name: 'showDetailedScope',
     label: 'Show detailed scope of work',
     type: 'toggle',
     required: false,
     order: 90,
-    complexity: 'advanced' // Advanced field
+    complexity: 'advanced'
   },
   {
-    id: 'breakoutQuote',
+    id: 'breakout-quote',
+    name: 'breakoutQuote',
     label: 'Break out quote summary',
     type: 'toggle',
     required: false,
     order: 100,
-    complexity: 'advanced' // Advanced field
+    complexity: 'advanced'
   },
   {
-    id: 'includeTerms',
+    id: 'include-terms',
+    name: 'includeTerms',
     label: 'Include terms & conditions',
     type: 'toggle',
     required: false,
     order: 110,
-    complexity: 'advanced' // Advanced field - changed from basic
+    complexity: 'advanced'
   },
   {
-    id: 'uploadFiles',
+    id: 'upload-files',
+    name: 'uploadFiles',
     label: 'Upload Files/Images',
     type: 'file-upload',
     required: false,
     order: 120,
     helpText: 'Upload reference images or documents',
-    complexity: 'advanced' // Advanced field
+    complexity: 'advanced'
   }
 ];

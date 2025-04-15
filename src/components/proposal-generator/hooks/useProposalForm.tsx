@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -28,18 +27,18 @@ export const useProposalForm = (
     }
   };
 
-  const handleFieldChange = (fieldId: string, value: FieldValue) => {
+  const handleFieldChange = (fieldName: string, value: FieldValue) => {
     setFieldValues(prev => ({
       ...prev,
-      [fieldId]: value
+      [fieldName]: value
     }));
   };
 
   const handleSubmit = async () => {
     const missingRequiredFields = fields
       .filter(field => field.required)
-      .filter(field => !fieldValues[field.id] && fieldValues[field.id] !== false && 
-        !(Array.isArray(fieldValues[field.id]) && (fieldValues[field.id] as any[]).length > 0))
+      .filter(field => !fieldValues[field.name] && fieldValues[field.name] !== false && 
+        !(Array.isArray(fieldValues[field.name]) && (fieldValues[field.name] as any[]).length > 0))
       .map(field => field.label);
 
     if (missingRequiredFields.length > 0) {

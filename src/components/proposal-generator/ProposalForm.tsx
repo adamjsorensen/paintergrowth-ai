@@ -1,4 +1,4 @@
-
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import { FORM_SECTIONS } from "./constants/formSections";
 
 type FieldValue = string | number | boolean | string[];
 
-// Add the EnhancedFieldConfig type that combines FieldConfig with additional properties
 interface EnhancedFieldConfig extends FieldConfig {
   value: FieldValue;
   onChange: (value: FieldValue) => void;
@@ -38,45 +37,41 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
   const getFieldsBySection = () => {
     const result: Record<string, EnhancedFieldConfig[]> = {};
     
-    // Initialize empty sections
     FORM_SECTIONS.forEach(section => {
       result[section.id] = [];
     });
     
-    // Group fields by sectionId
     visibleFields.forEach(field => {
       const sectionId = field.sectionId || 'additional';
       
       if (result[sectionId]) {
         result[sectionId].push({
           ...field,
-          value: fieldValues[field.id] ?? (
+          value: fieldValues[field.name] ?? (
             field.type === 'checkbox-group' || field.type === 'multi-select' || field.type === 'file-upload' 
               ? [] 
               : field.type === 'toggle' 
                 ? false 
                 : ""
           ),
-          onChange: (value: FieldValue) => handleFieldChange(field.id, value)
+          onChange: (value: FieldValue) => handleFieldChange(field.name, value)
         });
       } else {
-        // If sectionId doesn't match any predefined section, put in 'additional'
         result['additional'] = result['additional'] || [];
         result['additional'].push({
           ...field,
-          value: fieldValues[field.id] ?? (
+          value: fieldValues[field.name] ?? (
             field.type === 'checkbox-group' || field.type === 'multi-select' || field.type === 'file-upload' 
               ? [] 
               : field.type === 'toggle' 
                 ? false 
                 : ""
           ),
-          onChange: (value: FieldValue) => handleFieldChange(field.id, value)
+          onChange: (value: FieldValue) => handleFieldChange(field.name, value)
         });
       }
     });
     
-    // Sort fields within each section by order
     Object.keys(result).forEach(sectionId => {
       result[sectionId].sort((a, b) => a.order - b.order);
     });

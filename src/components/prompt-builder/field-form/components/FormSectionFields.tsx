@@ -1,6 +1,6 @@
 
 import React from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 
@@ -20,6 +20,23 @@ const FormSectionFields = ({ form }: FormSectionFieldsProps) => {
             <FormControl>
               <Input placeholder="Client Name" {...field} />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Template Variable Name</FormLabel>
+            <FormControl>
+              <Input placeholder="clientName" {...field} />
+            </FormControl>
+            <FormDescription>
+              This will be used as {"{{variableName}}"} in the template. Use camelCase without spaces.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

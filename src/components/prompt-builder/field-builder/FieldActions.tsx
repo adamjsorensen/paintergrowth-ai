@@ -21,6 +21,10 @@ interface FieldActionsProps {
 
 const fieldSchema = z.object({
   label: z.string().min(1, "Label is required"),
+  name: z.string()
+    .min(1, "Template variable name is required")
+    .regex(/^[a-z][a-zA-Z0-9]*$/, "Must start with lowercase letter and contain only letters and numbers")
+    .transform(val => val.replace(/\s+/g, '')),
   type: z.enum(["text", "textarea", "select", "number", "toggle", "date", "checkbox-group", "multi-select", "file-upload", "quote-table", "upsell-table", "tax-calculator"]),
   sectionId: z.string().min(1, "Section is required"),
   required: z.boolean().default(false),
