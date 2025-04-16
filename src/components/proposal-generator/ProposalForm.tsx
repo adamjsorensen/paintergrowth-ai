@@ -9,7 +9,7 @@ import ProposalFormHeader from "./components/ProposalFormHeader";
 import ProposalFormContent from "./components/ProposalFormContent";
 import { FORM_SECTIONS } from "./constants/formSections";
 
-type FieldValue = string | number | boolean | string[];
+type FieldValue = string | number | boolean | string[] | any[];
 
 interface EnhancedFieldConfig extends FieldConfig {
   value: FieldValue;

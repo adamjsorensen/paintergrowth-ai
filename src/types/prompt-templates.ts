@@ -14,4 +14,71 @@ export type FieldType =
   | 'date'
   | 'file-upload'
   | 'tax-calculator'
-  | 'matrix-selector';  // Added matrix-selector to the FieldType
+  | 'matrix-selector';
+
+export interface FieldOption {
+  value: string;
+  label: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  service: string;
+  price: string | number;
+  notes?: string;
+}
+
+export interface UpsellItem {
+  id: string;
+  service: string;
+  price: string | number;
+  included: boolean;
+}
+
+export interface TaxSettings {
+  rate: number;
+  enabled: boolean;
+}
+
+export interface FieldConfig {
+  id: string;
+  name?: string;
+  label: string;
+  type: FieldType;
+  required?: boolean;
+  helpText?: string;
+  placeholder?: string;
+  options?: FieldOption[];
+  min?: number;
+  max?: number;
+  step?: number;
+  order: number;
+  sectionId?: string;
+  complexity?: 'basic' | 'advanced';
+}
+
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  system_prompt: string;
+  field_config: FieldConfig[] | string;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const parseFieldConfig = (fieldConfig: string | FieldConfig[]): FieldConfig[] => {
+  if (typeof fieldConfig === 'string') {
+    try {
+      return JSON.parse(fieldConfig);
+    } catch (error) {
+      console.error('Error parsing field config', error);
+      return [];
+    }
+  }
+  return fieldConfig;
+};
+
+export const stringifyFieldConfig = (fieldConfig: FieldConfig[]): string => {
+  return JSON.stringify(fieldConfig);
+};
