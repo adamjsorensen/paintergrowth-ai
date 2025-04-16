@@ -132,7 +132,7 @@ const StylePreferences = () => {
                 max={100} 
                 step={5} 
                 value={[currentLength]}
-                onValueChange={handleLengthChange}
+                onValueChange={(value) => handleLengthChange(value)}
                 className="mb-4"
               />
             </div>

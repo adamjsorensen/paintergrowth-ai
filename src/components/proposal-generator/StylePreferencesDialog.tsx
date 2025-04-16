@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
@@ -46,7 +45,7 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
     }));
   };
 
-  const handleJobTypeChange = (value: 'interior' | 'exterior') => {
+  const handleJobTypeChange = (value: "interior" | "exterior") => {
     setPreferences(prev => ({
       ...prev,
       jobType: value
@@ -68,7 +67,7 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
             
             <div className="flex justify-center py-2">
               <InteriorExteriorToggle 
-                value={preferences.jobType || 'interior'}
+                value={preferences.jobType}
                 onChange={handleJobTypeChange} 
               />
             </div>
