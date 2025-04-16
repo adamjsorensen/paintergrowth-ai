@@ -44,7 +44,7 @@ export {
   inferColumnsFromData
 };
 
-// Re-export the utility functions from prompt-templates.ts
+// Re-export the utility functions from prompt-templates
 export { 
   generatePreviewText,
   stringifyFieldConfig,
