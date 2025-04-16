@@ -130,6 +130,43 @@ const MatrixField: React.FC<MatrixFieldProps> = ({
     }
     return null;
   };
+  
+  // Organize rows by groups
+  const organizeRows = () => {
+    // If no groups defined, just return all rows
+    if (!matrixConfig.groups || matrixConfig.groups.length === 0) {
+      return { ungrouped: matrixConfig.rows.map(row => row.id) };
+    }
+    
+    // Get rows organized by groups
+    const groupedRows: Record<string, string[]> = {};
+    
+    // First add all defined groups
+    matrixConfig.groups.forEach(group => {
+      groupedRows[group.id] = group.rowIds;
+    });
+    
+    // Find any rows not in a group
+    const allGroupedRowIds = Object.values(groupedRows).flat();
+    const ungroupedRowIds = matrixConfig.rows
+      .map(row => row.id)
+      .filter(id => !allGroupedRowIds.includes(id));
+    
+    // Add ungrouped rows if any exist
+    if (ungroupedRowIds.length > 0) {
+      groupedRows.ungrouped = ungroupedRowIds;
+    }
+    
+    return groupedRows;
+  };
+
+  const groupedRows = organizeRows();
+  
+  // Get a mapping of row IDs to their corresponding MatrixItem
+  const rowMapping: Record<string, MatrixItem> = {};
+  matrixValue.forEach(item => {
+    rowMapping[item.id] = item;
+  });
 
   return (
     <div className="space-y-2">
@@ -154,16 +191,86 @@ const MatrixField: React.FC<MatrixFieldProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {matrixValue.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell className="font-medium">{row.label || row.id}</TableCell>
-                {matrixConfig.columns.map(column => (
-                  <TableCell key={`${row.id}-${column.id}`} className="text-center">
-                    {renderCell(row, column)}
-                  </TableCell>
+            {matrixConfig.groups && matrixConfig.groups.length > 0 ? (
+              // Render grouped rows with category headers
+              <>
+                {matrixConfig.groups.map(group => (
+                  <React.Fragment key={group.id}>
+                    {/* Group header row */}
+                    <TableRow className="bg-muted/20 font-medium">
+                      <TableCell 
+                        colSpan={matrixConfig.columns.length + 1}
+                        className="py-2 text-muted-foreground"
+                        role="rowheader"
+                      >
+                        {group.label}:
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* Group rows */}
+                    {group.rowIds.map(rowId => {
+                      const rowItem = rowMapping[rowId];
+                      // Skip if the row doesn't exist in values
+                      if (!rowItem) return null;
+                      
+                      return (
+                        <TableRow key={rowId}>
+                          <TableCell className="font-medium">{rowItem.label || rowItem.id}</TableCell>
+                          {matrixConfig.columns.map(column => (
+                            <TableCell key={`${rowId}-${column.id}`} className="text-center">
+                              {renderCell(rowItem, column)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
+                  </React.Fragment>
                 ))}
-              </TableRow>
-            ))}
+                
+                {/* Ungrouped rows if any */}
+                {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
+                  <>
+                    <TableRow className="bg-muted/20 font-medium">
+                      <TableCell 
+                        colSpan={matrixConfig.columns.length + 1}
+                        className="py-2 text-muted-foreground"
+                        role="rowheader"
+                      >
+                        Other Rooms:
+                      </TableCell>
+                    </TableRow>
+                    
+                    {groupedRows.ungrouped.map(rowId => {
+                      const rowItem = rowMapping[rowId];
+                      if (!rowItem) return null;
+                      
+                      return (
+                        <TableRow key={rowId}>
+                          <TableCell className="font-medium">{rowItem.label || rowItem.id}</TableCell>
+                          {matrixConfig.columns.map(column => (
+                            <TableCell key={`${rowId}-${column.id}`} className="text-center">
+                              {renderCell(rowItem, column)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
+                  </>
+                )}
+              </>
+            ) : (
+              // Render rows without groups (backward compatibility)
+              matrixValue.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell className="font-medium">{row.label || row.id}</TableCell>
+                  {matrixConfig.columns.map(column => (
+                    <TableCell key={`${row.id}-${column.id}`} className="text-center">
+                      {renderCell(row, column)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

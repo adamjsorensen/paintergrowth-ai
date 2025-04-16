@@ -1,3 +1,4 @@
+
 /**
  * Core types for the prompt template system
  */
@@ -20,9 +21,16 @@ export interface MatrixColumn {
   type: 'number' | 'checkbox' | 'text';
 }
 
+export interface MatrixGroup {
+  id: string;
+  label: string;
+  rowIds: string[];
+}
+
 export interface MatrixConfig {
   rows: MatrixRow[];
   columns: MatrixColumn[];
+  groups?: MatrixGroup[];
 }
 
 // Field types supported by the system

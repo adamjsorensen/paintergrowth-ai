@@ -10,6 +10,7 @@ import FieldToggles from "./components/FieldToggles";
 import SectionSelect from "./components/SectionSelect";
 import OptionInputs from "./OptionInputs";
 import MatrixConfigEditor from "./MatrixConfigEditor";
+import GroupsConfigEditor from "./GroupsConfigEditor";
 
 interface FieldFormProps {
   form: UseFormReturn<any>;
@@ -84,6 +85,15 @@ const FieldForm: React.FC<FieldFormProps> = ({
     }
   };
 
+  const handleGroupsChange = (groups: MatrixConfig['groups']) => {
+    if (setMatrixConfig && matrixConfig) {
+      setMatrixConfig({
+        ...matrixConfig,
+        groups
+      });
+    }
+  };
+
   return (
     <Card className="my-4">
       <CardContent className="pt-6">
@@ -109,10 +119,18 @@ const FieldForm: React.FC<FieldFormProps> = ({
           )}
 
           {isMatrixSelector() && matrixConfig && setMatrixConfig && (
-            <MatrixConfigEditor 
-              config={matrixConfig} 
-              onChange={handleMatrixConfigChange}
-            />
+            <>
+              <GroupsConfigEditor 
+                groups={matrixConfig.groups || []}
+                rows={matrixConfig.rows}
+                onChange={handleGroupsChange}
+              />
+              
+              <MatrixConfigEditor 
+                config={matrixConfig} 
+                onChange={handleMatrixConfigChange}
+              />
+            </>
           )}
           
           <div className="flex justify-end gap-2 pt-2">
