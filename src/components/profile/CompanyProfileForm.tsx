@@ -45,16 +45,22 @@ const CompanyProfileForm = ({ userId, initialData, isLoading }: CompanyProfileFo
     mutationFn: async (values: Omit<CompanyProfileFormValues, "currentKeyword">) => {
       if (!userId) throw new Error("User not authenticated");
 
-      const updatedValues = {
-        ...values,
-        user_id: userId,
+      // Create a properly typed object with required user_id
+      const updatedValues: CompanyProfileUpdate = {
+        user_id: userId, // Explicitly set as non-optional
+        business_name: values.business_name,
+        location: values.location,
+        services_offered: values.services_offered,
+        team_size: values.team_size,
+        pricing_notes: values.pricing_notes,
+        preferred_tone: values.preferred_tone,
         brand_keywords: keywords,
         logo_url: logoUrl,
       };
 
       const { data, error } = await supabase
         .from("company_profiles")
-        .upsert(updatedValues as CompanyProfileUpdate)
+        .upsert(updatedValues)
         .select()
         .single();
 
