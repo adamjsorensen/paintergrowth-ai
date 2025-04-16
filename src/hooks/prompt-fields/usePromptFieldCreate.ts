@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PromptFieldInput, formatFieldOptions } from './types';
+import { PromptFieldInput } from './types';
 import { isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from '@/types/prompt-templates';
 
 export const usePromptFieldCreate = () => {
@@ -30,7 +30,7 @@ export const usePromptFieldCreate = () => {
       }
 
       // Prepare field data for database insertion
-      const fieldData: any = {
+      const fieldData = {
         name: field.name,
         label: field.label,
         type: field.type,

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
@@ -37,6 +36,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   const getMatrixConfig = (): MatrixConfig => {
     // Default configuration if none is provided
     const defaultConfig: MatrixConfig = {
+      type: 'matrix-config',
       rows: [
         { id: "kitchen", label: "Kitchen" },
         { id: "living_room", label: "Living Room" },
@@ -61,7 +61,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     // Check if options exist and are in the right format
     if (field.options && typeof field.options === "object" && !Array.isArray(field.options) &&
         'rows' in field.options && 'columns' in field.options) {
-      return field.options as MatrixConfig;
+      // Ensure the type property exists
+      return {
+        type: 'matrix-config',
+        ...field.options
+      } as MatrixConfig;
     }
     
     return defaultConfig;

@@ -35,10 +35,12 @@ export const convertToFieldConfig = (promptFields: PromptField[]): FieldConfig[]
             : field.options;
             
           // Check if options already has the expected structure
-          if (options && 'rows' in options && 'columns' in options) {
+          if (options && typeof options === 'object' && !Array.isArray(options) && 'rows' in options && 'columns' in options) {
             // Ensure the type discriminator is present
             parsedOptions = { ...options, type: 'matrix-config' };
-          } else if (options && options.options && 'rows' in options.options && 'columns' in options.options) {
+          } else if (options && typeof options === 'object' && !Array.isArray(options) && 'options' in options && 
+                     typeof options.options === 'object' && !Array.isArray(options.options) && 
+                     'rows' in options.options && 'columns' in options.options) {
             // Handle nested options structure that sometimes comes from the database
             parsedOptions = { ...options.options, type: 'matrix-config' };
           } else {
@@ -50,7 +52,8 @@ export const convertToFieldConfig = (promptFields: PromptField[]): FieldConfig[]
           // For option-based fields
           if (Array.isArray(field.options)) {
             parsedOptions = field.options;
-          } else if (field.options.options && Array.isArray(field.options.options)) {
+          } else if (typeof field.options === 'object' && field.options !== null && 
+                     'options' in field.options && Array.isArray(field.options.options)) {
             // Handle nested options structure
             parsedOptions = field.options.options;
           }
