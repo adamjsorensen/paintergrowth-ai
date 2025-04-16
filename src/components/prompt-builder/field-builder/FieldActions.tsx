@@ -40,8 +40,9 @@ const fieldSchema = z.object({
     "quote-table", 
     "upsell-table", 
     "tax-calculator",
-    "matrix-selector"
-  ]),
+    "matrix-selector",
+    "scope-of-work"
+  ] as const),
   sectionId: z.string().min(1, "Section is required"),
   required: z.boolean().default(false),
   complexity: z.enum(["basic", "advanced"]).default("basic"),

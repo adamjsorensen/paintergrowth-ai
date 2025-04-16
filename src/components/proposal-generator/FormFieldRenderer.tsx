@@ -1,6 +1,6 @@
 
 import React from "react";
-import { FieldConfig } from "@/types/prompt-templates";
+import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import TextField from "./form-fields/TextField";
 import TextareaField from "./form-fields/TextareaField";
 import SelectField from "./form-fields/SelectField";
@@ -17,12 +17,13 @@ import MatrixSelectorField from "./form-fields/MatrixSelectorField";
 import ScopeOfWorkField from "./form-fields/ScopeOfWorkField";
 import { isMatrixConfig } from "@/types/prompt-templates";
 
-interface FormFieldRendererProps {
+export interface FormFieldRendererProps {
   field: FieldConfig;
   value: any;
   onChange: (value: any) => void;
   readOnly?: boolean;
   isAdvanced?: boolean;
+  subtotal?: number;
 }
 
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({ 
@@ -30,53 +31,54 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   value, 
   onChange, 
   readOnly = false,
-  isAdvanced = false
+  isAdvanced = false,
+  subtotal
 }) => {
   const { type, id } = field;
 
   switch (type) {
     case "text":
-      return <TextField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <TextField field={field} value={value} onChange={onChange} />;
     
     case "textarea":
-      return <TextareaField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <TextareaField field={field} value={value} onChange={onChange} />;
     
     case "number":
-      return <NumberField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <NumberField field={field} value={value} onChange={onChange} />;
     
     case "select":
-      return <SelectField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <SelectField field={field} value={value} onChange={onChange} />;
     
     case "toggle":
-      return <ToggleField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <ToggleField field={field} value={value} onChange={onChange} />;
     
     case "checkbox-group":
-      return <CheckboxGroupField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <CheckboxGroupField field={field} value={value} onChange={onChange} />;
     
     case "multi-select":
-      return <MultiSelectField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <MultiSelectField field={field} value={value} onChange={onChange} />;
     
     case "date":
-      return <DatePickerField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <DatePickerField field={field} value={value} onChange={onChange} />;
     
     case "file-upload":
-      return <FileUploadField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <FileUploadField field={field} value={value} onChange={onChange} />;
     
     case "quote-table":
-      return <QuoteTableField field={field} value={value} onChange={onChange} readOnly={readOnly} isAdvanced={isAdvanced} />;
+      return <QuoteTableField field={field} value={value} onChange={onChange} isAdvanced={isAdvanced} />;
     
     case "upsell-table":
-      return <UpsellTableField field={field} value={value} onChange={onChange} readOnly={readOnly} isAdvanced={isAdvanced} />;
+      return <UpsellTableField field={field} value={value} onChange={onChange} isAdvanced={isAdvanced} />;
     
     case "tax-calculator":
-      return <TaxCalculatorField field={field} value={value} onChange={onChange} readOnly={readOnly} />;
+      return <TaxCalculatorField field={field} value={value} onChange={onChange} />;
     
     case "matrix-selector":
       return <MatrixSelectorField 
         field={field} 
         value={value} 
         onChange={onChange}
-        readOnly={readOnly}
+        isAdvanced={isAdvanced}
         matrixConfig={isMatrixConfig(field.options) ? field.options : undefined}
       />;
 

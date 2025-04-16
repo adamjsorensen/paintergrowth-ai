@@ -9,12 +9,15 @@ export * from './base';
 // Re-export item types
 export * from './item-types';
 
-// Selectively re-export from matrix to avoid conflicts
+// Explicitly re-export the matrix types to avoid conflicts
 export {
   MatrixRow, 
   MatrixColumn, 
   MatrixGroup, 
-  MatrixConfig
+  MatrixConfig,
+  createDefaultMatrixConfig,
+  isMatrixConfig,
+  validateMatrixConfig
 } from './matrix';
 
 // Selectively re-export utility functions from utils to avoid conflicts
@@ -24,10 +27,3 @@ export {
   parseFieldConfig,
   generatePreviewText
 } from './utils';
-
-// Explicitly re-export the utility functions that had conflicts
-export {
-  createDefaultMatrixConfig, 
-  isMatrixConfig, 
-  validateMatrixConfig
-} from './matrix';
