@@ -47,8 +47,8 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
         body: {
           promptId: templateId || "00000000-0000-0000-0000-000000000000",
           values: mergedValues,
-          proposalId: proposalId,
-          modelName: 'openai/gpt-4o-mini'
+          proposalId: proposalId
+          // Removed hard-coded modelName to use the one from ai_settings table
         }
       });
 
