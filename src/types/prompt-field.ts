@@ -1,8 +1,7 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export type FieldType = 
-  | 'text'
+  | 'text' 
   | 'textarea' 
   | 'quote-table'
   | 'upsell-table'
@@ -13,7 +12,8 @@ export type FieldType =
   | 'multi-select'
   | 'date'
   | 'file-upload'
-  | 'tax-calculator';
+  | 'tax-calculator'
+  | 'matrix-selector';
 
 export type SectionType = 
   | 'client'
