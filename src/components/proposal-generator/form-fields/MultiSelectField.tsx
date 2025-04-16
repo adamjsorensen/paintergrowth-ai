@@ -10,6 +10,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -31,57 +32,24 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
   const { id, label, required, helpText, placeholder } = field;
   const [open, setOpen] = useState(false);
   
-  // Diagnostic logging for options and value
-  useEffect(() => {
-    console.log('MultiSelect Component Mounted:', {
-      fieldId: id,
-      rawFieldOptions: field.options,
-      isFieldOptionArray: isFieldOptionArray(field.options),
-      rawValue: value,
-    });
-  }, []);
-
+  // Ensure value is always an array before processing
+  const safeValue = Array.isArray(value) ? value : [];
+  
   // Ensure options is always defined and an array
   const options = isFieldOptionArray(field.options) ? field.options : [];
   
-  // Log options for debugging before render
-  useEffect(() => {
-    console.log('Rendering Command Group:', { 
-      optionsExist: options && options.length > 0,
-      options 
-    });
-  }, [options]);
-  
   const toggleOption = (optionValue: string) => {
-    console.log('Toggle Option Called:', {
-      optionValue,
-      currentValue: value,
-      options: options
-    });
-
-    const safeValue = Array.isArray(value) ? value : [];
+    const newValue = safeValue.includes(optionValue)
+      ? safeValue.filter(v => v !== optionValue)
+      : [...safeValue, optionValue];
     
-    if (safeValue.includes(optionValue)) {
-      console.log('Removing option');
-      onChange(safeValue.filter(v => v !== optionValue));
-    } else {
-      console.log('Adding option');
-      onChange([...safeValue, optionValue]);
-    }
+    onChange(newValue);
   };
   
   const removeOption = (optionValue: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const safeValue = Array.isArray(value) ? value : [];
-    console.log('Removing specific option:', {
-      optionValue,
-      currentValue: safeValue
-    });
     onChange(safeValue.filter(v => v !== optionValue));
   };
-  
-  // Ensure value is always an array before processing
-  const safeValue = Array.isArray(value) ? value : [];
   
   return (
     <div className="space-y-2" key={id}>
@@ -114,14 +82,6 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
             role="combobox"
             aria-expanded={open}
             className={`w-full justify-between ${safeValue.length > 0 ? "h-auto" : "h-10"} ${isAdvanced ? "border-dashed" : ""}`}
-            onClick={() => {
-              console.log('Popover Trigger Clicked', {
-                currentOpenState: open,
-                currentValue: safeValue,
-                currentOptions: options
-              });
-              setOpen(!open);
-            }}
           >
             {safeValue.length > 0 ? (
               <div className="flex flex-wrap gap-1 py-1">
@@ -150,33 +110,28 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
         <PopoverContent className="w-full p-0">
           <Command>
             <CommandInput placeholder="Search options..." />
-            <CommandEmpty>No options found.</CommandEmpty>
-            {/* Only render CommandGroup when options exist - removed console.log from JSX */}
-            {options && options.length > 0 && (
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    value={option.value}
-                    onSelect={() => {
-                      console.log('Command Item Selected:', {
-                        optionValue: option.value,
-                        currentValue: safeValue
-                      });
-                      toggleOption(option.value);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        safeValue.includes(option.value) ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {option.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
+            <CommandList>
+              <CommandEmpty>No options found.</CommandEmpty>
+              {options && options.length > 0 && (
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => toggleOption(option.value)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          safeValue.includes(option.value) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {option.label}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
