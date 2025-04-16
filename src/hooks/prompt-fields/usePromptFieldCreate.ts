@@ -46,10 +46,10 @@ export const usePromptFieldCreate = () => {
         prompt_snippet: field.prompt_snippet || ""
       };
 
-      // TypeScript cast to handle the database enum type for field.type
+      // Use type assertion to handle the database enum type
       const { data, error } = await supabase
         .from('prompt_fields')
-        .insert(fieldData)
+        .insert(fieldData as any) // TypeScript type assertion to bypass type checking
         .select()
         .single();
 

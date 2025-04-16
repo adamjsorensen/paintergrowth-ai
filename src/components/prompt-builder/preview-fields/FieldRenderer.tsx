@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FieldConfig, FieldType, isFieldOptionArray } from "@/types/prompt-templates";
 import TextField from "./TextField";
@@ -21,6 +20,7 @@ interface FieldRendererProps {
 const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange }) => {
   const { id, label, type, required, helpText, placeholder, options, min, max, step } = field;
   
+
   switch (type) {
     case "text":
       return (
@@ -35,6 +35,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
+    
     case "textarea":
       return (
         <TextareaField
@@ -47,6 +48,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           onChange={onChange}
         />
       );
+    
     
     case "select":
       return (
@@ -61,6 +63,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           onChange={onChange}
         />
       );
+    
     
     case "number":
       return (
@@ -78,6 +81,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
+    
     case "toggle":
       return (
         <ToggleField
@@ -89,6 +93,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           onChange={onChange}
         />
       );
+    
     
     case "date":
       return (
@@ -102,6 +107,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
+    
     case "checkbox-group":
       return (
         <CheckboxGroupField
@@ -114,6 +120,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           onChange={onChange}
         />
       );
+    
     
     case "multi-select":
       return (
@@ -129,6 +136,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
+    
     case "file-upload":
       return (
         <FileUploadField
@@ -140,6 +148,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           onChange={onChange}
         />
       );
+    
     
     case "matrix-selector":
       return (
