@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Settings, X } from "lucide-react";
 import { FieldConfig, FieldOption, isFieldOptionArray } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
@@ -31,15 +31,33 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
   const { id, label, required, helpText, placeholder } = field;
   const [open, setOpen] = useState(false);
   
+  // Diagnostic logging for options and value
+  useEffect(() => {
+    console.log('MultiSelect Component Mounted:', {
+      fieldId: id,
+      rawFieldOptions: field.options,
+      isFieldOptionArray: isFieldOptionArray(field.options),
+      rawValue: value,
+    });
+  }, []);
+
   // Ensure options is always defined and an array
   const options = isFieldOptionArray(field.options) ? field.options : [];
   
   const toggleOption = (optionValue: string) => {
+    console.log('Toggle Option Called:', {
+      optionValue,
+      currentValue: value,
+      options: options
+    });
+
     const safeValue = Array.isArray(value) ? value : [];
     
     if (safeValue.includes(optionValue)) {
+      console.log('Removing option');
       onChange(safeValue.filter(v => v !== optionValue));
     } else {
+      console.log('Adding option');
       onChange([...safeValue, optionValue]);
     }
   };
@@ -47,6 +65,10 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
   const removeOption = (optionValue: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const safeValue = Array.isArray(value) ? value : [];
+    console.log('Removing specific option:', {
+      optionValue,
+      currentValue: safeValue
+    });
     onChange(safeValue.filter(v => v !== optionValue));
   };
   
@@ -84,7 +106,14 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
             role="combobox"
             aria-expanded={open}
             className={`w-full justify-between ${safeValue.length > 0 ? "h-auto" : "h-10"} ${isAdvanced ? "border-dashed" : ""}`}
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              console.log('Popover Trigger Clicked', {
+                currentOpenState: open,
+                currentValue: safeValue,
+                currentOptions: options
+              });
+              setOpen(!open);
+            }}
           >
             {safeValue.length > 0 ? (
               <div className="flex flex-wrap gap-1 py-1">
@@ -114,14 +143,24 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
           <Command>
             <CommandInput placeholder="Search options..." />
             <CommandEmpty>No options found.</CommandEmpty>
-            {/* Only render CommandGroup when options exist */}
+            {/* Added console log and conditional rendering */}
+            {console.log('Rendering Command Group:', { 
+              optionsExist: options && options.length > 0,
+              options 
+            })}
             {options && options.length > 0 && (
               <CommandGroup>
                 {options.map((option) => (
                   <CommandItem
                     key={option.value}
                     value={option.value}
-                    onSelect={() => toggleOption(option.value)}
+                    onSelect={() => {
+                      console.log('Command Item Selected:', {
+                        optionValue: option.value,
+                        currentValue: safeValue
+                      });
+                      toggleOption(option.value);
+                    }}
                   >
                     <Check
                       className={cn(
