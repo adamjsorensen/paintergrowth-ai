@@ -10,15 +10,8 @@ export * from './base';
 export * from './item-types';
 
 // Explicitly re-export the matrix types to avoid conflicts
-export {
-  MatrixRow, 
-  MatrixColumn, 
-  MatrixGroup, 
-  MatrixConfig,
-  createDefaultMatrixConfig,
-  isMatrixConfig,
-  validateMatrixConfig
-} from './matrix';
+export type { MatrixRow, MatrixColumn, MatrixGroup, MatrixConfig } from './matrix';
+export { createDefaultMatrixConfig, isMatrixConfig, validateMatrixConfig } from './matrix';
 
 // Selectively re-export utility functions from utils to avoid conflicts
 export {

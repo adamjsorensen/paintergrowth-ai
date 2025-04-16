@@ -1,3 +1,4 @@
+
 import React from "react";
 import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
@@ -24,16 +25,23 @@ interface MatrixSelectorFieldProps {
   value: MatrixItem[];
   onChange: (value: MatrixItem[]) => void;
   isAdvanced?: boolean;
+  matrixConfig?: MatrixConfig;
 }
 
 const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   field,
   value,
   onChange,
-  isAdvanced
+  isAdvanced,
+  matrixConfig: externalMatrixConfig
 }) => {
-  // Get matrix configuration from field options
+  // Get matrix configuration from field options or use provided external config
   const getMatrixConfig = (): MatrixConfig => {
+    // Use external config if provided
+    if (externalMatrixConfig) {
+      return externalMatrixConfig;
+    }
+    
     // Default configuration if none is provided
     const defaultConfig: MatrixConfig = {
       type: 'matrix-config',
