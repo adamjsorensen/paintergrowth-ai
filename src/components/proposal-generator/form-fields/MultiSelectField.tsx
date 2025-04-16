@@ -44,6 +44,14 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
   // Ensure options is always defined and an array
   const options = isFieldOptionArray(field.options) ? field.options : [];
   
+  // Log options for debugging before render
+  useEffect(() => {
+    console.log('Rendering Command Group:', { 
+      optionsExist: options && options.length > 0,
+      options 
+    });
+  }, [options]);
+  
   const toggleOption = (optionValue: string) => {
     console.log('Toggle Option Called:', {
       optionValue,
@@ -143,11 +151,7 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
           <Command>
             <CommandInput placeholder="Search options..." />
             <CommandEmpty>No options found.</CommandEmpty>
-            {/* Added console log and conditional rendering */}
-            {console.log('Rendering Command Group:', { 
-              optionsExist: options && options.length > 0,
-              options 
-            })}
+            {/* Only render CommandGroup when options exist - removed console.log from JSX */}
             {options && options.length > 0 && (
               <CommandGroup>
                 {options.map((option) => (
