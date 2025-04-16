@@ -30,7 +30,7 @@ const AISettingsPage = () => {
   // Form setup
   const form = useForm<FormValues>({
     defaultValues: {
-      model: "gpt-4o-mini", // Make sure this default exists among your new options if needed
+      model: "gpt-4.1-mini", // Make sure this default exists among your new options if needed
       temperature: 0.7,
       max_tokens: 1024,
       default_system_prompt: "",
