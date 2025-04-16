@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FieldConfig, FieldType } from "@/types/prompt-templates";
 import TextField from "./TextField";
@@ -10,6 +9,7 @@ import DateField from "./DateField";
 import CheckboxGroupField from "./CheckboxGroupField";
 import MultiSelectField from "./MultiSelectField";
 import FileUploadField from "./FileUploadField";
+import MatrixField from "./MatrixField";
 
 interface FieldRendererProps {
   field: FieldConfig;
@@ -140,18 +140,16 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
-    // Preview for matrix-selector can reuse TextareaField as a simplified representation
     case "matrix-selector":
       return (
-        <TextareaField
+        <MatrixField
           id={id}
-          label={label + " (Matrix Selector)"}
+          label={label}
           required={required}
-          helpText={"This will display as a matrix of rooms and surfaces in the actual form."}
-          placeholder="Matrix selector will appear here"
-          value="[Matrix of interior rooms and surfaces]"
+          helpText={helpText}
+          value={value || []}
           onChange={onChange}
-          disabled={true}
+          options={options}
         />
       );
     

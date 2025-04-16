@@ -465,6 +465,8 @@ export type Database = {
         | "multi-select"
         | "date"
         | "file-upload"
+        | "matrix-selector"
+        | "tax-calculator"
       section_type:
         | "client"
         | "estimator"
@@ -606,6 +608,8 @@ export const Constants = {
         "multi-select",
         "date",
         "file-upload",
+        "matrix-selector",
+        "tax-calculator",
       ],
       section_type: [
         "client",
