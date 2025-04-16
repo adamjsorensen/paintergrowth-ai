@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const corsHeaders = {
@@ -91,7 +92,7 @@ export async function fetchAISettings(supabase) {
 
   return {
     temperature: data?.temperature ?? 0.7,
-    model: data?.model ?? 'openai/gpt-4o-mini',
+    model: data?.model ?? 'gpt-4o-mini',
     max_tokens: data?.max_tokens ?? 1500
   };
 }
