@@ -1,6 +1,7 @@
 
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ModeToggle from "../ModeToggle";
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import ModeToggle from "@/components/proposal-generator/ModeToggle";
+import { Badge } from "@/components/ui/badge";
 
 interface ProposalFormHeaderProps {
   templateName: string;
@@ -8,29 +9,44 @@ interface ProposalFormHeaderProps {
   onModeChange: (mode: 'basic' | 'advanced') => void;
   visibleFieldCount: number;
   totalFieldCount: number;
+  projectType?: 'interior' | 'exterior';
 }
 
-const ProposalFormHeader = ({ 
-  templateName, 
-  mode, 
-  onModeChange, 
-  visibleFieldCount, 
-  totalFieldCount 
+const ProposalFormHeader = ({
+  templateName,
+  mode,
+  onModeChange,
+  visibleFieldCount,
+  totalFieldCount,
+  projectType
 }: ProposalFormHeaderProps) => {
   return (
-    <CardHeader className="bg-gray-50 border-b border-gray-100 rounded-t-lg p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <CardHeader className="border-b bg-muted/20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
         <div>
           <CardTitle className="text-xl font-semibold">{templateName}</CardTitle>
-          <CardDescription>Fill out the form below to generate your professional proposal</CardDescription>
+          <CardDescription>Fill out the form to generate your custom proposal</CardDescription>
         </div>
-        <div className="w-full sm:w-auto">
+        
+        <div className="flex items-center gap-2 mt-4 md:mt-0">
+          {projectType && (
+            <Badge 
+              variant="outline" 
+              className="capitalize"
+            >
+              {projectType} Project
+            </Badge>
+          )}
           <ModeToggle mode={mode} onModeChange={onModeChange} />
         </div>
       </div>
+      
       {mode === 'basic' && totalFieldCount > visibleFieldCount && (
-        <div className="mt-2 text-xs text-muted-foreground animate-fade-in">
-          Showing {visibleFieldCount} of {totalFieldCount} fields. Switch to Advanced mode to see all options.
+        <div className="text-xs text-muted-foreground mt-2">
+          Showing {visibleFieldCount} of {totalFieldCount} fields. 
+          <span className="font-medium ml-1">
+            Switch to Advanced mode to see all fields.
+          </span>
         </div>
       )}
     </CardHeader>

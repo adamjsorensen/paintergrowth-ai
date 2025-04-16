@@ -42,6 +42,7 @@ const FieldTypeSection = ({ form }: FieldTypeSectionProps) => {
               <SelectItem value="quote-table">Quote Table</SelectItem>
               <SelectItem value="upsell-table">Upsell Table</SelectItem>
               <SelectItem value="tax-calculator">Tax Calculator</SelectItem>
+              <SelectItem value="matrix-selector">Matrix Selector</SelectItem>
             </SelectContent>
           </Select>
           <FormMessage />

@@ -140,6 +140,21 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
+    // Preview for matrix-selector can reuse TextareaField as a simplified representation
+    case "matrix-selector":
+      return (
+        <TextareaField
+          id={id}
+          label={label + " (Matrix Selector)"}
+          required={required}
+          helpText={"This will display as a matrix of rooms and surfaces in the actual form."}
+          placeholder="Matrix selector will appear here"
+          value="[Matrix of interior rooms and surfaces]"
+          onChange={onChange}
+          disabled={true}
+        />
+      );
+    
     default:
       return null;
   }

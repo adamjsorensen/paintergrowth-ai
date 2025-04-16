@@ -1,7 +1,7 @@
 
 import { Json } from "@/integrations/supabase/types";
 
-export type FieldType = 'text' | 'textarea' | 'select' | 'number' | 'toggle' | 'date' | 'checkbox-group' | 'multi-select' | 'file-upload' | 'quote-table' | 'upsell-table' | 'tax-calculator';
+export type FieldType = 'text' | 'textarea' | 'quote-table' | 'upsell-table' | 'number' | 'select' | 'toggle' | 'checkbox-group' | 'multi-select' | 'date' | 'file-upload' | 'tax-calculator' | 'matrix-selector';
 
 export interface FieldOption {
   value: string;
@@ -25,6 +25,17 @@ export interface UpsellItem {
 export interface TaxSettings {
   includeTax: boolean;
   taxRate: number;
+}
+
+export interface MatrixRow {
+  id: string;
+  room: string;
+  quantity: number;
+  walls: boolean;
+  ceiling: boolean;
+  trim: boolean;
+  doors: boolean;
+  closets: boolean;
 }
 
 export interface FieldConfig {

@@ -13,7 +13,8 @@ export type FieldType =
   | "multi-select"
   | "date"
   | "file-upload"
-  | "tax-calculator";
+  | "tax-calculator"
+  | "matrix-selector";
 
 export type SectionType = 
   | "client"

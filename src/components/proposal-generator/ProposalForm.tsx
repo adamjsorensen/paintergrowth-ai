@@ -21,9 +21,10 @@ interface ProposalFormProps {
   isGenerating: boolean;
   onGenerate: (fieldValues: Record<string, FieldValue>, proposalId: string) => Promise<void>;
   templateName: string;
+  projectType?: 'interior' | 'exterior';
 }
 
-const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: ProposalFormProps) => {
+const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectType = 'interior' }: ProposalFormProps) => {
   const {
     fieldValues,
     formMode,
@@ -53,7 +54,9 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
               ? [] 
               : field.type === 'toggle' 
                 ? false 
-                : ""
+                : field.type === 'matrix-selector'
+                  ? []
+                  : ""
           ),
           onChange: (value: FieldValue) => handleFieldChange(field.name, value)
         });
@@ -66,7 +69,9 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
               ? [] 
               : field.type === 'toggle' 
                 ? false 
-                : ""
+                : field.type === 'matrix-selector'
+                  ? []
+                  : ""
           ),
           onChange: (value: FieldValue) => handleFieldChange(field.name, value)
         });
@@ -90,6 +95,7 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName }: Propos
         onModeChange={setFormMode}
         visibleFieldCount={visibleFields.length}
         totalFieldCount={fields.length}
+        projectType={projectType}
       />
       
       <ProposalFormContent fieldsBySection={fieldsBySection} />

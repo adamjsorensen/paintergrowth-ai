@@ -12,6 +12,7 @@ import FileUploadField from "./form-fields/FileUploadField";
 import QuoteTableField from "./form-fields/QuoteTableField";
 import UpsellTableField from "./form-fields/UpsellTableField";
 import TaxCalculatorField from "./form-fields/TaxCalculatorField";
+import MatrixSelectorField from "./form-fields/MatrixSelectorField";
 
 interface FormFieldRendererProps {
   field: FieldConfig;
@@ -141,6 +142,16 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced, subtotal }: For
           value={value as any}
           onChange={onChange}
           subtotal={subtotal}
+          isAdvanced={isAdvanced}
+        />
+      );
+      
+    case "matrix-selector":
+      return (
+        <MatrixSelectorField
+          field={field}
+          value={value as any[]}
+          onChange={onChange}
           isAdvanced={isAdvanced}
         />
       );
