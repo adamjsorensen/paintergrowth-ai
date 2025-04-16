@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash, Plus } from "lucide-react";
-import { ScopeOfWorkItem, FieldConfig } from "@/types/prompt-templates";
+import { FieldConfig } from "@/types/prompt-templates";
+import { ScopeOfWorkItem } from "@/types/prompt-templates/item-types";
 import { formatCurrency } from "@/utils/formatUtils";
 
 interface ScopeOfWorkFieldProps {
@@ -123,7 +124,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 col-span-2">
       <div className="flex justify-between items-center">
         <Label className="text-base font-medium">
           {field.label}
@@ -136,7 +137,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
       )}
       
       {/* Desktop Table View - Full Width */}
-      <div className="hidden md:block overflow-x-auto border rounded-md col-span-2">
+      <div className="hidden md:block overflow-x-auto border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
@@ -211,4 +212,3 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
 };
 
 export default ScopeOfWorkField;
-

@@ -1,5 +1,6 @@
 
 import { Json } from "@/integrations/supabase/types";
+import { SectionType } from "@/types/prompt-field";
 
 export type FieldType = 
   | "text"
@@ -14,14 +15,15 @@ export type FieldType =
   | "date"
   | "file-upload"
   | "tax-calculator"
-  | "matrix-selector";
+  | "matrix-selector"
+  | "scope-of-work";
 
 export interface PromptField {
   id: string;
   name: string;
   label: string;
   type: FieldType;
-  section: string;
+  section: SectionType;
   order_position: number;
   required?: boolean;
   complexity?: 'basic' | 'advanced';
@@ -43,7 +45,7 @@ export interface PromptFieldInput {
   name: string;
   label: string;
   type: FieldType;
-  section: string;
+  section: SectionType;
   order_position?: number;
   required?: boolean;
   complexity?: 'basic' | 'advanced';
@@ -58,14 +60,3 @@ export const formatFieldOptions = (options: FieldOption[]): Json => {
   // Cast to unknown first, then to Json to avoid type errors
   return { options } as unknown as Json;
 };
-
-export interface MatrixRow {
-  id: string;
-  room: string;
-  quantity: number;
-  walls: boolean;
-  ceiling: boolean;
-  trim: boolean;
-  doors: boolean;
-  closets: boolean;
-}

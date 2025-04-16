@@ -35,3 +35,11 @@ export interface UpsellItem {
   label?: string;
   description?: string;
 }
+
+// For scope of work items
+export interface ScopeOfWorkItem {
+  id: string;
+  service: string;
+  description?: string;
+  price: number;
+}

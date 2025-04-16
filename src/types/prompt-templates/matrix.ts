@@ -27,3 +27,30 @@ export interface MatrixConfig {
   columns: MatrixColumn[];
   groups?: MatrixGroup[];
 }
+
+// Helper function to create a default matrix configuration
+export const createDefaultMatrixConfig = (): MatrixConfig => ({
+  type: 'matrix-config',
+  rows: [{ id: 'row1', label: 'Row 1' }],
+  columns: [{ id: 'col1', label: 'Column 1', type: 'checkbox' }]
+});
+
+// Type guard to check if an object is a MatrixConfig
+export const isMatrixConfig = (obj: any): obj is MatrixConfig => {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'rows' in obj &&
+    'columns' in obj &&
+    Array.isArray(obj.rows) &&
+    Array.isArray(obj.columns)
+  );
+};
+
+// Validation function for matrix configurations
+export const validateMatrixConfig = (config: any): boolean => {
+  if (!isMatrixConfig(config)) return false;
+  
+  // Ensure we have at least one row and one column
+  return config.rows.length > 0 && config.columns.length > 0;
+};

@@ -23,7 +23,8 @@ export type FieldType =
   | 'date'
   | 'file-upload'
   | 'tax-calculator'
-  | 'matrix-selector';
+  | 'matrix-selector'
+  | 'scope-of-work';
 
 // Core field configuration
 export interface FieldConfig {

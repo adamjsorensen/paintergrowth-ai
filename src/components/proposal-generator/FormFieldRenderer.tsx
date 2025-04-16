@@ -13,6 +13,7 @@ import QuoteTableField from "./form-fields/QuoteTableField";
 import UpsellTableField from "./form-fields/UpsellTableField";
 import TaxCalculatorField from "./form-fields/TaxCalculatorField";
 import MatrixSelectorField from "./form-fields/MatrixSelectorField";
+import ScopeOfWorkField from "./form-fields/ScopeOfWorkField";
 
 interface FormFieldRendererProps {
   field: FieldConfig;
@@ -149,6 +150,16 @@ const FormFieldRenderer = ({ field, value, onChange, isAdvanced, subtotal }: For
     case "matrix-selector":
       return (
         <MatrixSelectorField
+          field={field}
+          value={value as any[]}
+          onChange={onChange}
+          isAdvanced={isAdvanced}
+        />
+      );
+      
+    case "scope-of-work":
+      return (
+        <ScopeOfWorkField
           field={field}
           value={value as any[]}
           onChange={onChange}

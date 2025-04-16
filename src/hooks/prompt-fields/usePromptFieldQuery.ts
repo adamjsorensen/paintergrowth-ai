@@ -28,34 +28,37 @@ export const convertToFieldConfig = (promptFields: PromptField[]): FieldConfig[]
     
     if (field.options) {
       try {
+        const optionsValue = field.options;
+        
         if (field.type === 'matrix-selector') {
           // For matrix fields, ensure we have the proper structure
-          const options = typeof field.options === 'string' 
-            ? JSON.parse(field.options) 
-            : field.options;
-            
-          // Check if options already has the expected structure
-          if (options && typeof options === 'object' && !Array.isArray(options) && 'rows' in options && 'columns' in options) {
-            // Ensure the type discriminator is present
-            parsedOptions = { ...options, type: 'matrix-config' };
-          } else if (options && typeof options === 'object' && !Array.isArray(options) && 'options' in options && 
-                     typeof options.options === 'object' && !Array.isArray(options.options) && 
-                     'rows' in options.options && 'columns' in options.options) {
-            // Handle nested options structure that sometimes comes from the database
-            parsedOptions = { ...options.options, type: 'matrix-config' };
+          if (typeof optionsValue === 'object' && optionsValue !== null) {
+            if ('rows' in optionsValue && 'columns' in optionsValue) {
+              // Ensure the type discriminator is present
+              parsedOptions = { ...optionsValue, type: 'matrix-config' };
+            } else if ('options' in optionsValue && 
+                      typeof optionsValue.options === 'object' && 
+                      optionsValue.options !== null &&
+                      'rows' in optionsValue.options && 
+                      'columns' in optionsValue.options) {
+              // Handle nested options structure that sometimes comes from the database
+              parsedOptions = { ...optionsValue.options, type: 'matrix-config' };
+            } else {
+              // Fallback to default config
+              console.warn(`Invalid matrix config for field ${field.id}, using default`);
+              parsedOptions = createDefaultMatrixConfig();
+            }
           } else {
-            // Fallback to default config
-            console.warn(`Invalid matrix config for field ${field.id}, using default`);
             parsedOptions = createDefaultMatrixConfig();
           }
         } else if (['select', 'checkbox-group', 'multi-select'].includes(field.type)) {
           // For option-based fields
-          if (Array.isArray(field.options)) {
-            parsedOptions = field.options;
-          } else if (typeof field.options === 'object' && field.options !== null && 
-                     'options' in field.options && Array.isArray(field.options.options)) {
-            // Handle nested options structure
-            parsedOptions = field.options.options;
+          if (typeof optionsValue === 'object' && optionsValue !== null) {
+            if (Array.isArray(optionsValue)) {
+              parsedOptions = optionsValue;
+            } else if ('options' in optionsValue && Array.isArray(optionsValue.options)) {
+              parsedOptions = optionsValue.options;
+            }
           }
         }
       } catch (e) {

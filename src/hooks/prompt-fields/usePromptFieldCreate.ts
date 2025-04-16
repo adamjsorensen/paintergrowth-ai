@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PromptFieldInput } from './types';
 import { isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from '@/types/prompt-templates';
+import { SectionType } from '@/types/prompt-field';
 
 export const usePromptFieldCreate = () => {
   const queryClient = useQueryClient();
@@ -34,7 +35,7 @@ export const usePromptFieldCreate = () => {
         name: field.name,
         label: field.label,
         type: field.type,
-        section: field.section,
+        section: field.section as SectionType, // Cast to the enum type
         order_position: field.order_position,
         required: field.required || false,
         complexity: field.complexity || 'basic',
