@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CompanyProfileUpdate } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { CompanyProfileFormValues } from "@/types/companyProfile";
+import { CompanyProfileFormValues, CompanyProfileUpdate } from "@/types/companyProfile";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,9 +43,8 @@ const CompanyProfileForm = ({ userId, initialData, isLoading }: CompanyProfileFo
     mutationFn: async (values: Omit<CompanyProfileFormValues, "currentKeyword">) => {
       if (!userId) throw new Error("User not authenticated");
 
-      // Create a properly typed object with required user_id
       const updatedValues: CompanyProfileUpdate = {
-        user_id: userId, // Explicitly set as non-optional
+        user_id: userId,
         business_name: values.business_name,
         location: values.location,
         services_offered: values.services_offered,
