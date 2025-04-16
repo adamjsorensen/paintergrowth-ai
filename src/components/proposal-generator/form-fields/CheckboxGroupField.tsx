@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FieldConfig, FieldOption } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption, isFieldOptionArray } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Settings } from "lucide-react";
@@ -23,6 +23,9 @@ const CheckboxGroupField = ({ field, value, onChange, isAdvanced = false }: Chec
       onChange(value.filter(item => item !== optionValue));
     }
   };
+
+  // Get field options safely
+  const fieldOptions = isFieldOptionArray(options) ? options : [];
 
   return (
     <div className="space-y-2" key={id}>
@@ -49,7 +52,7 @@ const CheckboxGroupField = ({ field, value, onChange, isAdvanced = false }: Chec
       </div>
       
       <div className={`grid grid-cols-2 gap-2 ${isAdvanced ? "border border-dashed rounded-md p-3" : ""}`}>
-        {options?.map((option: FieldOption) => (
+        {fieldOptions.map((option: FieldOption) => (
           <div key={option.value} className="flex items-center space-x-2">
             <Checkbox
               id={`${id}-${option.value}`}

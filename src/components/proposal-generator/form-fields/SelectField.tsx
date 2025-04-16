@@ -1,5 +1,5 @@
 
-import { FieldConfig, FieldOption } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption, isFieldOptionArray } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
 import { Settings } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -20,6 +20,9 @@ interface SelectFieldProps {
 
 const SelectField = ({ field, value, onChange, isAdvanced = false }: SelectFieldProps) => {
   const { id, label, required, helpText, placeholder, options } = field;
+  
+  // Get field options safely
+  const fieldOptions = isFieldOptionArray(options) ? options : [];
   
   return (
     <div className="space-y-2" key={id}>
@@ -53,7 +56,7 @@ const SelectField = ({ field, value, onChange, isAdvanced = false }: SelectField
           <SelectValue placeholder={placeholder || "Select an option"} />
         </SelectTrigger>
         <SelectContent>
-          {options?.map((option: FieldOption) => (
+          {fieldOptions.map((option: FieldOption) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>

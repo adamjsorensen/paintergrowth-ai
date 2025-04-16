@@ -1,5 +1,5 @@
 
-import { FieldConfig } from "@/types/prompt-templates";
+import { FieldConfig, isFieldOptionArray } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
 import FieldBuilderHeader from "./FieldBuilderHeader";
 import FieldActions from "./FieldActions";
@@ -30,7 +30,11 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
 
   const handleEditField = (field: FieldConfig) => {
     setEditingFieldId(field.id);
-    setOptions(field.options || []);
+    if (field.options && isFieldOptionArray(field.options)) {
+      setOptions(field.options);
+    } else {
+      setOptions([]);
+    }
   };
 
   const handleDeleteField = (fieldId: string) => {

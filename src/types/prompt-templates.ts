@@ -109,3 +109,20 @@ export const parseFieldConfig = (fieldConfig: string | FieldConfig[]): FieldConf
 export const stringifyFieldConfig = (fieldConfig: FieldConfig[]): string => {
   return JSON.stringify(fieldConfig);
 };
+
+// Utility function to check if options is a MatrixConfig
+export const isMatrixConfig = (options: any): options is MatrixConfig => {
+  return options && 
+    typeof options === 'object' && 
+    !Array.isArray(options) &&
+    'rows' in options && 
+    'columns' in options;
+};
+
+// Utility function to check if options is a FieldOption array
+export const isFieldOptionArray = (options: any): options is FieldOption[] => {
+  return Array.isArray(options) && 
+    options.length > 0 && 
+    'value' in options[0] && 
+    'label' in options[0];
+};

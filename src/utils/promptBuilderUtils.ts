@@ -1,5 +1,5 @@
 
-import { FieldConfig, FieldOption, MatrixConfig } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption, MatrixConfig, MatrixColumn } from "@/types/prompt-templates";
 import { stringifyFieldConfig } from "@/types/prompt-templates";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -118,7 +118,7 @@ export const formatMatrixForPrompt = (matrixData: MatrixItem[], fieldConfig?: Fi
     
     // Infer columns from first item
     const sampleItem = matrixData[0];
-    const columns: {id: string, type: string}[] = [];
+    const columns: MatrixColumn[] = [];
     
     Object.entries(sampleItem).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'label') {
@@ -168,7 +168,7 @@ export const formatMatrixForPrompt = (matrixData: MatrixItem[], fieldConfig?: Fi
     const selections = [];
     checkboxColumns.forEach(col => {
       if (Boolean(room[col.id])) {
-        selections.push(col.label || col.id);
+        selections.push(col.label);
       }
     });
     

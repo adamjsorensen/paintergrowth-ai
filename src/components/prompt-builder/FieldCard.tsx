@@ -1,5 +1,5 @@
 
-import { FieldConfig } from "@/types/prompt-templates";
+import { FieldConfig, isFieldOptionArray } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, ChevronUp, ChevronDown } from "lucide-react";
@@ -48,7 +48,7 @@ const FieldCard: React.FC<FieldCardProps> = ({
               <p className="text-sm text-gray-500">{field.helpText}</p>
             )}
             
-            {field.type === "select" && field.options && (
+            {field.type === "select" && field.options && isFieldOptionArray(field.options) && (
               <div className="mt-2">
                 <p className="text-xs text-gray-500">Options:</p>
                 <div className="flex flex-wrap gap-1 mt-1">

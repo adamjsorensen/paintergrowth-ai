@@ -1,5 +1,6 @@
+
 import React from "react";
-import { FieldConfig, FieldType } from "@/types/prompt-templates";
+import { FieldConfig, FieldType, isFieldOptionArray } from "@/types/prompt-templates";
 import TextField from "./TextField";
 import TextareaField from "./TextareaField";
 import SelectField from "./SelectField";
@@ -55,7 +56,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           required={required}
           helpText={helpText}
           placeholder={placeholder}
-          options={options}
+          options={isFieldOptionArray(options) ? options : []}
           value={value || ""}
           onChange={onChange}
         />
@@ -108,7 +109,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           label={label}
           required={required}
           helpText={helpText}
-          options={options}
+          options={isFieldOptionArray(options) ? options : []}
           value={Array.isArray(value) ? value : []}
           onChange={onChange}
         />
@@ -122,7 +123,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
           required={required}
           helpText={helpText}
           placeholder={placeholder}
-          options={options}
+          options={isFieldOptionArray(options) ? options : []}
           value={Array.isArray(value) ? value : []}
           onChange={onChange}
         />
