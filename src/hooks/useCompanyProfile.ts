@@ -26,6 +26,7 @@ export const useCompanyProfile = (userId: string | undefined) => {
         companyAddress: data.location || "",
         companyServices: data.services_offered || "",
         warranty: data.pricing_notes || "", // Using pricing_notes for warranty info
+        logo_url: data.logo_url || null,
       } as const;
     },
     enabled: !!userId

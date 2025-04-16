@@ -47,6 +47,7 @@ export type Database = {
           brand_keywords: string[] | null
           business_name: string | null
           location: string | null
+          logo_url: string | null
           preferred_tone: string | null
           pricing_notes: string | null
           services_offered: string | null
@@ -58,6 +59,7 @@ export type Database = {
           brand_keywords?: string[] | null
           business_name?: string | null
           location?: string | null
+          logo_url?: string | null
           preferred_tone?: string | null
           pricing_notes?: string | null
           services_offered?: string | null
@@ -69,6 +71,7 @@ export type Database = {
           brand_keywords?: string[] | null
           business_name?: string | null
           location?: string | null
+          logo_url?: string | null
           preferred_tone?: string | null
           pricing_notes?: string | null
           services_offered?: string | null

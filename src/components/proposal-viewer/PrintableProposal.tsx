@@ -14,6 +14,8 @@ interface PrintableProposalProps {
     companyName?: string;
     companyAddress?: string;
     companyServices?: string;
+    warranty?: string;
+    logo_url?: string;
   };
 }
 
@@ -29,8 +31,12 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
     }
   }, []);
 
+  // Default logo if none provided
+  const defaultLogo = "/placeholder.svg";
+  const logoUrl = companyProfile?.logo_url || defaultLogo;
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white font-sans">
       {/* Print Instructions - Hidden in Print */}
       <div className="p-4 mb-6 bg-blue-50 rounded-lg print:hidden">
         <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -49,32 +55,52 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
       </div>
 
       {/* Proposal Content - Optimized for Print */}
-      <div className="max-w-[800px] mx-auto p-8 print:p-6">
-        {/* Header */}
-        <div className="mb-8 print:mb-6">
+      <div className="max-w-[750px] mx-auto p-8 print:p-6 print:mx-0 print:w-full">
+        {/* Cover Page */}
+        <div className="pb-10 mb-10 border-b border-gray-200 print:pb-6 print:mb-6">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <img
+              src={logoUrl}
+              alt={companyProfile?.companyName || "Company Logo"}
+              className="max-h-[100px] w-auto object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = defaultLogo;
+              }}
+            />
+          </div>
+
+          {/* Company Name */}
           {companyProfile?.companyName && (
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center print:text-2xl">
               {companyProfile.companyName}
             </h1>
           )}
+          
+          {/* Company Address */}
           {companyProfile?.companyAddress && (
-            <p className="text-gray-600">{companyProfile.companyAddress}</p>
+            <p className="text-gray-600 text-center mb-8 print:mb-6">
+              {companyProfile.companyAddress}
+            </p>
           )}
-        </div>
 
-        {/* Client Info */}
-        <div className="mb-8 print:mb-6">
-          <h2 className="text-xl font-semibold mb-2">
-            Proposal for {metadata.clientName || "Client"}
-          </h2>
-          {metadata.jobType && (
-            <p className="text-gray-600">Project Type: {metadata.jobType}</p>
-          )}
-          <p className="text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+          {/* Proposal Title */}
+          <div className="mb-8 print:mb-6">
+            <h2 className="text-2xl font-semibold mb-2 text-center print:text-xl">
+              Proposal for {metadata.clientName || "Client"}
+            </h2>
+            {metadata.jobType && (
+              <p className="text-gray-600 text-center">Project Type: {metadata.jobType}</p>
+            )}
+            <p className="text-gray-600 text-center mt-1">
+              Date: {new Date().toLocaleDateString()}
+            </p>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="prose max-w-none print:prose-sm">
+        <div className="prose max-w-none print:prose-sm leading-relaxed">
           {formatProposalText(proposal)}
         </div>
 

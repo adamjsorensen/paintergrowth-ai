@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import LogoUpload from "@/components/LogoUpload";
 
 type FormValues = {
   business_name: string;
@@ -32,6 +33,7 @@ const CompanyProfilePage = () => {
   const queryClient = useQueryClient();
   const [keywords, setKeywords] = useState<string[]>([]);
   const [currentKeyword, setCurrentKeyword] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -75,6 +77,7 @@ const CompanyProfilePage = () => {
         ...values,
         user_id: user.id,
         brand_keywords: keywords,
+        logo_url: logoUrl,
       };
 
       const { data, error } = await supabase
@@ -116,6 +119,7 @@ const CompanyProfilePage = () => {
       });
       
       setKeywords(companyProfile.brand_keywords || []);
+      setLogoUrl(companyProfile.logo_url || null);
     }
   }, [companyProfile, form]);
 
@@ -142,6 +146,10 @@ const CompanyProfilePage = () => {
     }
   };
 
+  const handleLogoUpdated = (url: string | null) => {
+    setLogoUrl(url);
+  };
+
   return (
     <PageLayout title="Company Profile">
       <div className="container max-w-3xl mx-auto">
@@ -160,6 +168,14 @@ const CompanyProfilePage = () => {
             ) : (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="mb-6">
+                    <LogoUpload 
+                      userId={user?.id} 
+                      currentLogo={logoUrl} 
+                      onLogoUpdated={handleLogoUpdated} 
+                    />
+                  </div>
+
                   <div className="grid gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
