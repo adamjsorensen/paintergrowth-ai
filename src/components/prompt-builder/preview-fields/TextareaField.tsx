@@ -11,6 +11,7 @@ interface TextareaFieldProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 const TextareaField: React.FC<TextareaFieldProps> = ({
@@ -21,6 +22,7 @@ const TextareaField: React.FC<TextareaFieldProps> = ({
   placeholder,
   value,
   onChange,
+  disabled = false,
 }) => {
   return (
     <div className="space-y-2">
@@ -34,6 +36,7 @@ const TextareaField: React.FC<TextareaFieldProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
+        disabled={disabled}
       />
       {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
     </div>
