@@ -4,29 +4,15 @@ import { createContext, useContext, useState, ReactNode } from "react";
 export type StylePreference = {
   tone: "friendly" | "professional" | "bold" | "chill" | null;
   length: number;
-  formality: "casual" | "formal" | null;
-  visualFlair: {
-    mentionColors: boolean;
-    includePricing: boolean;
-    bulletPoints: boolean;
-  };
-  relationship: "new" | "repeat" | "referred" | "cold" | null;
+  jobType: "interior" | "exterior";
   addUpsells: boolean;
-  addPersonality: boolean;
 };
 
 const defaultPreferences: StylePreference = {
   tone: null,
   length: 50, // Default middle value for slider (0-100)
-  formality: null,
-  visualFlair: {
-    mentionColors: false,
-    includePricing: false,
-    bulletPoints: false,
-  },
-  relationship: null,
+  jobType: "interior",
   addUpsells: false,
-  addPersonality: false,
 };
 
 type StylePreferencesContextType = {

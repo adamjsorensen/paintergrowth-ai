@@ -26,7 +26,7 @@ export const usePromptFieldCreate = () => {
         
         // Ensure the discriminator is set
         if (isMatrixConfig(fieldOptions) && !fieldOptions.type) {
-          fieldOptions = { ...fieldOptions, type: 'matrix-config' };
+          fieldOptions = Object.assign({}, fieldOptions, { type: 'matrix-config' });
         }
       }
 

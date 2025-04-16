@@ -6,14 +6,11 @@ import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 // Import preference section components
 import TonePreference from "./preference-sections/TonePreference";
-import FormalityPreference from "./preference-sections/FormalityPreference";
 import LengthPreference from "./preference-sections/LengthPreference";
-import VisualFlairPreference from "./preference-sections/VisualFlairPreference";
-import RelationshipPreference from "./preference-sections/RelationshipPreference";
-import AdditionalOptionsPreference from "./preference-sections/AdditionalOptionsPreference";
 import PreferencesSectionHeading from "./preference-sections/PreferencesSectionHeading";
 import PreferencesDialogHeader from "./preference-sections/PreferencesDialogHeader";
 import PreferencesFooter from "./preference-sections/PreferencesFooter";
+import InteriorExteriorToggle from "./InteriorExteriorToggle";
 
 interface StylePreferencesDialogProps {
   open: boolean;
@@ -49,28 +46,10 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
     }));
   };
 
-  const handleFormalityChange = (value: string) => {
+  const handleJobTypeChange = (value: 'interior' | 'exterior') => {
     setPreferences(prev => ({
       ...prev,
-      formality: value as "casual" | "formal"
-    }));
-  };
-
-  const handleRelationshipChange = (value: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      relationship: value as "new" | "repeat" | "referred" | "cold"
-    }));
-  };
-
-  const handleVisualFlairChange = (value: string[]) => {
-    setPreferences(prev => ({
-      ...prev,
-      visualFlair: {
-        mentionColors: value.includes("mentionColors"),
-        includePricing: value.includes("includePricing"),
-        bulletPoints: value.includes("bulletPoints"),
-      }
+      jobType: value
     }));
   };
 
@@ -83,7 +62,19 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
         />
 
         <div className="flex flex-col space-y-8 pb-20">
-          {/* Group 1: Style */}
+          {/* Group 1: Job Type */}
+          <div className="space-y-5">
+            <PreferencesSectionHeading title="Job Type" />
+            
+            <div className="flex justify-center py-2">
+              <InteriorExteriorToggle 
+                value={preferences.jobType || 'interior'}
+                onChange={handleJobTypeChange} 
+              />
+            </div>
+          </div>
+          
+          {/* Group 2: Style */}
           <div className="space-y-5">
             <PreferencesSectionHeading title="Style" />
             
@@ -91,42 +82,15 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
               value={preferences.tone} 
               onChange={handleToneChange} 
             />
-
-            <FormalityPreference 
-              value={preferences.formality} 
-              onChange={handleFormalityChange} 
-            />
           </div>
 
-          {/* Group 2: Format */}
+          {/* Group 3: Length */}
           <div className="space-y-5">
             <PreferencesSectionHeading title="Format" />
             
             <LengthPreference 
               value={preferences.length} 
               onChange={handleLengthChange} 
-            />
-
-            <VisualFlairPreference 
-              values={preferences.visualFlair} 
-              onChange={handleVisualFlairChange} 
-            />
-          </div>
-
-          {/* Group 3: Client Context */}
-          <div className="space-y-5">
-            <PreferencesSectionHeading title="Client Context" />
-            
-            <RelationshipPreference 
-              value={preferences.relationship} 
-              onChange={handleRelationshipChange} 
-            />
-
-            <AdditionalOptionsPreference
-              addPersonality={preferences.addPersonality}
-              addUpsells={preferences.addUpsells}
-              onPersonalityChange={(checked) => setPreferences(prev => ({ ...prev, addPersonality: checked }))}
-              onUpsellsChange={(checked) => setPreferences(prev => ({ ...prev, addUpsells: checked }))}
             />
           </div>
         </div>
