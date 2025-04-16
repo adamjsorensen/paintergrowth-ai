@@ -1,5 +1,5 @@
 
-import { FieldConfig, isFieldOptionArray } from "@/types/prompt-templates";
+import { FieldConfig, isFieldOptionArray, isMatrixConfig } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
 import FieldBuilderHeader from "./FieldBuilderHeader";
 import FieldActions from "./FieldActions";
@@ -19,6 +19,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setEditingFieldId,
     options,
     setOptions,
+    matrixConfig,
+    setMatrixConfig,
     handleAddField,
     handleUpdateField,
     handleMoveField,
@@ -32,6 +34,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
     setEditingFieldId(field.id);
     if (field.options && isFieldOptionArray(field.options)) {
       setOptions(field.options);
+    } else if (field.options && isMatrixConfig(field.options)) {
+      setMatrixConfig(field.options);
     } else {
       setOptions([]);
     }
@@ -70,6 +74,8 @@ const FieldBuilder: React.FC<FieldBuilderProps> = ({ fields, setFields }) => {
           setEditingFieldId={setEditingFieldId}
           options={options}
           setOptions={setOptions}
+          matrixConfig={matrixConfig}
+          setMatrixConfig={setMatrixConfig}
           onAddField={handleAddField}
           onUpdateField={handleUpdateField}
           onCancel={handleCancel}

@@ -22,6 +22,7 @@ export interface MatrixGroup {
 }
 
 export interface MatrixConfig {
+  type: 'matrix-config'; // Discriminator for type guards
   rows: MatrixRow[];
   columns: MatrixColumn[];
   groups?: MatrixGroup[];

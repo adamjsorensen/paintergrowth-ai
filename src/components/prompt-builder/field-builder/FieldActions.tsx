@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FieldType, FieldOption, FieldConfig, MatrixConfig } from "@/types/prompt-templates";
+import { FieldType, FieldOption, FieldConfig, MatrixConfig, isMatrixConfig, createDefaultMatrixConfig } from "@/types/prompt-templates";
 import FieldForm from "../field-form/FieldForm";
 
 interface FieldActionsProps {
@@ -12,6 +13,8 @@ interface FieldActionsProps {
   setEditingFieldId: (value: string | null) => void;
   options: FieldOption[];
   setOptions: React.Dispatch<React.SetStateAction<FieldOption[]>>;
+  matrixConfig: MatrixConfig;
+  setMatrixConfig: React.Dispatch<React.SetStateAction<MatrixConfig>>;
   onAddField: (values: any) => void;
   onUpdateField: (values: any) => void;
   onCancel: () => void;
@@ -46,22 +49,6 @@ const fieldSchema = z.object({
   placeholder: z.string().optional(),
 });
 
-const defaultMatrixConfig: MatrixConfig = {
-  rows: [
-    { id: "kitchen", label: "Kitchen" },
-    { id: "living_room", label: "Living Room" },
-    { id: "dining_room", label: "Dining Room" },
-    { id: "master_bedroom", label: "Master Bedroom" }
-  ],
-  columns: [
-    { id: "quantity", label: "Qty", type: "number" },
-    { id: "walls", label: "Walls", type: "checkbox" },
-    { id: "ceiling", label: "Ceiling", type: "checkbox" },
-    { id: "trim", label: "Trim", type: "checkbox" },
-    { id: "doors", label: "Doors", type: "checkbox" }
-  ]
-};
-
 const FieldActions: React.FC<FieldActionsProps> = ({
   isAddingField,
   setIsAddingField,
@@ -69,13 +56,13 @@ const FieldActions: React.FC<FieldActionsProps> = ({
   setEditingFieldId,
   options,
   setOptions,
+  matrixConfig,
+  setMatrixConfig,
   onAddField,
   onUpdateField,
   onCancel,
   fields,
 }) => {
-  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
-  
   const form = useForm<z.infer<typeof fieldSchema>>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
@@ -105,10 +92,16 @@ const FieldActions: React.FC<FieldActionsProps> = ({
           placeholder: field.placeholder || "",
         });
         
-        if (field.type === "matrix-selector" && field.options && typeof field.options !== 'string' && 'rows' in field.options && 'columns' in field.options) {
-          setMatrixConfig(field.options as MatrixConfig);
-        } else {
-          setMatrixConfig(defaultMatrixConfig);
+        if (field.type === "matrix-selector" && field.options && isMatrixConfig(field.options)) {
+          // Ensure the type discriminator exists
+          const config: MatrixConfig = {
+            ...field.options,
+            type: 'matrix-config'
+          };
+          setMatrixConfig(config);
+        } else if (field.type === "matrix-selector") {
+          // Fallback to default if matrix options aren't valid
+          setMatrixConfig(createDefaultMatrixConfig());
         }
         
         if (Array.isArray(field.options)) {
@@ -129,23 +122,16 @@ const FieldActions: React.FC<FieldActionsProps> = ({
         placeholder: "",
       });
       setOptions([]);
-      setMatrixConfig(defaultMatrixConfig);
+      setMatrixConfig(createDefaultMatrixConfig());
     }
-  }, [editingFieldId, form, setOptions, fields]);
+  }, [editingFieldId, form, setOptions, setMatrixConfig, fields]);
 
   const handleSubmit = (values: z.infer<typeof fieldSchema>) => {
     try {
-      const fieldType = values.type;
-      let fieldOptions: any = options;
-      
-      if (fieldType === "matrix-selector") {
-        fieldOptions = matrixConfig;
-      }
-      
       if (editingFieldId) {
-        onUpdateField({ ...values, options: fieldOptions });
+        onUpdateField({ ...values });
       } else {
-        onAddField({ ...values, options: fieldOptions });
+        onAddField({ ...values });
       }
     } catch (error) {
       console.error("Error in handleSubmit:", error);

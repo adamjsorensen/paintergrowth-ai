@@ -2,7 +2,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PromptFieldInput, formatFieldOptions, FieldOption } from './types';
+import { PromptFieldInput, formatFieldOptions } from './types';
+import { isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from '@/types/prompt-templates';
 
 export const usePromptFieldCreate = () => {
   const queryClient = useQueryClient();
@@ -10,6 +11,24 @@ export const usePromptFieldCreate = () => {
 
   return useMutation({
     mutationFn: async (field: PromptFieldInput) => {
+      // Check if this is a matrix field and validate it
+      let fieldOptions = field.options;
+      if (field.type === 'matrix-selector' && fieldOptions) {
+        if (!validateMatrixConfig(fieldOptions)) {
+          toast({
+            title: "Invalid matrix configuration",
+            description: "Matrix fields must have at least one row and one column",
+            variant: "destructive",
+          });
+          throw new Error("Invalid matrix configuration");
+        }
+        
+        // Ensure the discriminator is set
+        if (isMatrixConfig(fieldOptions) && !fieldOptions.type) {
+          fieldOptions = { ...fieldOptions, type: 'matrix-config' };
+        }
+      }
+
       // Prepare field data for database insertion
       const fieldData: any = {
         name: field.name,
@@ -21,7 +40,7 @@ export const usePromptFieldCreate = () => {
         complexity: field.complexity || 'basic',
         help_text: field.help_text || "",
         placeholder: field.placeholder || "",
-        options: field.options, // Already in the correct format
+        options: fieldOptions, // Already in the correct format
         active: field.active ?? true,
         prompt_snippet: field.prompt_snippet
       };

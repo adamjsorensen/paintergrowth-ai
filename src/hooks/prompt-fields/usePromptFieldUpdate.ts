@@ -2,7 +2,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PromptField, PromptFieldInput, FieldOption, formatFieldOptions } from './types';
+import { PromptField, PromptFieldInput } from './types';
+import { isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from '@/types/prompt-templates';
 
 export const usePromptFieldUpdate = () => {
   const queryClient = useQueryClient();
@@ -10,10 +11,34 @@ export const usePromptFieldUpdate = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...fieldData }: Partial<PromptFieldInput> & { id: string }) => {
+      // Check if this is a matrix field and validate it
+      let fieldOptions = fieldData.options;
+      if (fieldData.type === 'matrix-selector' && fieldOptions) {
+        if (!validateMatrixConfig(fieldOptions)) {
+          toast({
+            title: "Invalid matrix configuration",
+            description: "Matrix fields must have at least one row and one column",
+            variant: "destructive",
+          });
+          throw new Error("Invalid matrix configuration");
+        }
+        
+        // Ensure the discriminator is set
+        if (isMatrixConfig(fieldOptions) && !fieldOptions.type) {
+          fieldOptions = { ...fieldOptions, type: 'matrix-config' };
+        }
+      }
+
+      // Update field data with validated options
+      const updatedFieldData = {
+        ...fieldData,
+        options: fieldOptions
+      };
+
       // Ensure we're sending data in the format the database expects
       const { data, error } = await supabase
         .from('prompt_fields')
-        .update(fieldData as any)
+        .update(updatedFieldData as any)
         .eq('id', id)
         .select()
         .single();

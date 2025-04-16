@@ -1,44 +1,23 @@
 
-import { MatrixConfig } from "@/types/prompt-templates";
+import { MatrixConfig, createDefaultMatrixConfig } from "@/types/prompt-templates";
 import { MatrixItem } from "./types";
 
 // Get matrix configuration from options
 export const getMatrixConfig = (options?: any): MatrixConfig => {
-  // Default configuration if none is provided
-  const defaultConfig: MatrixConfig = {
-    rows: [
-      { id: "kitchen", label: "Kitchen" },
-      { id: "living_room", label: "Living Room" },
-      { id: "dining_room", label: "Dining Room" },
-      { id: "master_bedroom", label: "Master Bedroom" },
-      { id: "bathroom", label: "Bathroom" },
-      { id: "guest_bedroom", label: "Guest Bedroom" },
-      { id: "hallway", label: "Hallway" },
-      { id: "garage", label: "Garage" },
-      { id: "bonus_room", label: "Bonus Room" }
-    ],
-    columns: [
-      { id: "quantity", label: "Qty", type: "number" },
-      { id: "walls", label: "Walls", type: "checkbox" },
-      { id: "ceiling", label: "Ceiling", type: "checkbox" },
-      { id: "trim", label: "Trim", type: "checkbox" },
-      { id: "doors", label: "Doors", type: "checkbox" },
-      { id: "closets", label: "Closets", type: "checkbox" }
-    ]
-  };
-  
   // Check if options exist and are in the right format
   if (options && typeof options === "object" && !Array.isArray(options) &&
       'rows' in options && 'columns' in options) {
-    return options as MatrixConfig;
+    // Return with type discriminator if not present
+    return { ...options, type: 'matrix-config' };
   }
   
-  return defaultConfig;
+  console.warn("Using default matrix config due to invalid configuration");
+  return createDefaultMatrixConfig();
 };
 
 // Organize rows by groups
 export const organizeRows = (matrixConfig: MatrixConfig): Record<string, string[]> => {
-  // If no groups defined, just return all rows
+  // If no groups defined or groups array is empty, just return all rows
   if (!matrixConfig.groups || matrixConfig.groups.length === 0) {
     return { ungrouped: matrixConfig.rows.map(row => row.id) };
   }
@@ -48,7 +27,9 @@ export const organizeRows = (matrixConfig: MatrixConfig): Record<string, string[
   
   // First add all defined groups
   matrixConfig.groups.forEach(group => {
-    groupedRows[group.id] = group.rowIds;
+    if (group && group.id && Array.isArray(group.rowIds)) {
+      groupedRows[group.id] = group.rowIds;
+    }
   });
   
   // Find any rows not in a group

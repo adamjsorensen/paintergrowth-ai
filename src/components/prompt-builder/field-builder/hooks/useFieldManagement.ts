@@ -1,9 +1,8 @@
 
 import { useState } from "react";
-import { FieldConfig, FieldOption } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption, MatrixConfig, isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from "@/types/prompt-templates";
 import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
 import { useToast } from "@/hooks/use-toast";
-import { formatFieldOptions } from "@/hooks/prompt-fields/types";
 
 export const useFieldManagement = (
   fields: FieldConfig[],
@@ -12,11 +11,40 @@ export const useFieldManagement = (
   const [isAddingField, setIsAddingField] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [options, setOptions] = useState<FieldOption[]>([]);
+  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(createDefaultMatrixConfig());
   const { createField, updateField, deleteField } = usePromptFields();
   const { toast } = useToast();
 
   const handleAddField = (values: any) => {
     try {
+      let fieldOptions: any;
+      
+      // Handle different types of field options based on field type
+      if (values.type === "matrix-selector") {
+        // Update matrix config with discriminator if needed
+        fieldOptions = { ...matrixConfig, type: 'matrix-config' };
+        
+        // Validate matrix configuration
+        if (!validateMatrixConfig(fieldOptions)) {
+          toast({
+            title: "Invalid matrix configuration",
+            description: "Matrix fields must have at least one row and one column",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
+        fieldOptions = [...options];
+        if (fieldOptions.length === 0) {
+          toast({
+            title: "Missing options",
+            description: "This field type requires at least one option",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
       const newFieldData: any = {
         name: values.name,
         label: values.label,
@@ -26,7 +54,7 @@ export const useFieldManagement = (
         complexity: values.complexity || 'basic',
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
-        options: options?.length > 0 ? formatFieldOptions(options) : undefined,
+        options: fieldOptions,
         order_position: fields.length + 1,
         active: true
       };
@@ -45,15 +73,13 @@ export const useFieldManagement = (
         order: fields.length + 1,
         sectionId: values.sectionId,
         complexity: values.complexity || 'basic',
+        options: fieldOptions
       };
-      
-      if (["select", "checkbox-group", "multi-select"].includes(values.type) && options.length > 0) {
-        newField.options = [...options];
-      }
       
       setFields((prev) => [...prev, newField]);
       setIsAddingField(false);
       setOptions([]);
+      setMatrixConfig(createDefaultMatrixConfig());
       
     } catch (error) {
       console.error("Error adding field:", error);
@@ -69,6 +95,34 @@ export const useFieldManagement = (
     if (!editingFieldId) return;
     
     try {
+      let fieldOptions: any;
+      
+      // Handle different types of field options based on field type
+      if (values.type === "matrix-selector") {
+        // Update matrix config with discriminator if needed
+        fieldOptions = { ...matrixConfig, type: 'matrix-config' };
+        
+        // Validate matrix configuration
+        if (!validateMatrixConfig(fieldOptions)) {
+          toast({
+            title: "Invalid matrix configuration",
+            description: "Matrix fields must have at least one row and one column",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
+        fieldOptions = [...options];
+        if (fieldOptions.length === 0) {
+          toast({
+            title: "Missing options",
+            description: "This field type requires at least one option",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
       const fieldUpdateData: any = {
         id: editingFieldId,
         name: values.name,
@@ -79,7 +133,7 @@ export const useFieldManagement = (
         complexity: values.complexity || 'basic',
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
-        options: options?.length > 0 ? formatFieldOptions(options) : undefined,
+        options: fieldOptions,
       };
       
       updateField.mutate(fieldUpdateData);
@@ -90,7 +144,7 @@ export const useFieldManagement = (
             return {
               ...field,
               ...values,
-              options: options
+              options: fieldOptions
             };
           }
           return field;
@@ -99,6 +153,7 @@ export const useFieldManagement = (
       
       setEditingFieldId(null);
       setOptions([]);
+      setMatrixConfig(createDefaultMatrixConfig());
     } catch (error) {
       console.error("Error updating field:", error);
       toast({
@@ -135,6 +190,8 @@ export const useFieldManagement = (
     setEditingFieldId,
     options,
     setOptions,
+    matrixConfig,
+    setMatrixConfig,
     handleAddField,
     handleUpdateField,
     handleMoveField,

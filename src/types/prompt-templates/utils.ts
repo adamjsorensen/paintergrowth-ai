@@ -39,6 +39,32 @@ export const parseFieldConfig = (configStr: string): FieldConfig[] => {
   }
 };
 
+// Validate matrix configuration
+export const validateMatrixConfig = (config: any): boolean => {
+  if (!isMatrixConfig(config)) return false;
+  
+  // Check for at least one row and one column
+  return Array.isArray(config.rows) && 
+         config.rows.length > 0 && 
+         Array.isArray(config.columns) && 
+         config.columns.length > 0;
+};
+
+// Create default matrix config for fallbacks
+export const createDefaultMatrixConfig = (): MatrixConfig => {
+  return {
+    type: 'matrix-config',
+    rows: [
+      { id: "bedroom", label: "Bedroom" },
+      { id: "kitchen", label: "Kitchen" }
+    ],
+    columns: [
+      { id: "quantity", label: "Qty", type: "number" },
+      { id: "walls", label: "Walls", type: "checkbox" }
+    ]
+  };
+};
+
 // Helper function to generate preview text based on template and values
 export const generatePreviewText = (
   template: string,
