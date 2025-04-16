@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PromptFieldInput } from './types';
-import { isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from '@/types/prompt-templates';
+import { isMatrixConfig, validateMatrixConfig } from '@/types/prompt-templates';
 import { SectionType } from '@/types/prompt-field';
 
 export const usePromptFieldCreate = () => {
@@ -35,15 +35,15 @@ export const usePromptFieldCreate = () => {
         name: field.name,
         label: field.label,
         type: field.type,
-        section: field.section as SectionType, // Cast to the enum type
-        order_position: field.order_position,
+        section: field.section,
+        order_position: field.order_position || 0,
         required: field.required || false,
         complexity: field.complexity || 'basic',
         help_text: field.help_text || "",
         placeholder: field.placeholder || "",
-        options: fieldOptions, // Already in the correct format
+        options: fieldOptions,
         active: field.active ?? true,
-        prompt_snippet: field.prompt_snippet
+        prompt_snippet: field.prompt_snippet || ""
       };
 
       const { data, error } = await supabase

@@ -1,3 +1,4 @@
+
 import { Json } from '@/integrations/supabase/types';
 
 export type FieldType = 
@@ -13,7 +14,8 @@ export type FieldType =
   | 'date'
   | 'file-upload'
   | 'tax-calculator'
-  | 'matrix-selector';
+  | 'matrix-selector'
+  | 'scope-of-work';
 
 export type SectionType = 
   | 'client'

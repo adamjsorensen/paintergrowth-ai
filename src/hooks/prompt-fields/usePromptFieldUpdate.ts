@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PromptField, PromptFieldInput } from './types';
-import { isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from '@/types/prompt-templates';
+import { isMatrixConfig, validateMatrixConfig } from '@/types/prompt-templates';
 import { SectionType } from '@/types/prompt-field';
 
 export const usePromptFieldUpdate = () => {
@@ -30,17 +30,16 @@ export const usePromptFieldUpdate = () => {
         }
       }
 
-      // Update field data with validated options and proper type casting
+      // Update field data with validated options
       const updatedFieldData = {
         ...fieldData,
-        section: fieldData.section as SectionType, // Cast to the enum type
         options: fieldOptions
       };
 
       // Ensure we're sending data in the format the database expects
       const { data, error } = await supabase
         .from('prompt_fields')
-        .update(updatedFieldData as any)
+        .update(updatedFieldData)
         .eq('id', id)
         .select()
         .single();

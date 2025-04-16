@@ -154,6 +154,20 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, value, onChange })
         />
       );
     
+    case "scope-of-work":
+      // For preview purposes, we'll handle scope-of-work fields as textarea for simplicity
+      return (
+        <TextareaField
+          id={id}
+          label={label}
+          required={required}
+          helpText={helpText || "Define the scope of work for this project"}
+          placeholder={placeholder || "Enter scope of work details..."}
+          value={value || ""}
+          onChange={onChange}
+        />
+      );
+    
     default:
       return null;
   }

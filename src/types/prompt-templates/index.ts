@@ -3,10 +3,31 @@
  * Export all types and utilities from the prompt-templates directory
  */
 
-// Re-export everything from the individual files
+// Re-export base types
 export * from './base';
-export * from './matrix';
-export * from './item-types';
-export * from './utils';
 
-// You can add any additional exports or logic here if needed in the future
+// Re-export item types
+export * from './item-types';
+
+// Selectively re-export from matrix to avoid conflicts
+export {
+  MatrixRow, 
+  MatrixColumn, 
+  MatrixGroup, 
+  MatrixConfig
+} from './matrix';
+
+// Selectively re-export utility functions from utils to avoid conflicts
+export {
+  isFieldOptionArray,
+  stringifyFieldConfig,
+  parseFieldConfig,
+  generatePreviewText
+} from './utils';
+
+// Explicitly re-export the utility functions that had conflicts
+export {
+  createDefaultMatrixConfig, 
+  isMatrixConfig, 
+  validateMatrixConfig
+} from './matrix';
