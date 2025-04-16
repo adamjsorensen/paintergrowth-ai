@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FieldType, FieldOption, FieldConfig } from "@/types/prompt-templates";
+import { FieldType, FieldOption, FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import FieldForm from "../field-form/FieldForm";
 
 interface FieldActionsProps {
@@ -38,7 +37,7 @@ const fieldSchema = z.object({
     "quote-table", 
     "upsell-table", 
     "tax-calculator",
-    "matrix-selector"  // Added the new field type here
+    "matrix-selector"
   ]),
   sectionId: z.string().min(1, "Section is required"),
   required: z.boolean().default(false),
@@ -46,6 +45,22 @@ const fieldSchema = z.object({
   helpText: z.string().optional(),
   placeholder: z.string().optional(),
 });
+
+const defaultMatrixConfig: MatrixConfig = {
+  rows: [
+    { id: "kitchen", label: "Kitchen" },
+    { id: "living_room", label: "Living Room" },
+    { id: "dining_room", label: "Dining Room" },
+    { id: "master_bedroom", label: "Master Bedroom" }
+  ],
+  columns: [
+    { id: "quantity", label: "Qty", type: "number" },
+    { id: "walls", label: "Walls", type: "checkbox" },
+    { id: "ceiling", label: "Ceiling", type: "checkbox" },
+    { id: "trim", label: "Trim", type: "checkbox" },
+    { id: "doors", label: "Doors", type: "checkbox" }
+  ]
+};
 
 const FieldActions: React.FC<FieldActionsProps> = ({
   isAddingField,
@@ -59,6 +74,8 @@ const FieldActions: React.FC<FieldActionsProps> = ({
   onCancel,
   fields,
 }) => {
+  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
+  
   const form = useForm<z.infer<typeof fieldSchema>>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
@@ -73,15 +90,13 @@ const FieldActions: React.FC<FieldActionsProps> = ({
     },
   });
 
-  // Reset form when switching between add/edit modes
   useEffect(() => {
     if (editingFieldId) {
-      // Get the field being edited from the parent component
       const field = fields.find(f => f.id === editingFieldId);
       if (field) {
         form.reset({
           label: field.label,
-          name: field.name || "", // Use name if it exists
+          name: field.name || "",
           type: field.type,
           sectionId: field.sectionId || "client",
           required: field.required || false,
@@ -89,7 +104,18 @@ const FieldActions: React.FC<FieldActionsProps> = ({
           helpText: field.helpText || "",
           placeholder: field.placeholder || "",
         });
-        setOptions(field.options || []);
+        
+        if (field.type === "matrix-selector" && field.options && typeof field.options !== 'string' && 'rows' in field.options && 'columns' in field.options) {
+          setMatrixConfig(field.options as MatrixConfig);
+        } else {
+          setMatrixConfig(defaultMatrixConfig);
+        }
+        
+        if (Array.isArray(field.options)) {
+          setOptions(field.options);
+        } else {
+          setOptions([]);
+        }
       }
     } else {
       form.reset({
@@ -103,15 +129,23 @@ const FieldActions: React.FC<FieldActionsProps> = ({
         placeholder: "",
       });
       setOptions([]);
+      setMatrixConfig(defaultMatrixConfig);
     }
   }, [editingFieldId, form, setOptions, fields]);
 
   const handleSubmit = (values: z.infer<typeof fieldSchema>) => {
     try {
+      const fieldType = values.type;
+      let fieldOptions: any = options;
+      
+      if (fieldType === "matrix-selector") {
+        fieldOptions = matrixConfig;
+      }
+      
       if (editingFieldId) {
-        onUpdateField({ ...values, options });
+        onUpdateField({ ...values, options: fieldOptions });
       } else {
-        onAddField({ ...values, options });
+        onAddField({ ...values, options: fieldOptions });
       }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -126,6 +160,8 @@ const FieldActions: React.FC<FieldActionsProps> = ({
           isEditing={!!editingFieldId}
           options={options}
           setOptions={setOptions}
+          matrixConfig={matrixConfig}
+          setMatrixConfig={setMatrixConfig}
           onSubmit={handleSubmit}
           onCancel={onCancel}
         />

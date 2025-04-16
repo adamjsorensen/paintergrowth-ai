@@ -1,6 +1,6 @@
 
 import React from "react";
-import { FieldConfig } from "@/types/prompt-templates";
+import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,35 +14,16 @@ import {
 } from "@/components/ui/table";
 import { HelpText } from "./components/HelpText";
 
-// Define the structure of a matrix row
-export interface MatrixRow {
+// Define the structure of a matrix row for the form data
+export interface MatrixItem {
   id: string;
-  room: string;
-  quantity: number;
-  walls: boolean;
-  ceiling: boolean;
-  trim: boolean;
-  doors: boolean;
-  closets: boolean;
+  [key: string]: string | number | boolean;
 }
-
-// Default rooms for the MVP implementation
-const DEFAULT_ROOMS = [
-  { id: "kitchen", room: "Kitchen" },
-  { id: "living_room", room: "Living Room" },
-  { id: "dining_room", room: "Dining Room" },
-  { id: "master_bedroom", room: "Master Bedroom" },
-  { id: "bathroom", room: "Bathroom" },
-  { id: "guest_bedroom", room: "Guest Bedroom" },
-  { id: "hallway", room: "Hallway" },
-  { id: "garage", room: "Garage" },
-  { id: "bonus_room", room: "Bonus Room" }
-];
 
 interface MatrixSelectorFieldProps {
   field: FieldConfig;
-  value: MatrixRow[];
-  onChange: (value: MatrixRow[]) => void;
+  value: MatrixItem[];
+  onChange: (value: MatrixItem[]) => void;
   isAdvanced?: boolean;
 }
 
@@ -52,34 +33,97 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   onChange,
   isAdvanced
 }) => {
+  // Get matrix configuration from field options
+  const getMatrixConfig = (): MatrixConfig => {
+    // Default configuration if none is provided
+    const defaultConfig: MatrixConfig = {
+      rows: [
+        { id: "kitchen", label: "Kitchen" },
+        { id: "living_room", label: "Living Room" },
+        { id: "dining_room", label: "Dining Room" },
+        { id: "master_bedroom", label: "Master Bedroom" },
+        { id: "bathroom", label: "Bathroom" },
+        { id: "guest_bedroom", label: "Guest Bedroom" },
+        { id: "hallway", label: "Hallway" },
+        { id: "garage", label: "Garage" },
+        { id: "bonus_room", label: "Bonus Room" }
+      ],
+      columns: [
+        { id: "quantity", label: "Qty", type: "number" },
+        { id: "walls", label: "Walls", type: "checkbox" },
+        { id: "ceiling", label: "Ceiling", type: "checkbox" },
+        { id: "trim", label: "Trim", type: "checkbox" },
+        { id: "doors", label: "Doors", type: "checkbox" },
+        { id: "closets", label: "Closets", type: "checkbox" }
+      ]
+    };
+    
+    // Check if options exist and are in the right format
+    if (field.options && typeof field.options === "object" && !Array.isArray(field.options) &&
+        'rows' in field.options && 'columns' in field.options) {
+      return field.options as MatrixConfig;
+    }
+    
+    return defaultConfig;
+  };
+  
+  const matrixConfig = getMatrixConfig();
+  
   // Initialize the matrix with default values if empty
   const matrixValue = React.useMemo(() => {
     if (!value || !Array.isArray(value) || value.length === 0) {
-      return DEFAULT_ROOMS.map(room => ({
-        ...room,
-        quantity: 1,
-        walls: false,
-        ceiling: false,
-        trim: false,
-        doors: false,
-        closets: false
-      }));
+      // Create initial value based on the configuration
+      return matrixConfig.rows.map(row => {
+        const item: MatrixItem = {
+          id: row.id,
+          label: row.label, // Store the label for display
+        };
+        
+        // Initialize all columns with default values
+        matrixConfig.columns.forEach(col => {
+          if (col.type === "number") {
+            item[col.id] = 1; // Default number value
+          } else if (col.type === "checkbox") {
+            item[col.id] = false; // Default checkbox value
+          }
+        });
+        
+        return item;
+      });
     }
     return value;
-  }, [value]);
+  }, [value, matrixConfig]);
 
-  const handleQuantityChange = (rowId: string, newQuantity: number) => {
+  // Handle value changes for each cell
+  const handleValueChange = (rowId: string, columnId: string, newValue: any) => {
     const updatedMatrix = matrixValue.map(row => 
-      row.id === rowId ? { ...row, quantity: newQuantity } : row
+      row.id === rowId ? { ...row, [columnId]: newValue } : row
     );
     onChange(updatedMatrix);
   };
 
-  const handleCheckboxChange = (rowId: string, field: keyof MatrixRow) => {
-    const updatedMatrix = matrixValue.map(row => 
-      row.id === rowId ? { ...row, [field]: !row[field] } : row
-    );
-    onChange(updatedMatrix);
+  // Render a cell based on the column type
+  const renderCell = (row: MatrixItem, column: { id: string; type: string; label: string }) => {
+    if (column.type === "number") {
+      return (
+        <Input
+          type="number"
+          min="0"
+          value={row[column.id] as number}
+          onChange={(e) => handleValueChange(row.id, column.id, parseInt(e.target.value) || 0)}
+          className="h-8 w-16 text-center"
+        />
+      );
+    } else if (column.type === "checkbox") {
+      return (
+        <Checkbox 
+          checked={Boolean(row[column.id])}
+          onCheckedChange={(checked) => handleValueChange(row.id, column.id, Boolean(checked))}
+          className="mx-auto"
+        />
+      );
+    }
+    return null;
   };
 
   return (
@@ -97,69 +141,29 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           <TableHeader>
             <TableRow className="bg-muted/30">
               <TableHead className="w-1/4">Room</TableHead>
-              <TableHead className="w-16 text-center">Qty</TableHead>
-              <TableHead className="text-center">Walls</TableHead>
-              <TableHead className="text-center">Ceiling</TableHead>
-              <TableHead className="text-center">Trim</TableHead>
-              <TableHead className="text-center">Doors</TableHead>
-              <TableHead className="text-center">Closets</TableHead>
+              {matrixConfig.columns.map(column => (
+                <TableHead key={column.id} className="text-center">
+                  {column.label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {matrixValue.map((row) => (
               <TableRow key={row.id}>
-                <TableCell className="font-medium">{row.room}</TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={row.quantity}
-                    onChange={(e) => handleQuantityChange(row.id, parseInt(e.target.value) || 0)}
-                    className="h-8 w-16 text-center"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox 
-                    checked={row.walls} 
-                    onCheckedChange={() => handleCheckboxChange(row.id, "walls")}
-                    className="mx-auto"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox 
-                    checked={row.ceiling} 
-                    onCheckedChange={() => handleCheckboxChange(row.id, "ceiling")}
-                    className="mx-auto"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox 
-                    checked={row.trim} 
-                    onCheckedChange={() => handleCheckboxChange(row.id, "trim")}
-                    className="mx-auto"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox 
-                    checked={row.doors} 
-                    onCheckedChange={() => handleCheckboxChange(row.id, "doors")}
-                    className="mx-auto"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox 
-                    checked={row.closets} 
-                    onCheckedChange={() => handleCheckboxChange(row.id, "closets")}
-                    className="mx-auto"
-                  />
-                </TableCell>
+                <TableCell className="font-medium">{row.label || row.id}</TableCell>
+                {matrixConfig.columns.map(column => (
+                  <TableCell key={`${row.id}-${column.id}`} className="text-center">
+                    {renderCell(row, column)}
+                  </TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
       
-      {matrixValue.length > 0 && (
+      {matrixConfig.columns.some(col => col.id === "quantity" || col.type === "number") && (
         <p className="text-xs text-muted-foreground mt-1">
           Set quantity to 0 for rooms not included in the project.
         </p>

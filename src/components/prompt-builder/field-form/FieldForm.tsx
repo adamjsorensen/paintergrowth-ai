@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { FieldOption } from "@/types/prompt-templates";
+import { FieldOption, MatrixConfig } from "@/types/prompt-templates";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import FormSectionFields from "./components/FormSectionFields";
@@ -9,12 +9,15 @@ import FieldTypeSection from "./components/FieldTypeSection";
 import FieldToggles from "./components/FieldToggles";
 import SectionSelect from "./components/SectionSelect";
 import OptionInputs from "./OptionInputs";
+import MatrixConfigEditor from "./MatrixConfigEditor";
 
 interface FieldFormProps {
   form: UseFormReturn<any>;
   isEditing: boolean;
   options: FieldOption[];
   setOptions: React.Dispatch<React.SetStateAction<FieldOption[]>>;
+  matrixConfig?: MatrixConfig;
+  setMatrixConfig?: React.Dispatch<React.SetStateAction<MatrixConfig>>;
   onSubmit: (values: any) => void;
   onCancel: () => void;
 }
@@ -24,6 +27,8 @@ const FieldForm: React.FC<FieldFormProps> = ({
   isEditing,
   options,
   setOptions,
+  matrixConfig,
+  setMatrixConfig,
   onSubmit,
   onCancel,
 }) => {
@@ -38,9 +43,14 @@ const FieldForm: React.FC<FieldFormProps> = ({
     };
   }, []);
 
+  const fieldType = form.watch("type");
+
   const needsOptions = () => {
-    const currentType = form.watch("type");
-    return ["select", "checkbox-group", "multi-select"].includes(currentType);
+    return ["select", "checkbox-group", "multi-select"].includes(fieldType);
+  };
+
+  const isMatrixSelector = () => {
+    return fieldType === "matrix-selector";
   };
 
   const handleFormSubmit = (values: any) => {
@@ -68,6 +78,12 @@ const FieldForm: React.FC<FieldFormProps> = ({
     setOptions(options.filter((_, i) => i !== index));
   };
 
+  const handleMatrixConfigChange = (newConfig: MatrixConfig) => {
+    if (setMatrixConfig) {
+      setMatrixConfig(newConfig);
+    }
+  };
+
   return (
     <Card className="my-4">
       <CardContent className="pt-6">
@@ -89,6 +105,13 @@ const FieldForm: React.FC<FieldFormProps> = ({
               setOptionInput={setOptionInput}
               onAddOption={handleAddOption}
               onRemoveOption={handleRemoveOption}
+            />
+          )}
+
+          {isMatrixSelector() && matrixConfig && setMatrixConfig && (
+            <MatrixConfigEditor 
+              config={matrixConfig} 
+              onChange={handleMatrixConfigChange}
             />
           )}
           

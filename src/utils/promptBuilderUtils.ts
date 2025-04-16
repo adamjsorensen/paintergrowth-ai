@@ -1,7 +1,13 @@
 
-import { FieldConfig, FieldOption, MatrixRow } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption, MatrixConfig } from "@/types/prompt-templates";
 import { stringifyFieldConfig } from "@/types/prompt-templates";
 import { supabase } from "@/integrations/supabase/client";
+
+// Interface for matrix items in the form
+interface MatrixItem {
+  id: string;
+  [key: string]: string | number | boolean;
+}
 
 /**
  * Process fields to ensure they have the correct structure
@@ -59,9 +65,16 @@ export const generatePreviewText = (systemPrompt: string, values: Record<string,
     const regex = new RegExp(`{{${key}}}`, "g");
     
     // Format matrix-selector data specially
-    if (Array.isArray(value) && value.length > 0 && 'room' in value[0] && 'walls' in value[0]) {
-      const formattedMatrix = formatMatrixForPrompt(value as MatrixRow[]);
-      preview = preview.replace(regex, formattedMatrix);
+    if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
+      // Check if this looks like a matrix by sampling some properties
+      const sampleObj = value[0];
+      if ('id' in sampleObj && Object.keys(sampleObj).some(key => typeof sampleObj[key] === 'boolean')) {
+        const formattedMatrix = formatMatrixForPrompt(value as MatrixItem[], fields.find(f => f.name === key));
+        preview = preview.replace(regex, formattedMatrix);
+      } else {
+        const displayValue = Array.isArray(value) ? value.join(", ") : value;
+        preview = preview.replace(regex, String(displayValue || `[${key}]`));
+      }
     } else {
       const displayValue = Array.isArray(value) ? value.join(", ") : value;
       preview = preview.replace(regex, String(displayValue || `[${key}]`));
@@ -81,35 +94,85 @@ export const generatePreviewText = (systemPrompt: string, values: Record<string,
 
 /**
  * Format matrix data into a human-readable format for the prompt
- * @param matrixData Array of room objects with surface selections
+ * @param matrixData Array of row objects with surface selections
+ * @param fieldConfig Optional field configuration to provide context
  * @returns Formatted string for use in the proposal
  */
-export const formatMatrixForPrompt = (matrixData: MatrixRow[]): string => {
-  // Filter out rooms with quantity 0
-  const activeRooms = matrixData.filter(room => room.quantity > 0);
-  
-  if (activeRooms.length === 0) {
-    return "No interior rooms selected.";
+export const formatMatrixForPrompt = (matrixData: MatrixItem[], fieldConfig?: FieldConfig): string => {
+  if (!matrixData || !Array.isArray(matrixData) || matrixData.length === 0) {
+    return "No rooms selected.";
+  }
+
+  // Try to determine the matrix configuration
+  let matrixConfig: MatrixConfig | undefined;
+  if (fieldConfig && fieldConfig.options && typeof fieldConfig.options === "object" && !Array.isArray(fieldConfig.options) &&
+      'rows' in fieldConfig.options && 'columns' in fieldConfig.options) {
+    matrixConfig = fieldConfig.options as MatrixConfig;
   }
   
-  let result = "Interior Scope of Work:\n\n";
+  // Get column definitions or infer them from data
+  const getColumnDefinitions = () => {
+    if (matrixConfig) {
+      return matrixConfig.columns;
+    }
+    
+    // Infer columns from first item
+    const sampleItem = matrixData[0];
+    const columns: {id: string, type: string}[] = [];
+    
+    Object.entries(sampleItem).forEach(([key, value]) => {
+      if (key !== 'id' && key !== 'label') {
+        const type = typeof value === 'number' ? 'number' : 
+                     typeof value === 'boolean' ? 'checkbox' : 'text';
+        columns.push({ id: key, type, label: key });
+      }
+    });
+    
+    return columns;
+  };
+  
+  const columns = getColumnDefinitions();
+  const numericColumns = columns.filter(col => col.type === 'number');
+  
+  // Filter out rooms based on numeric columns (if any)
+  const activeRooms = numericColumns.length > 0 
+    ? matrixData.filter(room => numericColumns.some(col => (room[col.id] as number) > 0))
+    : matrixData;
+  
+  if (activeRooms.length === 0) {
+    return "No rooms selected.";
+  }
+  
+  let result = "Room Selection Details:\n\n";
   
   activeRooms.forEach(room => {
-    // Skip rooms with no surfaces selected and quantity 0
-    const hasSurfaces = room.walls || room.ceiling || room.trim || room.doors || room.closets;
-    if (room.quantity === 0 || !hasSurfaces) return;
+    // Skip rooms with no selections
+    const checkboxColumns = columns.filter(col => col.type === 'checkbox');
+    const hasSelections = checkboxColumns.some(col => Boolean(room[col.id]));
     
-    const quantityText = room.quantity > 1 ? `${room.quantity} ${room.room}s` : room.room;
+    // If there's a quantity column specifically
+    const qtyColumn = columns.find(col => col.id.toLowerCase() === 'quantity' || col.id.toLowerCase() === 'qty');
+    const quantity = qtyColumn ? (room[qtyColumn.id] as number) : 1;
+    
+    // Only show rooms with selections or positive quantity
+    if (!hasSelections && (!qtyColumn || quantity <= 0)) {
+      return;
+    }
+    
+    // Get room name
+    const roomName = room.label || room.id;
+    const quantityText = quantity && quantity > 1 ? `${quantity} ${roomName}s` : roomName;
     result += `- ${quantityText}: `;
     
-    const surfaces = [];
-    if (room.walls) surfaces.push("Walls");
-    if (room.ceiling) surfaces.push("Ceiling");
-    if (room.trim) surfaces.push("Trim");
-    if (room.doors) surfaces.push("Doors");
-    if (room.closets) surfaces.push("Closets");
+    // List selected options
+    const selections = [];
+    checkboxColumns.forEach(col => {
+      if (Boolean(room[col.id])) {
+        selections.push(col.label || col.id);
+      }
+    });
     
-    result += surfaces.join(", ");
+    result += selections.join(", ");
     result += "\n";
   });
   

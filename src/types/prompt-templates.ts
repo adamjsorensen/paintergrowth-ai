@@ -50,11 +50,21 @@ export interface MatrixRow {
   id: string;
   room: string;
   quantity: number;
-  walls: boolean;
-  ceiling: boolean;
-  trim: boolean;
-  doors: boolean;
-  closets: boolean;
+  [key: string]: boolean | string | number; // Allow dynamic column properties
+}
+
+export interface MatrixColumn {
+  id: string;
+  label: string;
+  type: 'number' | 'checkbox';
+}
+
+export interface MatrixConfig {
+  rows: {
+    id: string;
+    label: string;
+  }[];
+  columns: MatrixColumn[];
 }
 
 export interface FieldConfig {
@@ -65,7 +75,7 @@ export interface FieldConfig {
   required?: boolean;
   helpText?: string;
   placeholder?: string;
-  options?: FieldOption[];
+  options?: FieldOption[] | MatrixConfig;
   min?: number;
   max?: number;
   step?: number;
