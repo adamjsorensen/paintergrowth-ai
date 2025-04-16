@@ -16,7 +16,7 @@ interface TaxCalculatorFieldProps {
 
 const TaxCalculatorField = ({ 
   field, 
-  value = { rate: 0, enabled: false }, 
+  value = { rate: 0, applyToMaterials: true, applyToLabor: true }, 
   onChange,
   subtotal = 0,
   isAdvanced 
@@ -25,7 +25,9 @@ const TaxCalculatorField = ({
     // Initialize with default or provided values
     return {
       rate: value?.rate || 0,
-      enabled: value?.enabled || false
+      enabled: value?.enabled || false,
+      applyToMaterials: value?.applyToMaterials || true,
+      applyToLabor: value?.applyToLabor || true
     };
   });
 

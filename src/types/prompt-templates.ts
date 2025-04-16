@@ -60,21 +60,27 @@ export interface FieldConfig {
   step?: number;
 }
 
-// For tax calculator fields
+// For tax calculator fields - updated to match the actual implementation
 export interface TaxSettings {
   rate: number;
-  applyToMaterials: boolean;
-  applyToLabor: boolean;
+  enabled?: boolean; // Added this to match how it's actually used
+  applyToMaterials?: boolean;
+  applyToLabor?: boolean;
 }
 
-// For quote table fields
+// For quote table fields - updated to match implementation in QuoteTableField.tsx
 export interface QuoteItem {
   id: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  total: number;
+  service: string; // Changed from description to match implementation
+  price: number; // Added to match how it's being used
+  notes?: string; // Added to match how it's being used
+  
+  // Making the original fields optional to maintain compatibility
+  description?: string;
+  quantity?: number;
+  unit?: string;
+  unitPrice?: number;
+  total?: number;
 }
 
 // Prompt template definition

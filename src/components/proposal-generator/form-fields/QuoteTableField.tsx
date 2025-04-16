@@ -21,7 +21,12 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
   // Initialize with at least one row if empty
   const [items, setItems] = useState<QuoteItem[]>(() => {
     if (value && value.length > 0) return value;
-    return [{ id: uuidv4(), service: "", price: 0, notes: "" }];
+    return [{ 
+      id: uuidv4(), 
+      service: "", 
+      price: 0, 
+      notes: "" 
+    }];
   });
 
   const [subtotal, setSubtotal] = useState<number>(0);
@@ -36,7 +41,12 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
   }, [items, onChange]);
 
   const handleAddRow = () => {
-    const newItem = { id: uuidv4(), service: "", price: 0, notes: "" };
+    const newItem: QuoteItem = { 
+      id: uuidv4(), 
+      service: "", 
+      price: 0, 
+      notes: "" 
+    };
     setItems([...items, newItem]);
   };
 
