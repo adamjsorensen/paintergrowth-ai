@@ -1,4 +1,3 @@
-
 /**
  * Core types for the prompt template system
  */
@@ -81,6 +80,16 @@ export interface QuoteItem {
   unit?: string;
   unitPrice?: number;
   total?: number;
+}
+
+// Add UpsellItem type definition
+export interface UpsellItem {
+  id: string;
+  service: string;
+  price: number;
+  included?: boolean;
+  label?: string;
+  description?: string;
 }
 
 // Prompt template definition
