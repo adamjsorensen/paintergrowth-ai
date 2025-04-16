@@ -1,16 +1,13 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import InteriorExteriorToggle from "./InteriorExteriorToggle";
 
 const StylePreferences = () => {
   const { preferences, setPreferences, setHasSetPreferences } = useStylePreferences();
@@ -41,37 +38,11 @@ const StylePreferences = () => {
     }));
   };
 
-  const handleFormalityChange = (value: string) => {
+  const handleJobTypeChange = (value: "interior" | "exterior") => {
     setPreferences(prev => ({
       ...prev,
-      formality: value as "casual" | "formal"
+      jobType: value
     }));
-  };
-
-  const handleRelationshipChange = (value: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      relationship: value as "new" | "repeat" | "referred" | "cold"
-    }));
-  };
-
-  const handleVisualFlairChange = (value: string[]) => {
-    setPreferences(prev => ({
-      ...prev,
-      visualFlair: {
-        mentionColors: value.includes("mentionColors"),
-        includePricing: value.includes("includePricing"),
-        bulletPoints: value.includes("bulletPoints"),
-      }
-    }));
-  };
-
-  const getVisualFlairValue = () => {
-    const result = [];
-    if (preferences.visualFlair.mentionColors) result.push("mentionColors");
-    if (preferences.visualFlair.includePricing) result.push("includePricing");
-    if (preferences.visualFlair.bulletPoints) result.push("bulletPoints");
-    return result;
   };
 
   const getToneButtonClass = (tone: string) => {
@@ -90,6 +61,19 @@ const StylePreferences = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Job Type */}
+        <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-lg mb-3">Job Type</h3>
+            <div className="flex justify-center py-2">
+              <InteriorExteriorToggle 
+                value={preferences.jobType}
+                onChange={handleJobTypeChange}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Tone Preference */}
         <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
           <CardContent className="p-6">
@@ -155,79 +139,6 @@ const StylePreferences = () => {
           </CardContent>
         </Card>
 
-        {/* Formality */}
-        <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-lg mb-3">Formality</h3>
-            <RadioGroup 
-              value={preferences.formality || ""} 
-              onValueChange={handleFormalityChange}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="casual" id="casual" />
-                <Label htmlFor="casual">Casual</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="formal" id="formal" />
-                <Label htmlFor="formal">Formal</Label>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
-
-        {/* Visual Flair */}
-        <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-lg mb-3">Visual Flair</h3>
-            <ToggleGroup 
-              type="multiple"
-              value={getVisualFlairValue()}
-              onValueChange={handleVisualFlairChange}
-              className="flex flex-wrap gap-2"
-            >
-              <ToggleGroupItem value="mentionColors" className="rounded-full">
-                Mention Colors
-              </ToggleGroupItem>
-              <ToggleGroupItem value="includePricing" className="rounded-full">
-                Include Pricing
-              </ToggleGroupItem>
-              <ToggleGroupItem value="bulletPoints" className="rounded-full">
-                Bullet Points
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </CardContent>
-        </Card>
-
-        {/* Relationship */}
-        <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-lg mb-3">Customer Relationship</h3>
-            <RadioGroup 
-              value={preferences.relationship || ""} 
-              onValueChange={handleRelationshipChange}
-              className="grid grid-cols-2 gap-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="new" id="new" />
-                <Label htmlFor="new">New Lead</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="repeat" id="repeat" />
-                <Label htmlFor="repeat">Repeat Client</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="referred" id="referred" />
-                <Label htmlFor="referred">Referred</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cold" id="cold" />
-                <Label htmlFor="cold">Cold</Label>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
-
         {/* Add Upsells */}
         <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
           <CardContent className="p-6 flex items-center justify-between">
@@ -238,20 +149,6 @@ const StylePreferences = () => {
             <Switch 
               checked={preferences.addUpsells}
               onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, addUpsells: checked }))}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Add Personality */}
-        <Card className="overflow-hidden border-2 hover:border-paintergrowth-300 transition-all">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-lg">Add Personality</h3>
-              <p className="text-muted-foreground text-sm">Make the proposal more human</p>
-            </div>
-            <Switch 
-              checked={preferences.addPersonality}
-              onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, addPersonality: checked }))}
             />
           </CardContent>
         </Card>
