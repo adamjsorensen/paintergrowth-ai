@@ -195,10 +195,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                     <TableRow className="bg-muted/20 font-medium">
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 1}
-                        className="py-2 text-muted-foreground"
+                        className="py-2 px-3 text-sm font-semibold bg-muted"
                         role="rowheader"
                       >
-                        {group.label}:
+                        {group.label}
                       </TableCell>
                     </TableRow>
                     
@@ -228,10 +228,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                     <TableRow className="bg-muted/20 font-medium">
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 1}
-                        className="py-2 text-muted-foreground"
+                        className="py-2 px-3 text-sm font-semibold bg-muted"
                         role="rowheader"
                       >
-                        Other Rooms:
+                        Other Rooms
                       </TableCell>
                     </TableRow>
                     
@@ -268,6 +268,92 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
             )}
           </TableBody>
         </Table>
+      </div>
+      
+      {/* Mobile view with responsive cards */}
+      <div className="md:hidden space-y-6 mt-4">
+        {matrixConfig.groups && matrixConfig.groups.length > 0 ? (
+          // Grouped mobile view
+          <>
+            {matrixConfig.groups.map(group => (
+              <div key={group.id} className="space-y-3">
+                {/* Group header */}
+                <h3 className="text-muted-foreground text-sm font-medium mt-6 mb-2">
+                  {group.label}
+                </h3>
+                
+                {/* Group rows */}
+                {group.rowIds.map(rowId => {
+                  const rowItem = rowMapping[rowId];
+                  if (!rowItem) return null;
+                  
+                  return (
+                    <div key={rowId} className="border rounded-md p-4 bg-card">
+                      <h4 className="font-medium mb-3">{rowItem.label || rowItem.id}</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {matrixConfig.columns.map(column => (
+                          <div key={`${rowId}-${column.id}`} className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">{column.label}:</span>
+                            <div className="ml-2">
+                              {renderCell(rowItem, column)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            
+            {/* Ungrouped rows if any */}
+            {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-muted-foreground text-sm font-medium mt-6 mb-2">
+                  Other Rooms
+                </h3>
+                
+                {groupedRows.ungrouped.map(rowId => {
+                  const rowItem = rowMapping[rowId];
+                  if (!rowItem) return null;
+                  
+                  return (
+                    <div key={rowId} className="border rounded-md p-4 bg-card">
+                      <h4 className="font-medium mb-3">{rowItem.label || rowItem.id}</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {matrixConfig.columns.map(column => (
+                          <div key={`${rowId}-${column.id}`} className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">{column.label}:</span>
+                            <div className="ml-2">
+                              {renderCell(rowItem, column)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          // Ungrouped mobile view
+          matrixValue.map((row) => (
+            <div key={row.id} className="border rounded-md p-4 bg-card">
+              <h4 className="font-medium mb-3">{row.label || row.id}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {matrixConfig.columns.map(column => (
+                  <div key={`${row.id}-${column.id}`} className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{column.label}:</span>
+                    <div className="ml-2">
+                      {renderCell(row, column)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
       
       {matrixConfig.columns.some(col => col.id === "quantity" || col.type === "number") && (
