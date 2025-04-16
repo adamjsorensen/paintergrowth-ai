@@ -1,4 +1,6 @@
 
+import { MatrixColumn } from "@/types/prompt-templates";
+
 // Update the column type inference to match the new type definition
 const getColumnDefinitions = (matrixConfig: any, matrixData: any[]) => {
   if (matrixConfig) {
@@ -35,3 +37,18 @@ const inferColumnsFromData = (matrixData: any[]): MatrixColumn[] => {
   
   return columns;
 };
+
+// Export all utility functions
+export { 
+  getColumnDefinitions,
+  inferColumnsFromData
+};
+
+// Re-export the utility functions from prompt-templates.ts
+export { 
+  generatePreviewText,
+  stringifyFieldConfig,
+  parseFieldConfig,
+  isFieldOptionArray,
+  isMatrixConfig
+} from "@/types/prompt-templates";
