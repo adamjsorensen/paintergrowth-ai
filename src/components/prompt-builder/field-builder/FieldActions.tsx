@@ -25,7 +25,21 @@ const fieldSchema = z.object({
     .min(1, "Template variable name is required")
     .regex(/^[a-z][a-zA-Z0-9]*$/, "Must start with lowercase letter and contain only letters and numbers")
     .transform(val => val.replace(/\s+/g, '')),
-  type: z.enum(["text", "textarea", "select", "number", "toggle", "date", "checkbox-group", "multi-select", "file-upload", "quote-table", "upsell-table", "tax-calculator"]),
+  type: z.enum([
+    "text", 
+    "textarea", 
+    "select", 
+    "number", 
+    "toggle", 
+    "date", 
+    "checkbox-group", 
+    "multi-select", 
+    "file-upload", 
+    "quote-table", 
+    "upsell-table", 
+    "tax-calculator",
+    "matrix-selector"  // Added the new field type here
+  ]),
   sectionId: z.string().min(1, "Section is required"),
   required: z.boolean().default(false),
   complexity: z.enum(["basic", "advanced"]).default("basic"),
