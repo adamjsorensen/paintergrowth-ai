@@ -21,7 +21,14 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
   // Initialize with at least one row if empty
   const [items, setItems] = useState<UpsellItem[]>(() => {
     if (value && value.length > 0) return value;
-    return [{ id: uuidv4(), label: "", description: "", price: 0 }];
+    return [{ 
+      id: uuidv4(), 
+      service: "", 
+      price: 0, 
+      included: false, 
+      label: "", 
+      description: "" 
+    }];
   });
 
   useEffect(() => {
@@ -30,7 +37,14 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
   }, [items, onChange]);
 
   const handleAddRow = () => {
-    const newItem = { id: uuidv4(), label: "", description: "", price: 0 };
+    const newItem: UpsellItem = { 
+      id: uuidv4(), 
+      service: "", 
+      price: 0, 
+      included: false, 
+      label: "", 
+      description: "" 
+    };
     setItems([...items, newItem]);
   };
 
@@ -39,7 +53,7 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
     setItems(items.filter(item => item.id !== id));
   };
 
-  const handleChange = (id: string, field: keyof UpsellItem, value: string | number) => {
+  const handleChange = (id: string, field: keyof UpsellItem, value: string | number | boolean) => {
     setItems(prev => 
       prev.map(item => 
         item.id === id ? { ...item, [field]: value } : item
@@ -67,11 +81,11 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor={`label-${item.id}`}>Name</Label>
+                <Label htmlFor={`service-${item.id}`}>Name</Label>
                 <Input
-                  id={`label-${item.id}`}
-                  value={item.label}
-                  onChange={(e) => handleChange(item.id, 'label', e.target.value)}
+                  id={`service-${item.id}`}
+                  value={item.service}
+                  onChange={(e) => handleChange(item.id, 'service', e.target.value)}
                   placeholder="Premium option name"
                   className="w-full"
                 />
@@ -93,7 +107,7 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
                 <Label htmlFor={`description-${item.id}`}>Description</Label>
                 <Input
                   id={`description-${item.id}`}
-                  value={item.description}
+                  value={item.description || ""}
                   onChange={(e) => handleChange(item.id, 'description', e.target.value)}
                   placeholder="Description of the premium option"
                   className="w-full"
@@ -135,8 +149,8 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
               <TableRow key={item.id}>
                 <TableCell>
                   <Input 
-                    value={item.label} 
-                    onChange={(e) => handleChange(item.id, 'label', e.target.value)}
+                    value={item.service} 
+                    onChange={(e) => handleChange(item.id, 'service', e.target.value)}
                     placeholder="Premium option name"
                   />
                 </TableCell>
@@ -151,7 +165,7 @@ const UpsellTableField = ({ field, value = [], onChange, isAdvanced }: UpsellTab
                 </TableCell>
                 <TableCell>
                   <Input 
-                    value={item.description} 
+                    value={item.description || ""} 
                     onChange={(e) => handleChange(item.id, 'description', e.target.value)}
                     placeholder="Description of the premium option"
                   />

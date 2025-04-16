@@ -55,7 +55,8 @@ export interface PromptFieldInput {
 }
 
 export const formatFieldOptions = (options: FieldOption[]): Json => {
-  return { options } as Json;
+  // Cast to unknown first, then to Json to avoid type errors
+  return { options } as unknown as Json;
 };
 
 export interface MatrixRow {

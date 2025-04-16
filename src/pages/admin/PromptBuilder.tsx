@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,9 +30,14 @@ const PromptBuilder = () => {
         if (error) throw error;
 
         if (data) {
+          // Safely parse the field_config, ensuring it's a string first
+          const configStr = typeof data.field_config === 'string' 
+            ? data.field_config 
+            : JSON.stringify(data.field_config);
+          
           const parsedTemplate = {
             ...data,
-            field_config: parseFieldConfig(data.field_config)
+            field_config: parseFieldConfig(configStr)
           } as PromptTemplate;
           
           setPromptTemplate(parsedTemplate);
@@ -52,9 +58,9 @@ const PromptBuilder = () => {
   }, [toast]);
 
   // Merge prompt fields with template fields, prioritizing prompt fields
-  const combinedFields = promptFields.length > 0 
+  const combinedFields: FieldConfig[] = promptFields.length > 0 
     ? convertToFieldConfig(promptFields)
-    : promptTemplate?.field_config || [];
+    : (promptTemplate?.field_config as FieldConfig[]) || [];
 
   if (loading || isLoadingFields) {
     return (

@@ -33,11 +33,28 @@ export interface UpsellItem {
   service: string;
   price: string | number;
   included: boolean;
+  // These properties are used in the UpsellTableField component
+  label?: string;
+  description?: string;
 }
 
 export interface TaxSettings {
   rate: number;
   enabled: boolean;
+  // These properties are used in the TaxCalculatorField component
+  includeTax?: boolean;
+  taxRate?: number;
+}
+
+export interface MatrixRow {
+  id: string;
+  room: string;
+  quantity: number;
+  walls: boolean;
+  ceiling: boolean;
+  trim: boolean;
+  doors: boolean;
+  closets: boolean;
 }
 
 export interface FieldConfig {

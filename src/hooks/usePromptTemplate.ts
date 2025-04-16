@@ -95,13 +95,18 @@ export const usePromptTemplate = (defaultFields: FieldConfig[]) => {
         if (fallbackError) throw fallbackError;
         
         if (anyTemplate) {
+          // Safely parse the field_config, ensuring it's a string first
+          const configStr = typeof anyTemplate.field_config === 'string' 
+            ? anyTemplate.field_config 
+            : JSON.stringify(anyTemplate.field_config);
+          
           const parsedTemplate = {
             ...anyTemplate,
-            field_config: parseFieldConfig(anyTemplate.field_config)
+            field_config: parseFieldConfig(configStr)
           } as PromptTemplate;
           
           setPromptTemplate(parsedTemplate);
-          setFields(parseFieldConfig(anyTemplate.field_config));
+          setFields(parseFieldConfig(configStr));
           console.log("Using fallback template:", parsedTemplate.name);
           
           return parsedTemplate;
@@ -115,13 +120,18 @@ export const usePromptTemplate = (defaultFields: FieldConfig[]) => {
         }
       } else {
         // Using active template
+        // Safely parse the field_config, ensuring it's a string first
+        const configStr = typeof data.field_config === 'string' 
+          ? data.field_config 
+          : JSON.stringify(data.field_config);
+        
         const parsedTemplate = {
           ...data,
-          field_config: parseFieldConfig(data.field_config)
+          field_config: parseFieldConfig(configStr)
         } as PromptTemplate;
         
         setPromptTemplate(parsedTemplate);
-        setFields(parseFieldConfig(data.field_config));
+        setFields(parseFieldConfig(configStr));
         console.log("Using active template:", parsedTemplate.name);
         
         return parsedTemplate;

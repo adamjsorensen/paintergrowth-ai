@@ -16,7 +16,7 @@ interface TaxCalculatorFieldProps {
 
 const TaxCalculatorField = ({ 
   field, 
-  value = { includeTax: false, taxRate: 0 }, 
+  value = { rate: 0, enabled: false }, 
   onChange,
   subtotal = 0,
   isAdvanced 
@@ -24,23 +24,23 @@ const TaxCalculatorField = ({
   const [taxSettings, setTaxSettings] = useState<TaxSettings>(() => {
     // Initialize with default or provided values
     return {
-      includeTax: value?.includeTax || false,
-      taxRate: value?.taxRate || 0
+      rate: value?.rate || 0,
+      enabled: value?.enabled || false
     };
   });
 
   const [taxAmount, setTaxAmount] = useState<number>(0);
-  const [total, setTotal] = useState<number>(subtotal);
+  const [totalAmount, setTotalAmount] = useState<number>(subtotal);
 
   useEffect(() => {
     // Calculate tax amount and total
-    if (taxSettings.includeTax && subtotal > 0) {
-      const calculatedTax = subtotal * (taxSettings.taxRate / 100);
+    if (taxSettings.enabled && subtotal > 0) {
+      const calculatedTax = subtotal * (taxSettings.rate / 100);
       setTaxAmount(calculatedTax);
-      setTotal(subtotal + calculatedTax);
+      setTotalAmount(subtotal + calculatedTax);
     } else {
       setTaxAmount(0);
-      setTotal(subtotal);
+      setTotalAmount(subtotal);
     }
     
     // Notify parent component of changes
@@ -48,12 +48,12 @@ const TaxCalculatorField = ({
   }, [taxSettings, subtotal, onChange]);
 
   const handleIncludeTaxChange = (checked: boolean) => {
-    setTaxSettings(prev => ({ ...prev, includeTax: checked }));
+    setTaxSettings(prev => ({ ...prev, enabled: checked }));
   };
 
   const handleTaxRateChange = (rate: string) => {
     const parsedRate = parseFloat(rate) || 0;
-    setTaxSettings(prev => ({ ...prev, taxRate: parsedRate }));
+    setTaxSettings(prev => ({ ...prev, rate: parsedRate }));
   };
 
   return (
@@ -71,19 +71,19 @@ const TaxCalculatorField = ({
         <div className="flex items-center space-x-2">
           <Switch 
             id="include-tax"
-            checked={taxSettings.includeTax}
+            checked={taxSettings.enabled}
             onCheckedChange={handleIncludeTaxChange}
           />
           <Label htmlFor="include-tax">Include Tax</Label>
         </div>
         
-        {taxSettings.includeTax && (
+        {taxSettings.enabled && (
           <div className="flex items-center gap-2">
             <Label htmlFor="tax-rate" className="whitespace-nowrap">Tax Rate (%)</Label>
             <Input
               id="tax-rate"
               type="number"
-              value={taxSettings.taxRate === 0 ? "" : taxSettings.taxRate}
+              value={taxSettings.rate === 0 ? "" : taxSettings.rate}
               onChange={(e) => handleTaxRateChange(e.target.value)}
               placeholder="0.00"
               className="w-20"
@@ -102,16 +102,16 @@ const TaxCalculatorField = ({
             <span>{formatCurrency(subtotal)}</span>
           </div>
           
-          {taxSettings.includeTax && (
+          {taxSettings.enabled && (
             <div className="flex justify-between text-sm">
-              <span>Tax ({taxSettings.taxRate}%)</span>
+              <span>Tax ({taxSettings.rate}%)</span>
               <span>{formatCurrency(taxAmount)}</span>
             </div>
           )}
           
           <div className="flex justify-between pt-2 border-t font-medium">
             <span>Total</span>
-            <span>{formatCurrency(total)}</span>
+            <span>{formatCurrency(totalAmount)}</span>
           </div>
         </div>
       </div>
