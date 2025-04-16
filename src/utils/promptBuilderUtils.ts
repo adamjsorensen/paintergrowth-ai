@@ -1,11 +1,20 @@
 
 // Update the column type inference to match the new type definition
-const getColumnDefinitions = () => {
+const getColumnDefinitions = (matrixConfig: any, matrixData: any[]) => {
   if (matrixConfig) {
     return matrixConfig.columns;
   }
   
   // Infer columns from first item
+  return inferColumnsFromData(matrixData);
+};
+
+// Extract column inference logic to a separate function for better modularity
+const inferColumnsFromData = (matrixData: any[]): MatrixColumn[] => {
+  if (!matrixData || matrixData.length === 0) {
+    return [];
+  }
+  
   const sampleItem = matrixData[0];
   const columns: MatrixColumn[] = [];
   
