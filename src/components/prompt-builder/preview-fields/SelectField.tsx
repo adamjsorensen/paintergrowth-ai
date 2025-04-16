@@ -31,6 +31,9 @@ const SelectField: React.FC<SelectFieldProps> = ({
   value,
   onChange,
 }) => {
+  // Ensure options is always an array
+  const safeOptions = Array.isArray(options) ? options : [];
+  
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>
@@ -45,7 +48,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
           <SelectValue placeholder={placeholder || "Select an option"} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
+          {safeOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>

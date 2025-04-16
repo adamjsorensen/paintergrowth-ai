@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Check, ChevronsUpDown, Settings, X } from "lucide-react";
-import { FieldConfig, FieldOption } from "@/types/prompt-templates";
+import { FieldConfig, FieldOption, isFieldOptionArray } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,7 +32,7 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
   const [open, setOpen] = useState(false);
   
   // Ensure options is always defined and an array
-  const options = Array.isArray(field.options) ? field.options : [];
+  const options = isFieldOptionArray(field.options) ? field.options : [];
   
   const toggleOption = (optionValue: string) => {
     const safeValue = Array.isArray(value) ? value : [];
@@ -53,10 +53,6 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
   // Ensure value is always an array before processing
   const safeValue = Array.isArray(value) ? value : [];
   
-  const selectedLabels = options
-    .filter(option => safeValue.includes(option.value))
-    .map(option => option.label);
-
   return (
     <div className="space-y-2" key={id}>
       <div className="flex items-center gap-1 group">
@@ -118,6 +114,7 @@ const MultiSelectField = ({ field, value, onChange, isAdvanced = false }: MultiS
           <Command>
             <CommandInput placeholder="Search options..." />
             <CommandEmpty>No options found.</CommandEmpty>
+            {/* Only render CommandGroup when options exist */}
             {options && options.length > 0 && (
               <CommandGroup>
                 {options.map((option) => (

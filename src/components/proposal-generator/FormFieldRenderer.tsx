@@ -47,22 +47,22 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       return <NumberField field={field} value={value} onChange={onChange} />;
     
     case "select":
-      return <SelectField field={field} value={value} onChange={onChange} />;
+      return <SelectField field={field} value={value} onChange={onChange} isAdvanced={isAdvanced} />;
     
     case "toggle":
       return <ToggleField field={field} value={value} onChange={onChange} />;
     
     case "checkbox-group":
-      return <CheckboxGroupField field={field} value={value} onChange={onChange} />;
+      return <CheckboxGroupField field={field} value={value || []} onChange={onChange} isAdvanced={isAdvanced} />;
     
     case "multi-select":
-      return <MultiSelectField field={field} value={value} onChange={onChange} />;
+      return <MultiSelectField field={field} value={value || []} onChange={onChange} isAdvanced={isAdvanced} />;
     
     case "date":
       return <DatePickerField field={field} value={value} onChange={onChange} />;
     
     case "file-upload":
-      return <FileUploadField field={field} value={value} onChange={onChange} />;
+      return <FileUploadField field={field} value={value || []} onChange={onChange} />;
     
     case "quote-table":
       return <QuoteTableField field={field} value={value} onChange={onChange} isAdvanced={isAdvanced} />;
@@ -71,12 +71,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       return <UpsellTableField field={field} value={value} onChange={onChange} isAdvanced={isAdvanced} />;
     
     case "tax-calculator":
-      return <TaxCalculatorField field={field} value={value} onChange={onChange} />;
+      return <TaxCalculatorField field={field} value={value} onChange={onChange} subtotal={subtotal} />;
     
     case "matrix-selector":
       return <MatrixSelectorField 
         field={field} 
-        value={value} 
+        value={value || []} 
         onChange={onChange}
         isAdvanced={isAdvanced}
         matrixConfig={isMatrixConfig(field.options) ? field.options : undefined}
