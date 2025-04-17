@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createErrorResponse, createSuccessResponse, callOpenRouterAPI } from "./api.ts";
 import { renderPrompt } from "./utils.ts";

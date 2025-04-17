@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -21,25 +20,23 @@ type FormValues = {
   temperature: number;
   max_tokens: number;
   default_system_prompt: string;
-  seed_prompt: string; // Changed from default_user_prompt
+  seed_prompt: string;
 };
 
 const AISettingsPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Form setup
   const form = useForm<FormValues>({
     defaultValues: {
-      model: "gpt-4.1-mini", // Make sure this default exists among your new options if needed
+      model: "gpt-4.1-mini",
       temperature: 0.7,
       max_tokens: 1024,
       default_system_prompt: "",
-      seed_prompt: "", // Changed from default_user_prompt
+      seed_prompt: "",
     },
   });
 
-  // Fetch AI settings
   const { data: aiSettings, isLoading } = useQuery({
     queryKey: ["aiSettings"],
     queryFn: async () => {
@@ -58,13 +55,11 @@ const AISettingsPage = () => {
     },
   });
 
-  // Update AI settings
   const updateAISettings = useMutation({
     mutationFn: async (values: AISettingsUpdate) => {
       let result;
       
       if (aiSettings?.id) {
-        // Update existing record
         const { data, error } = await supabase
           .from("ai_settings")
           .update(values)
@@ -75,7 +70,6 @@ const AISettingsPage = () => {
         if (error) throw error;
         result = data;
       } else {
-        // Insert new record
         const { data, error } = await supabase
           .from("ai_settings")
           .insert(values)
@@ -104,7 +98,6 @@ const AISettingsPage = () => {
     },
   });
 
-  // Set form values when settings data is loaded
   useEffect(() => {
     if (aiSettings) {
       form.reset({
@@ -112,7 +105,7 @@ const AISettingsPage = () => {
         temperature: aiSettings.temperature || 0.7,
         max_tokens: aiSettings.max_tokens || 1024,
         default_system_prompt: aiSettings.default_system_prompt || "",
-        seed_prompt: aiSettings.seed_prompt || "", // Changed from default_user_prompt
+        seed_prompt: aiSettings.seed_prompt || "",
       });
     }
   }, [aiSettings, form]);
@@ -177,7 +170,6 @@ const AISettingsPage = () => {
                               <SelectItem value="google/gemini-2.5-pro-exp-03-25:free">Google Gemini-2.5 Pro Exp (Free)</SelectItem>
                               <SelectItem value="anthropic/claude-3.5-haiku-20241022">Anthropic Claude-3.5 Haiku (20241022)</SelectItem>
                               <SelectItem value="x-ai/grok-3-mini-beta">X-AI Grok-3 Mini Beta</SelectItem>
-                              {/* You can keep or adjust the existing legacy options as needed */}
                               <SelectItem value="gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</SelectItem>
                               <SelectItem value="gpt-4o">OpenAI GPT-4o</SelectItem>
                             </SelectContent>
@@ -259,21 +251,19 @@ const AISettingsPage = () => {
 
                     <FormField
                       control={form.control}
-                      name="seed_prompt" // Changed from default_user_prompt
+                      name="seed_prompt"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Seed Prompt</FormLabel> {/* Changed from Default User Prompt */}
+                          <FormLabel>Seed Prompt</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Enter seed prompt template"
-                              className="min-h-[150px]"
+                            <Textarea
+                              placeholder="Initial context or instruction for the AI"
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Initial content prompt that sets style and structure before template content
+                            A seed prompt that provides initial context for all AI generations.
                           </FormDescription>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
