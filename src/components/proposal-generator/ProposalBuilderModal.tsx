@@ -1,25 +1,14 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FieldConfig } from "@/types/prompt-templates";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { useGroupedPromptFields, ModalStepType, getModalSteps } from '@/hooks/prompt-fields/useGroupedPromptFields';
+import { useGroupedPromptFields, getModalSteps } from '@/hooks/prompt-fields/useGroupedPromptFields';
 import ConfirmationDialog from './modal/ConfirmationDialog';
 import ModalContent from './modal/ModalContent';
 import { validateStep } from './modal/ValidationHelper';
-
-interface ProposalBuilderModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  fields: FieldConfig[];
-  values: Record<string, any>;
-  onValueChange: (fieldName: string, value: any) => void;
-  onSubmit: () => Promise<void>;
-  checkRequiredFields?: (modalStep: string) => boolean;
-  stepCompleted?: Record<string, boolean>;
-  initialStep?: number;
-}
+import { ProposalBuilderModalProps } from './modal/modalTypes';
 
 export type { ProposalBuilderModalProps };
 
@@ -49,6 +38,14 @@ const ProposalBuilderModal = ({
     title: stepType === 'style' ? 'Style Preferences' : 'Scope of Work',
     fields: groupedFields[stepType]
   }));
+  
+  // Reset the current step when the modal steps change
+  useEffect(() => {
+    // Ensure the currentStep is not beyond available steps
+    if (currentStep >= stepData.length && stepData.length > 0) {
+      setCurrentStep(0);
+    }
+  }, [stepData.length, currentStep]);
   
   // Store the last active step in session storage
   const saveCurrentStep = () => {
@@ -150,6 +147,12 @@ const ProposalBuilderModal = ({
 
   if (stepData.length === 0) return null;
 
+  // Debug logging to help diagnose issues
+  console.log('Modal Steps:', modalSteps);
+  console.log('Current Step:', currentStep);
+  console.log('Step Data:', stepData);
+  console.log('Grouped Fields:', groupedFields);
+  
   const currentStepData = stepData[currentStep];
   const currentFields = currentStepData?.fields || [];
 

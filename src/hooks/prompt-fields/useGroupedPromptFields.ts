@@ -27,15 +27,23 @@ export function useGroupedPromptFields(fields: FieldConfig[]): GroupedFields {
 export function getModalSteps(groupedFields: GroupedFields): ModalStepType[] {
   const steps: ModalStepType[] = [];
   
+  // Always add 'main' to the array of steps
+  if (groupedFields.main.length > 0) {
+    steps.push('main');
+  }
+  
+  // Add style step if there are style fields
   if (groupedFields.style.length > 0) {
     steps.push('style');
   }
   
+  // Add scope step if there are scope fields
   if (groupedFields.scope.length > 0) {
     steps.push('scope');
   }
   
-  return steps;
+  // Remove 'main' from the array since we don't want it in the modal steps
+  return steps.filter(step => step !== 'main');
 }
 
 export function hasModalFields(groupedFields: GroupedFields): boolean {

@@ -4,11 +4,16 @@ export * from './usePromptFieldQuery';
 export * from './usePromptFieldCreate';
 export * from './usePromptFieldUpdate'; 
 export * from './usePromptFieldDelete';
-export * from './useGroupedPromptFields';
+export { 
+  useGroupedPromptFields,
+  GroupedFields,
+  getModalSteps,
+  hasModalFields
+} from './useGroupedPromptFields';
 export * from './types';
 
 // Export from usePromptFields without the ModalStepType to avoid conflict
 export { 
-  usePromptFields,
-  PromptField
+  usePromptFields
 } from './usePromptFields';
+export type { PromptField } from './usePromptFields';
