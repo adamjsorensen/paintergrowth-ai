@@ -25,6 +25,12 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
   projectType,
   onReopenModal
 }) => {
+  // Dummy onChange handler for project type since it's not yet implemented
+  const handleProjectTypeChange = (newType: 'interior' | 'exterior') => {
+    // This would be implemented when exterior projects are supported
+    console.log("Project type change requested:", newType);
+  };
+
   return (
     <CardHeader className="pb-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
@@ -43,7 +49,10 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
             </Button>
           )}
           
-          <InteriorExteriorToggle initialValue={projectType} />
+          <InteriorExteriorToggle 
+            value={projectType} 
+            onChange={handleProjectTypeChange} 
+          />
           
           <ModeToggle
             mode={mode}
