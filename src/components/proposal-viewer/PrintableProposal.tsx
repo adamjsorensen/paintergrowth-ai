@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
-import { Check, Printer, PaintBrush, Mail, Phone } from 'lucide-react';
+import { Check, Printer, Paintbrush, Mail, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PrintableProposalProps {
@@ -120,7 +120,7 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
               {companyServices.length > 0 ? (
                 companyServices.map((service, index) => (
                   <li key={index} className="flex items-start">
-                    <PaintBrush className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
+                    <Paintbrush className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
                     <span>{service}</span>
                   </li>
                 ))
