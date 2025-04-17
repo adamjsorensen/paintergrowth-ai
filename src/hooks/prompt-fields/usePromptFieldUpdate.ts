@@ -12,7 +12,7 @@ export const usePromptFieldUpdate = () => {
 
   return useMutation({
     mutationFn: async (fieldData: UpdateInput) => {
-      const updateData = {
+      const updateData: Record<string, any> = {
         name: fieldData.name,
         label: fieldData.label,
         type: fieldData.type,

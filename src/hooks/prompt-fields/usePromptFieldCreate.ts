@@ -10,7 +10,7 @@ export const usePromptFieldCreate = () => {
     mutationFn: async (fieldData: PromptFieldInput) => {
       const { data, error } = await supabase
         .from('prompt_fields')
-        .insert([{
+        .insert({
           name: fieldData.name,
           label: fieldData.label,
           type: fieldData.type,
@@ -24,7 +24,7 @@ export const usePromptFieldCreate = () => {
           active: fieldData.active !== undefined ? fieldData.active : true,
           prompt_snippet: fieldData.prompt_snippet || '',
           modal_step: fieldData.modal_step || 'main'
-        }])
+        })
         .select('*')
         .single();
 

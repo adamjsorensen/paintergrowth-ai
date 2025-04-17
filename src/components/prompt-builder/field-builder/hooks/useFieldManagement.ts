@@ -5,7 +5,7 @@ import { v4 as uuid } from "uuid";
 import { FieldConfig, FieldOption, isFieldOptionArray, isMatrixConfig, createDefaultMatrixConfig, MatrixConfig } from "@/types/prompt-templates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { usePromptFields } from "@/hooks/prompt-fields";
+import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
 
 export const useFieldManagement = (
   fields: FieldConfig[],
@@ -153,15 +153,27 @@ export const useFieldManagement = (
     }
   };
 
-  const handleMoveField = (dragIndex: number, hoverIndex: number) => {
+  // Changed to match the expected function signature in FieldBuilder.tsx
+  const handleMoveField = (fieldId: string, direction: "up" | "down") => {
     setFields((prevFields) => {
-      const newFields = [...prevFields];
-      const draggedField = newFields[dragIndex];
+      const fieldIndex = prevFields.findIndex(field => field.id === fieldId);
+      if (fieldIndex === -1) return prevFields;
       
-      // Remove the dragged item
-      newFields.splice(dragIndex, 1);
-      // Insert it at the new position
-      newFields.splice(hoverIndex, 0, draggedField);
+      const newFields = [...prevFields];
+      let newIndex: number;
+      
+      if (direction === "up" && fieldIndex > 0) {
+        newIndex = fieldIndex - 1;
+      } else if (direction === "down" && fieldIndex < newFields.length - 1) {
+        newIndex = fieldIndex + 1;
+      } else {
+        return prevFields; // Can't move further up or down
+      }
+      
+      // Swap the fields
+      const field = newFields[fieldIndex];
+      newFields[fieldIndex] = newFields[newIndex];
+      newFields[newIndex] = field;
       
       // Update order property for all fields
       return newFields.map((field, index) => ({
