@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
 import { Check, Printer, Paintbrush, Mail, Phone } from 'lucide-react';
