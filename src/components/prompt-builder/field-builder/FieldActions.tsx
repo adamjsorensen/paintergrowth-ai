@@ -48,6 +48,7 @@ const fieldSchema = z.object({
   complexity: z.enum(["basic", "advanced"]).default("basic"),
   helpText: z.string().optional(),
   placeholder: z.string().optional(),
+  modalStep: z.enum(["main", "style", "scope"]).default("main"),
 });
 
 const FieldActions: React.FC<FieldActionsProps> = ({
@@ -75,6 +76,7 @@ const FieldActions: React.FC<FieldActionsProps> = ({
       complexity: "basic",
       helpText: "",
       placeholder: "",
+      modalStep: "main",
     },
   });
 
@@ -91,6 +93,7 @@ const FieldActions: React.FC<FieldActionsProps> = ({
           complexity: field.complexity || "basic",
           helpText: field.helpText || "",
           placeholder: field.placeholder || "",
+          modalStep: field.modalStep || "main",
         });
         
         if (field.type === "matrix-selector" && field.options && isMatrixConfig(field.options)) {
@@ -121,6 +124,7 @@ const FieldActions: React.FC<FieldActionsProps> = ({
         complexity: "basic",
         helpText: "",
         placeholder: "",
+        modalStep: "main",
       });
       setOptions([]);
       setMatrixConfig(createDefaultMatrixConfig());

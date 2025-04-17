@@ -81,7 +81,8 @@ export const convertToFieldConfig = (promptFields: PromptField[]): FieldConfig[]
       helpText: field.help_text,
       placeholder: field.placeholder,
       options: parsedOptions,
-      sectionId: field.section
+      sectionId: field.section,
+      modalStep: field.modal_step
     };
   });
 };

@@ -1,8 +1,11 @@
 
 import { useState } from "react";
-import { FieldConfig, FieldOption, MatrixConfig, isMatrixConfig, validateMatrixConfig, createDefaultMatrixConfig } from "@/types/prompt-templates";
-import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { v4 as uuid } from "uuid";
+import { FieldConfig, FieldOption, isFieldOptionArray, isMatrixConfig, createDefaultMatrixConfig, MatrixConfig } from "@/types/prompt-templates";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePromptFields } from "@/hooks/prompt-fields";
 
 export const useFieldManagement = (
   fields: FieldConfig[],
@@ -12,75 +15,65 @@ export const useFieldManagement = (
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [options, setOptions] = useState<FieldOption[]>([]);
   const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(createDefaultMatrixConfig());
-  const { createField, updateField, deleteField } = usePromptFields();
+  
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { createField, updateField, deleteField: deleteFieldMutation } = usePromptFields();
 
   const handleAddField = (values: any) => {
     try {
-      let fieldOptions: any;
-      
-      // Handle different types of field options based on field type
-      if (values.type === "matrix-selector") {
-        // Update matrix config with discriminator if needed
-        fieldOptions = { ...matrixConfig, type: 'matrix-config' };
-        
-        // Validate matrix configuration
-        if (!validateMatrixConfig(fieldOptions)) {
-          toast({
-            title: "Invalid matrix configuration",
-            description: "Matrix fields must have at least one row and one column",
-            variant: "destructive",
-          });
-          return;
-        }
-      } else if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
-        fieldOptions = [...options];
-        if (fieldOptions.length === 0) {
-          toast({
-            title: "Missing options",
-            description: "This field type requires at least one option",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      
-      const newFieldData: any = {
+      // Create a new field object
+      const newField: FieldConfig = {
+        id: uuid(),
+        name: values.name,
+        label: values.label,
+        type: values.type,
+        sectionId: values.sectionId,
+        required: values.required || false,
+        complexity: values.complexity || "basic",
+        helpText: values.helpText || "",
+        placeholder: values.placeholder || "",
+        order: fields.length + 1,
+        modalStep: values.modalStep || "main",
+        options: (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
+          ? options
+          : values.type === "matrix-selector"
+          ? matrixConfig
+          : undefined
+      };
+
+      // Add to state
+      setFields((prev) => [...prev, newField]);
+
+      // Save to database
+      createField.mutate({
         name: values.name,
         label: values.label,
         type: values.type,
         section: values.sectionId,
         required: values.required || false,
-        complexity: values.complexity || 'basic',
+        complexity: values.complexity || "basic",
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
-        options: fieldOptions,
         order_position: fields.length + 1,
+        modal_step: values.modalStep || "main",
+        options: (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
+          ? { options }
+          : values.type === "matrix-selector"
+          ? matrixConfig
+          : undefined,
         active: true
-      };
-      
-      createField.mutate(newFieldData);
-      
-      const fieldId = values.name.toLowerCase().replace(/\s+/g, "_");
-      const newField: FieldConfig = {
-        id: fieldId,
-        name: values.name,
-        label: values.label,
-        type: values.type,
-        required: values.required,
-        helpText: values.helpText || "",
-        placeholder: values.placeholder || "",
-        order: fields.length + 1,
-        sectionId: values.sectionId,
-        complexity: values.complexity || 'basic',
-        options: fieldOptions
-      };
-      
-      setFields((prev) => [...prev, newField]);
+      });
+
+      // Reset form
       setIsAddingField(false);
       setOptions([]);
       setMatrixConfig(createDefaultMatrixConfig());
-      
+
+      toast({
+        title: "Success",
+        description: "Field added successfully",
+      });
     } catch (error) {
       console.error("Error adding field:", error);
       toast({
@@ -93,67 +86,63 @@ export const useFieldManagement = (
 
   const handleUpdateField = (values: any) => {
     if (!editingFieldId) return;
-    
+
     try {
-      let fieldOptions: any;
-      
-      // Handle different types of field options based on field type
-      if (values.type === "matrix-selector") {
-        // Update matrix config with discriminator if needed
-        fieldOptions = { ...matrixConfig, type: 'matrix-config' };
-        
-        // Validate matrix configuration
-        if (!validateMatrixConfig(fieldOptions)) {
-          toast({
-            title: "Invalid matrix configuration",
-            description: "Matrix fields must have at least one row and one column",
-            variant: "destructive",
-          });
-          return;
-        }
-      } else if (["select", "checkbox-group", "multi-select"].includes(values.type)) {
-        fieldOptions = [...options];
-        if (fieldOptions.length === 0) {
-          toast({
-            title: "Missing options",
-            description: "This field type requires at least one option",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      
-      const fieldUpdateData: any = {
+      const currentField = fields.find((field) => field.id === editingFieldId);
+      if (!currentField) return;
+
+      // Create updated field object
+      const updatedField: FieldConfig = {
+        ...currentField,
+        name: values.name,
+        label: values.label,
+        type: values.type,
+        sectionId: values.sectionId,
+        required: values.required || false,
+        complexity: values.complexity || "basic",
+        helpText: values.helpText || "",
+        placeholder: values.placeholder || "",
+        modalStep: values.modalStep || "main",
+        options: (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
+          ? options
+          : values.type === "matrix-selector"
+          ? matrixConfig
+          : undefined
+      };
+
+      // Update state
+      setFields((prev) =>
+        prev.map((field) => (field.id === editingFieldId ? updatedField : field))
+      );
+
+      // Update in database
+      updateField.mutate({
         id: editingFieldId,
         name: values.name,
         label: values.label,
         type: values.type,
         section: values.sectionId,
         required: values.required || false,
-        complexity: values.complexity || 'basic',
+        complexity: values.complexity || "basic",
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
-        options: fieldOptions,
-      };
-      
-      updateField.mutate(fieldUpdateData);
-      
-      setFields((prev) =>
-        prev.map((field) => {
-          if (field.id === editingFieldId) {
-            return {
-              ...field,
-              ...values,
-              options: fieldOptions
-            };
-          }
-          return field;
-        })
-      );
-      
+        modal_step: values.modalStep || "main",
+        options: (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
+          ? { options }
+          : values.type === "matrix-selector"
+          ? matrixConfig
+          : undefined
+      });
+
+      // Reset form
       setEditingFieldId(null);
       setOptions([]);
       setMatrixConfig(createDefaultMatrixConfig());
+
+      toast({
+        title: "Success",
+        description: "Field updated successfully",
+      });
     } catch (error) {
       console.error("Error updating field:", error);
       toast({
@@ -164,24 +153,33 @@ export const useFieldManagement = (
     }
   };
 
-  const handleMoveField = (fieldId: string, direction: "up" | "down") => {
-    setFields((prev) => {
-      const fieldIndex = prev.findIndex((field) => field.id === fieldId);
-      if (fieldIndex === -1) return prev;
+  const handleMoveField = (dragIndex: number, hoverIndex: number) => {
+    setFields((prevFields) => {
+      const newFields = [...prevFields];
+      const draggedField = newFields[dragIndex];
       
-      const newFields = [...prev];
+      // Remove the dragged item
+      newFields.splice(dragIndex, 1);
+      // Insert it at the new position
+      newFields.splice(hoverIndex, 0, draggedField);
       
-      if (direction === "up" && fieldIndex > 0) {
-        [newFields[fieldIndex - 1], newFields[fieldIndex]] = 
-          [newFields[fieldIndex], newFields[fieldIndex - 1]];
-      } else if (direction === "down" && fieldIndex < newFields.length - 1) {
-        [newFields[fieldIndex], newFields[fieldIndex + 1]] = 
-          [newFields[fieldIndex + 1], newFields[fieldIndex]];
-      }
-      
-      return newFields.map((field, index) => ({ ...field, order: index + 1 }));
+      // Update order property for all fields
+      return newFields.map((field, index) => ({
+        ...field,
+        order: index + 1
+      }));
     });
   };
+
+  // Convert to react-query mutation
+  const deleteField = useMutation({
+    mutationFn: (id: string) => {
+      return deleteFieldMutation.mutate(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["promptFields"] });
+    }
+  });
 
   return {
     isAddingField,

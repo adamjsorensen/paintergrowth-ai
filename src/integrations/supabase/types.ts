@@ -224,6 +224,7 @@ export type Database = {
           help_text: string | null
           id: string
           label: string
+          modal_step: string | null
           name: string
           options: Json | null
           order_position: number
@@ -241,6 +242,7 @@ export type Database = {
           help_text?: string | null
           id?: string
           label: string
+          modal_step?: string | null
           name: string
           options?: Json | null
           order_position: number
@@ -258,6 +260,7 @@ export type Database = {
           help_text?: string | null
           id?: string
           label?: string
+          modal_step?: string | null
           name?: string
           options?: Json | null
           order_position?: number
@@ -470,6 +473,7 @@ export type Database = {
         | "file-upload"
         | "matrix-selector"
         | "tax-calculator"
+      modal_step_type: "style" | "scope" | "main"
       section_type:
         | "client"
         | "estimator"
@@ -614,6 +618,7 @@ export const Constants = {
         "matrix-selector",
         "tax-calculator",
       ],
+      modal_step_type: ["style", "scope", "main"],
       section_type: [
         "client",
         "estimator",

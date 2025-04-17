@@ -18,6 +18,8 @@ export type FieldType =
   | "matrix-selector"
   | "scope-of-work";
 
+export type ModalStepType = 'style' | 'scope' | 'main';
+
 export interface PromptField {
   id: string;
   name: string;
@@ -34,6 +36,7 @@ export interface PromptField {
   prompt_snippet?: string;
   created_at?: string;
   updated_at?: string;
+  modal_step?: ModalStepType;
 }
 
 export interface FieldOption {
@@ -54,6 +57,7 @@ export interface PromptFieldInput {
   options?: Json;
   active?: boolean;
   prompt_snippet?: string;
+  modal_step?: ModalStepType;
 }
 
 export const formatFieldOptions = (options: FieldOption[]): Json => {
