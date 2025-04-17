@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import StepIndicator from './StepIndicator';
@@ -31,6 +31,25 @@ const ModalContent = ({
   getNextButtonText
 }: ModalContentProps) => {
   const stepTitles = steps.map(step => step.title);
+  
+  // Add keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Using Tab + modifiers for navigation to avoid conflicts with form fields
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === 'Backspace' && e.ctrlKey) {
+        e.preventDefault();
+        handleBack();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleNext, handleBack]);
 
   return (
     <>
@@ -67,6 +86,12 @@ const ModalContent = ({
         >
           Back
         </Button>
+        <div className="text-xs text-muted-foreground flex items-center">
+          <kbd className="px-2 py-1 bg-muted rounded text-xs mr-1">Ctrl</kbd>
+          +
+          <kbd className="px-2 py-1 bg-muted rounded text-xs mx-1">Enter</kbd>
+          to continue
+        </div>
         <Button onClick={handleNext}>
           {getNextButtonText(currentStep)}
         </Button>

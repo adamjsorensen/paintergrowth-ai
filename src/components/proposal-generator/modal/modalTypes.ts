@@ -14,4 +14,5 @@ export interface ProposalBuilderModalProps {
   fieldValues: Record<string, any>;
   onFieldChange: (fieldName: string, value: any) => void;
   onComplete: () => void;
+  initialStep?: number;
 }

@@ -28,6 +28,7 @@ interface ProposalFormProps {
 const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectType = 'interior' }: ProposalFormProps) => {
   const [modalOpen, setModalOpen] = useState(true);
   const [completedModalSteps, setCompletedModalSteps] = useState<string[]>([]);
+  const [savedModalStep, setSavedModalStep] = useState(0);
 
   const {
     fieldValues,
@@ -45,6 +46,14 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectT
   // Get visible fields for the main form
   const visibleMainFormFields = getVisibleFields().filter(field => !field.modalStep || field.modalStep === 'main');
 
+  // Check for saved step when component mounts
+  useEffect(() => {
+    const savedStep = sessionStorage.getItem('proposalModalStep');
+    if (savedStep) {
+      setSavedModalStep(parseInt(savedStep, 10));
+    }
+  }, []);
+
   // Mark modal as complete when closed
   const handleModalComplete = () => {
     const modalSteps = Array.from(
@@ -55,6 +64,9 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectT
     
     setCompletedModalSteps(modalSteps as string[]);
     setModalOpen(false);
+    
+    // Clear the saved step when modal is completed
+    sessionStorage.removeItem('proposalModalStep');
   };
 
   // Re-open modal if user wants to edit
@@ -126,6 +138,7 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectT
         fieldValues={fieldValues}
         onFieldChange={handleFieldChange}
         onComplete={handleModalComplete}
+        initialStep={savedModalStep}
       />
 
       <Card className="border-none shadow-md">

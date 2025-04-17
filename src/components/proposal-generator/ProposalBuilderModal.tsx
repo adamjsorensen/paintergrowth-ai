@@ -15,14 +15,22 @@ const ProposalBuilderModal = ({
   fields = [], 
   fieldValues, 
   onFieldChange,
-  onComplete
+  onComplete,
+  initialStep = 0
 }: ProposalBuilderModalProps) => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [steps, setSteps] = useState<ModalStep[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const { toast } = useToast();
+  
+  // Store the last active step in session storage
+  const saveCurrentStep = () => {
+    if (currentStep > 0) {
+      sessionStorage.setItem('proposalModalStep', currentStep.toString());
+    }
+  };
 
   useEffect(() => {
     const modalSteps = Array.from(
@@ -49,10 +57,11 @@ const ProposalBuilderModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep(0);
+      // When opening, preserve the initialStep (which might be restored from session)
+      setCurrentStep(initialStep);
       setHasUnsavedChanges(false);
     }
-  }, [isOpen]);
+  }, [isOpen, initialStep]);
 
   const handleFieldChange = useCallback((fieldName: string, value: any) => {
     setHasUnsavedChanges(true);
@@ -64,20 +73,30 @@ const ProposalBuilderModal = ({
     if (!isValid) return;
     
     if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      // Save progress when advancing steps
+      sessionStorage.setItem('proposalModalStep', nextStep.toString());
     } else {
       setHasUnsavedChanges(false);
+      sessionStorage.removeItem('proposalModalStep'); // Clear on completion
       onComplete();
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+      const prevStep = currentStep - 1;
+      setCurrentStep(prevStep);
+      // Save progress when going back
+      sessionStorage.setItem('proposalModalStep', prevStep.toString());
     }
   };
 
   const handleCloseAttempt = () => {
+    // Save the current step before potentially closing
+    saveCurrentStep();
+    
     if (hasUnsavedChanges) {
       setShowConfirmation(true);
     } else {
