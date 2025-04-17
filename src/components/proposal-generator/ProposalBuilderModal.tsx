@@ -4,26 +4,51 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FieldConfig } from "@/types/prompt-templates";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { ModalStep, ProposalBuilderModalProps } from './modal/modalTypes';
+import { useGroupedPromptFields, ModalStepType, getModalSteps } from '@/hooks/prompt-fields/useGroupedPromptFields';
 import ConfirmationDialog from './modal/ConfirmationDialog';
 import ModalContent from './modal/ModalContent';
 import { validateStep } from './modal/ValidationHelper';
+
+interface ProposalBuilderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  fields: FieldConfig[];
+  values: Record<string, any>;
+  onValueChange: (fieldName: string, value: any) => void;
+  onSubmit: () => Promise<void>;
+  checkRequiredFields?: (modalStep: string) => boolean;
+  stepCompleted?: Record<string, boolean>;
+  initialStep?: number;
+}
+
+export type { ProposalBuilderModalProps };
 
 const ProposalBuilderModal = ({ 
   isOpen, 
   onClose, 
   fields = [], 
-  fieldValues, 
-  onFieldChange,
-  onComplete,
+  values,
+  onValueChange,
+  onSubmit,
+  checkRequiredFields,
+  stepCompleted,
   initialStep = 0
 }: ProposalBuilderModalProps) => {
   const [currentStep, setCurrentStep] = useState(initialStep);
-  const [steps, setSteps] = useState<ModalStep[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const { toast } = useToast();
+  
+  const groupedFields = useGroupedPromptFields(fields);
+  const modalSteps = getModalSteps(groupedFields);
+
+  // Map step types to field arrays and titles for easier access
+  const stepData = modalSteps.map(stepType => ({
+    type: stepType,
+    title: stepType === 'style' ? 'Style Preferences' : 'Scope of Work',
+    fields: groupedFields[stepType]
+  }));
   
   // Store the last active step in session storage
   const saveCurrentStep = () => {
@@ -31,42 +56,6 @@ const ProposalBuilderModal = ({
       sessionStorage.setItem('proposalModalStep', currentStep.toString());
     }
   };
-
-  // Use a ref to track previous fields to prevent infinite updates
-const prevFieldsRef = useRef<FieldConfig[]>([]);
-
-useEffect(() => {
-    // Skip processing if fields haven't changed (deep comparison)
-    if (JSON.stringify(prevFieldsRef.current) === JSON.stringify(fields)) {
-      return;
-    }
-    
-    // Update the ref with current fields
-    prevFieldsRef.current = fields;
-    
-    if (fields.length === 0) return;
-    
-    const modalSteps = Array.from(
-      new Set(
-        fields
-          .filter(field => field.modalStep && field.modalStep !== 'main')
-          .map(field => field.modalStep)
-      )
-    );
-
-    const stepTitles = {
-      'style': 'Style Preferences',
-      'scope': 'Scope of Work',
-    };
-
-    const newSteps = modalSteps.map(stepType => ({
-      type: stepType,
-      title: stepTitles[stepType] || stepType.charAt(0).toUpperCase() + stepType.slice(1),
-      fields: fields.filter(field => field.modalStep === stepType)
-    }));
-
-    setSteps(newSteps);
-  }, [fields]);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,22 +67,39 @@ useEffect(() => {
 
   const handleFieldChange = useCallback((fieldName: string, value: any) => {
     setHasUnsavedChanges(true);
-    onFieldChange(fieldName, value);
-  }, [onFieldChange, setHasUnsavedChanges]);
+    onValueChange(fieldName, value);
+  }, [onValueChange, setHasUnsavedChanges]);
 
   const handleNext = async () => {
-    const isValid = await validateStep(currentStep, steps, fieldValues, toast);
-    if (!isValid) return;
+    // Check if the current step is valid
+    if (stepData[currentStep]) {
+      const stepType = stepData[currentStep].type;
+      
+      // If we have a validation function, use it
+      if (checkRequiredFields) {
+        const isValid = checkRequiredFields(stepType);
+        if (!isValid) {
+          toast({
+            title: "Required Fields",
+            description: "Please fill in all required fields before continuing.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
     
-    if (currentStep < steps.length - 1) {
+    if (currentStep < stepData.length - 1) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       // Save progress when advancing steps
       sessionStorage.setItem('proposalModalStep', nextStep.toString());
     } else {
+      // Last step completed, submit form
       setHasUnsavedChanges(false);
       sessionStorage.removeItem('proposalModalStep'); // Clear on completion
-      onComplete();
+      await onSubmit();
+      onClose();
     }
   };
 
@@ -128,19 +134,23 @@ useEffect(() => {
   };
 
   const getNextButtonText = (stepIndex: number) => {
-    if (stepIndex >= steps.length - 1) {
+    if (stepIndex >= stepData.length - 1) {
       return "Continue to Proposal Builder";
     }
     
-    const nextStepFields = steps[stepIndex].fields;
-    const hasRequiredFields = nextStepFields.some(field => field.required);
+    // Check if the next step has required fields
+    if (stepIndex + 1 < stepData.length) {
+      const nextStepFields = stepData[stepIndex + 1].fields;
+      const hasRequiredFields = nextStepFields.some(field => field.required);
+      return hasRequiredFields ? "Next" : "Skip";
+    }
     
-    return hasRequiredFields ? "Next" : "Skip";
+    return "Next";
   };
 
-  if (steps.length === 0) return null;
+  if (stepData.length === 0) return null;
 
-  const currentStepData = steps[currentStep];
+  const currentStepData = stepData[currentStep];
   const currentFields = currentStepData?.fields || [];
 
   const contentProps = { 
@@ -155,10 +165,10 @@ useEffect(() => {
         <DialogContent {...contentProps}>
           <ModalContent 
             currentStep={currentStep}
-            steps={steps}
+            steps={stepData}
             currentStepData={currentStepData}
             currentFields={currentFields}
-            fieldValues={fieldValues}
+            fieldValues={values}
             onFieldChange={handleFieldChange}
             handleNext={handleNext}
             handleBack={handleBack}

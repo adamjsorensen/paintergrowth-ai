@@ -1,8 +1,8 @@
 
-import { FieldConfig, ModalStepType } from "@/types/prompt-templates";
+import { FieldConfig } from "@/types/prompt-templates";
 
 export interface ModalStep {
-  type: ModalStepType;
+  type: string;
   title: string;
   fields: FieldConfig[];
 }
@@ -10,16 +10,12 @@ export interface ModalStep {
 export interface ProposalBuilderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  styleFields?: FieldConfig[];
-  scopeFields?: FieldConfig[];
-  fields?: FieldConfig[];
-  fieldValues?: Record<string, any>;
-  values?: Record<string, any>;
-  onFieldChange?: (fieldName: string, value: any) => void;
-  onValueChange?: (fieldName: string, value: any) => void;
+  fields: FieldConfig[];
+  values: Record<string, any>;
+  onValueChange: (fieldName: string, value: any) => void;
   onComplete?: () => void;
   onSubmit?: () => Promise<void>;
-  initialStep?: number;
   checkRequiredFields?: (modalStep: string) => boolean;
   stepCompleted?: Record<string, boolean>;
+  initialStep?: number;
 }

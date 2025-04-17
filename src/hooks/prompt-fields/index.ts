@@ -5,4 +5,5 @@ export * from './usePromptFieldQuery';
 export * from './usePromptFieldCreate';
 export * from './usePromptFieldUpdate'; 
 export * from './usePromptFieldDelete';
+export * from './useGroupedPromptFields';
 export * from './types';

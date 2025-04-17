@@ -10,6 +10,7 @@ import { useProposalForm } from "@/components/proposal-generator/hooks/usePropos
 import ProposalBuilderModal from "@/components/proposal-generator/ProposalBuilderModal";
 import { cn } from "@/lib/utils";
 import { Sparkles, ChevronRight, Settings2 } from "lucide-react";
+import { useGroupedPromptFields, hasModalFields } from "@/hooks/prompt-fields/useGroupedPromptFields";
 
 interface ProposalFormProps {
   fields: FieldConfig[];
@@ -27,6 +28,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   projectType = "interior"
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const groupedFields = useGroupedPromptFields(fields);
   
   const {
     fieldValues,
@@ -41,19 +43,12 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   
   const visibleFields = getVisibleFields();
   
+  // Filter fields that should appear in the main form (not in modal)
   const projectFields = visibleFields.filter(
-    field => !['style', 'scope'].includes(field.modalStep || '')
+    field => !field.modalStep || field.modalStep === 'main'
   );
   
-  const styleFields = visibleFields.filter(
-    field => field.modalStep === 'style'
-  );
-  
-  const scopeFields = visibleFields.filter(
-    field => field.modalStep === 'scope'
-  );
-  
-  const hasModalFields = styleFields.length > 0 || scopeFields.length > 0;
+  const hasModalFieldsValue = hasModalFields(groupedFields);
   
   const submitForm = async () => {
     // Regular form submission without modal
@@ -77,7 +72,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
         onModeChange={setFormMode}
         visibleFieldCount={visibleFields.length}
         totalFieldCount={fields.length}
-        onReopenModal={hasModalFields ? openModal : undefined}
+        onReopenModal={hasModalFieldsValue ? openModal : undefined}
       />
       
       <div className="p-6 sm:p-8">
@@ -88,7 +83,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
         />
         
         <div className="mt-8 border-t pt-6 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
-          {hasModalFields ? (
+          {hasModalFieldsValue ? (
             <Button 
               onClick={openModal}
               className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
@@ -128,12 +123,11 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
         </div>
       </div>
       
-      {hasModalFields && (
+      {hasModalFieldsValue && (
         <ProposalBuilderModal
           isOpen={isModalOpen}
           onClose={closeModal}
-          styleFields={styleFields}
-          scopeFields={scopeFields}
+          fields={fields}  // Pass all fields instead of separate arrays
           values={fieldValues}
           onValueChange={handleFieldChange}
           onSubmit={handleSubmit}

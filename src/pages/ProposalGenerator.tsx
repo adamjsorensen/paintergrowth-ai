@@ -9,7 +9,6 @@ import ProposalForm from "@/components/proposal-generator/ProposalForm";
 import { useProposalGeneration } from "@/components/proposal-generator/hooks/useProposalGeneration";
 import { ENHANCED_FIELDS } from "@/components/proposal-generator/constants/templateFields";
 import { ENHANCED_SYSTEM_PROMPT } from "@/components/proposal-generator/constants/templatePrompts";
-import { FieldConfig } from "@/types/prompt-templates";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 const ProposalGenerator = () => {
