@@ -11,7 +11,7 @@ interface CoverPageProps {
   companyProfile?: {
     business_name?: string;
     location?: string;
-    companyServices?: string;
+    services_offered?: string;
     logo_url?: string;
     email?: string;
     phone?: string;
@@ -33,7 +33,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
   
   const docNumber = `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
   
-  const companyServices = companyProfile?.companyServices?.split(',').map(service => 
+  const companyServices = companyProfile?.services_offered?.split(',').map(service => 
     service.trim()
   ).filter(Boolean) || [
     'Residential & Commercial Painting',
@@ -103,7 +103,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
               Address: {metadata.clientAddress || "Address"}
             </p>
             <p className="font-['Inter'] text-base text-white mt-1">
-              Prepared by: {companyProfile?.owner_name || "PainterGrowth"}
+              Prepared by: {metadata.preparedBy || companyProfile?.owner_name || "PainterGrowth"}
             </p>
           </div>
         </div>
@@ -116,7 +116,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
             </h3>
             <img
               src={logoUrl}
-              alt={companyProfile?.companyName || "Company Logo"}
+              alt={companyProfile?.business_name || "Company Logo"}
               className="h-10 w-auto"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -138,7 +138,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
             </div>
             <div>
               <p className="font-['Playfair_Display'] text-xl text-right">
-                {companyProfile?.companyName || "Company Name"}
+                {companyProfile?.business_name || "Company Name"}
               </p>
             </div>
           </div>
@@ -172,4 +172,3 @@ const CoverPage: React.FC<CoverPageProps> = ({
 };
 
 export default CoverPage;
-

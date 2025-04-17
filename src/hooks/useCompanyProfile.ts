@@ -20,14 +20,8 @@ export const useCompanyProfile = (userId: string | undefined) => {
         return null;
       }
       
-      // Map database fields to template placeholders
-      return {
-        companyName: data.business_name || "",
-        companyAddress: data.location || "",
-        companyServices: data.services_offered || "",
-        warranty: data.pricing_notes || "", // Using pricing_notes for warranty info
-        logo_url: data.logo_url || null,
-      } as const;
+      // Return all fields directly from the database
+      return data as CompanyProfile;
     },
     enabled: !!userId
   });
