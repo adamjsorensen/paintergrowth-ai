@@ -69,16 +69,14 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   return (
     <Card className="border shadow-sm">
       <ProposalFormHeader 
-        formTitle={templateName}
+        templateName={templateName}
         projectType={projectType}
+        mode={formMode}
+        onModeChange={setFormMode}
+        visibleFieldCount={visibleFields.length}
+        totalFieldCount={fields.length}
+        onReopenModal={hasModalFields ? openModal : undefined}
       />
-      
-      <div className="flex items-center justify-between px-6 py-2 border-b">
-        <ModeToggle
-          mode={formMode}
-          onModeChange={setFormMode}
-        />
-      </div>
       
       <div className="p-6">
         <ProposalFormContent

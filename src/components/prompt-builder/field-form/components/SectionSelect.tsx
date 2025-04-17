@@ -33,7 +33,7 @@ const SectionSelect = ({ form }: SectionSelectProps) => {
             <SelectContent>
               {FORM_SECTIONS.map(section => (
                 <SelectItem key={section.id} value={section.id}>
-                  {section.title}
+                  {section.label}
                 </SelectItem>
               ))}
             </SelectContent>

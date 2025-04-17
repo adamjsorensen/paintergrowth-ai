@@ -8,10 +8,10 @@ import InteriorExteriorToggle from "../InteriorExteriorToggle";
 
 interface ProposalFormHeaderProps {
   templateName: string;
-  mode: 'basic' | 'advanced';
-  onModeChange: (mode: 'basic' | 'advanced') => void;
-  visibleFieldCount: number;
-  totalFieldCount: number;
+  mode?: 'basic' | 'advanced';
+  onModeChange?: (mode: 'basic' | 'advanced') => void;
+  visibleFieldCount?: number;
+  totalFieldCount?: number;
   projectType: 'interior' | 'exterior';
   onReopenModal?: () => void;
 }
@@ -20,8 +20,8 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
   templateName,
   mode,
   onModeChange,
-  visibleFieldCount,
-  totalFieldCount,
+  visibleFieldCount = 0,
+  totalFieldCount = 0,
   projectType,
   onReopenModal
 }) => {
@@ -54,18 +54,22 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
             onChange={handleProjectTypeChange} 
           />
           
-          <ModeToggle
-            mode={mode}
-            onModeChange={onModeChange}
-          />
+          {mode && onModeChange && (
+            <ModeToggle
+              mode={mode}
+              onModeChange={onModeChange}
+            />
+          )}
         </div>
       </div>
       
       <CardDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm text-muted-foreground">
         <span>Complete the fields below to customize your proposal</span>
-        <span className="mt-1 sm:mt-0">
-          Showing {visibleFieldCount} of {totalFieldCount} fields
-        </span>
+        {visibleFieldCount > 0 && totalFieldCount > 0 && (
+          <span className="mt-1 sm:mt-0">
+            Showing {visibleFieldCount} of {totalFieldCount} fields
+          </span>
+        )}
       </CardDescription>
     </CardHeader>
   );

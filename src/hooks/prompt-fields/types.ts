@@ -1,7 +1,9 @@
 
 import { Json } from "@/integrations/supabase/types";
 import { SectionType } from "@/types/prompt-field";
-import { FieldType, ModalStepType } from "@/types/prompt-templates";
+import { FieldType } from "@/types/prompt-templates";
+
+export type ModalStepType = "main" | "style" | "scope";
 
 export interface PromptField {
   id: string;
