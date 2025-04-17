@@ -65,7 +65,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
       {/* Main content area */}
       <div className="absolute top-[48px] left-20 right-0 bottom-0 bg-white z-10">
         {/* Hero section with diagonal clip */}
-        <div className="relative h-[60vh] w-full overflow-hidden">
+        <div className="relative h-[90vh] w-full overflow-hidden">
           {/* Background with white peek-through offset */}
           <div className="absolute inset-0 bg-white transform translate-x-2 translate-y-2" />
           
