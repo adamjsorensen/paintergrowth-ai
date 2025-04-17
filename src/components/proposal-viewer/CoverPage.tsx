@@ -56,11 +56,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
       }} />
       
       {/* Top black bar */}
-      <div className="absolute top-0 left-0 right-0 h-[200px] bg-black z-30 p-8">
-        <h1 className="font-['Playfair_Display'] text-5xl font-bold text-white uppercase mb-4">
-          Project Estimate
-        </h1>
-        
+      <div className="absolute top-0 left-0 right-0 h-[100px] bg-black z-30 p-8">       
       </div>
       
       {/* Left vertical accent stripe */}
