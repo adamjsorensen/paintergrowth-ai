@@ -141,6 +141,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
     ))}
   </ol>
 </div>
+      </div>
       
       {/* Diagonal footer accent */}
       <div className="absolute left-0 right-0 bottom-0 h-16 z-30">
