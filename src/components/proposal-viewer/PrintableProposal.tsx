@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
-import { Check, Printer, Paintbrush, Mail, Phone, PaintRoller } from 'lucide-react';
+import { Printer, Paintbrush, Mail, Phone, PaintRoller } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PrintableProposalProps {
@@ -30,7 +29,6 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // If opened in a new window, trigger print automatically
     if (window.opener) {
       window.print();
     }
@@ -49,35 +47,29 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
     fetchCoverImage();
   }, []);
 
-  // Default logo if none provided
   const defaultLogo = "/placeholder.svg";
   const logoUrl = companyProfile?.logo_url || defaultLogo;
   
-  // Format the current date
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: '2-digit'
   });
   
-  // Generate document number placeholder
   const docNumber = `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
   
-  // Parse company services
   const companyServices = companyProfile?.companyServices?.split(',').map(service => 
     service.trim()
   ).filter(Boolean) || [];
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      {/* Google Fonts for PDF - Will be properly loaded in print */}
       <style dangerouslySetInnerHTML={{
         __html: `
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600;700&display=swap');
         `
       }} />
 
-      {/* Print Instructions - Hidden in Print */}
       <div className="p-4 mb-6 bg-blue-50 rounded-lg print:hidden">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Printer className="h-5 w-5" />
@@ -94,130 +86,121 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
         </p>
       </div>
 
-      {/* PDF Content - Optimized for Print */}
       <div className="max-w-[750px] mx-auto px-8 print:max-w-none print:px-0 print:w-full">
         
-        {/* Cover Page - New Design */}
-        <div className="cover-page print:break-after-page">
-          {/* Top Brand Bar */}
-          <div className="w-full h-8 bg-[#0061ff] relative">
-            <div className="container mx-auto px-12 h-full flex items-center">
+        <div className="cover-page relative min-h-screen overflow-hidden print:break-after-page bg-white">
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-[#0061ff]" />
+            <div 
+              className="absolute inset-0 bg-white" 
+              style={{ 
+                clipPath: 'polygon(70% 0, 100% 0, 100% 100%, 40% 100%)'
+              }}
+            />
+          </div>
+          
+          <div className="relative h-full container mx-auto px-12 py-16 flex flex-col">
+            <div className="mb-12">
               <img
-                src={logoUrl}
+                src={companyProfile?.logo_url || "/placeholder.svg"}
                 alt={companyProfile?.companyName || "Company Logo"}
-                className="h-6 w-auto object-contain"
+                className="h-12 w-auto"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = defaultLogo;
+                  target.src = "/placeholder.svg";
                 }}
               />
             </div>
-          </div>
-          
-          {/* Hero Image with Overlay */}
-          <div className="relative w-full h-[70vh] overflow-hidden">
-            {/* Background image */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ 
-                backgroundImage: coverImageUrl ? `url(${coverImageUrl})` : 'url(/placeholder.svg)',
-              }}
-            />
-            
-            {/* Blue overlay */}
-            <div className="absolute inset-0 bg-[#0061ff]/40"></div>
-            
-            {/* Title & Client block */}
-            <div className="absolute bottom-0 left-0 p-8 text-white container mx-auto px-12">
-              <h1 className="font-['Playfair_Display'] text-5xl font-bold mb-2">PROJECT ESTIMATE</h1>
-              <p className="font-['Playfair_Display'] text-base">
-                Prepared for:
-                <span className="ml-2 font-semibold">
-                  {metadata.clientName || "Client Name"}
-                </span>
-              </p>
-            </div>
-          </div>
-          
-          {/* Date + Doc ID row */}
-          <div className="container mx-auto px-12 py-4 grid grid-cols-12 items-center">
-            <div className="col-span-6 text-xs font-['Inter'] uppercase tracking-wider">
-              DATE: {today}
-            </div>
-            <div className="col-span-6 text-right text-xs font-['Inter'] text-gray-500">
-              {docNumber}
-            </div>
-          </div>
-          
-          {/* Info Card */}
-          <div className="container mx-auto px-12 py-6">
-            <div className="bg-[#f3f4f6] rounded-md shadow-md p-6 max-w-[70%]">
-              <h3 className="font-medium mb-4 font-['Inter']">Our Professional Services</h3>
-              <ul className="space-y-3">
-                {companyServices.length > 0 ? (
-                  companyServices.map((service, index) => (
-                    <li key={index} className="flex items-start">
-                      {index % 2 === 0 ? (
-                        <PaintRoller className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
-                      ) : (
-                        <Paintbrush className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
-                      )}
-                      <span className="font-['Inter']">{service}</span>
-                    </li>
-                  ))
-                ) : (
-                  <>
-                    <li className="flex items-start">
-                      <PaintRoller className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
-                      <span className="font-['Inter']">Residential & Commercial Painting</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Paintbrush className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
-                      <span className="font-['Inter']">Interior & Exterior Painting</span>
-                    </li>
-                  </>
-                )}
-              </ul>
-            </div>
-          </div>
-          
-          {/* Watermark */}
-          <div className="absolute bottom-0 right-0 w-1/4 h-1/4 opacity-5 pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
-              <path d="M18 3v4c0 2-2 4-4 4H6c-2 0-4-2-4-4V3" />
-              <path d="M10 11v4c0 2-2 4-4 4H2" />
-              <path d="M22 19h-4c-2 0-4-2-4-4v-4" />
-            </svg>
-          </div>
-          
-          {/* Footer Bar */}
-          <div className="w-full bg-[#0061ff] py-4 mt-auto">
-            <div className="container mx-auto px-12 grid grid-cols-12">
-              <div className="col-span-12 flex justify-end items-center text-white space-x-6">
-                {companyProfile?.email && (
-                  <a href={`mailto:${companyProfile.email}`} className="flex items-center text-white no-underline">
-                    <Mail className="h-5 w-5 mr-2" />
-                    <span className="font-['Inter'] font-semibold text-lg">{companyProfile.email}</span>
-                  </a>
-                )}
-                
-                {companyProfile?.phone && (
-                  <a href={`tel:${companyProfile.phone}`} className="flex items-center text-white no-underline">
-                    <Phone className="h-5 w-5 mr-2" />
-                    <span className="font-['Inter'] font-semibold text-lg">{companyProfile.phone}</span>
-                  </a>
-                )}
+
+            <div className="grid grid-cols-12 gap-8 flex-grow">
+              <div className="col-span-6 flex flex-col justify-between">
+                <div>
+                  <h1 className="font-['Playfair_Display'] text-7xl font-bold text-[#0061ff] mb-8">
+                    PROJECT<br />ESTIMATE
+                  </h1>
+                  
+                  <div className="mt-12 space-y-6">
+                    <p className="text-gray-600 font-['Inter'] text-lg">
+                      {new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: '2-digit'
+                      })}
+                    </p>
+                    <p className="text-gray-500 font-['Inter'] text-sm tracking-wider">
+                      DOC-{Math.floor(1000 + Math.random() * 9000)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {companyProfile?.email && (
+                    <a href={`mailto:${companyProfile.email}`} className="flex items-center text-gray-700 hover:text-[#0061ff] transition-colors no-underline group">
+                      <Mail className="h-5 w-5 mr-3 text-[#0061ff]" />
+                      <span className="font-['Inter'] font-semibold">{companyProfile.email}</span>
+                    </a>
+                  )}
+                  
+                  {companyProfile?.phone && (
+                    <a href={`tel:${companyProfile.phone}`} className="flex items-center text-gray-700 hover:text-[#0061ff] transition-colors no-underline group">
+                      <Phone className="h-5 w-5 mr-3 text-[#0061ff]" />
+                      <span className="font-['Inter'] font-semibold">{companyProfile.phone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="col-span-5 col-start-8 flex flex-col justify-between text-white">
+                <div>
+                  <div className="flex items-center mb-8">
+                    <div className="w-0.5 h-16 bg-white/60 mr-6" />
+                    <div>
+                      <p className="font-['Inter'] text-sm font-semibold tracking-widest uppercase mb-2">
+                        Prepared For
+                      </p>
+                      <h2 className="font-['Playfair_Display'] text-3xl">
+                        {metadata.clientName || "Client Name"}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="mt-12">
+                    <h3 className="font-['Inter'] text-sm font-semibold tracking-widest uppercase mb-6">
+                      Our Services
+                    </h3>
+                    <ul className="space-y-4">
+                      {(companyProfile?.companyServices?.split(',') || [
+                        'Residential & Commercial Painting',
+                        'Interior & Exterior Painting'
+                      ]).map((service, index) => (
+                        <li key={index} className="flex items-start">
+                          {index % 2 === 0 ? (
+                            <PaintRoller className="h-4 w-4 mr-3 mt-1 text-white/80 flex-shrink-0" />
+                          ) : (
+                            <Paintbrush className="h-4 w-4 mr-3 mt-1 text-white/80 flex-shrink-0" />
+                          )}
+                          <span className="font-['Inter'] text-white/90">{service.trim()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <span className="font-['Inter'] text-sm text-white/60 mr-3">By</span>
+                  <span className="font-['Playfair_Display'] text-xl">
+                    {companyProfile?.companyName || "Company Name"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="prose max-w-none print:prose-sm leading-relaxed mt-8">
           {formatProposalText(proposal)}
         </div>
 
-        {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-600 print:mt-8">
           <p>Generated by {companyProfile?.companyName || "Company"}</p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
