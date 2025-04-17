@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
-import { Check, Printer, Paintbrush, Mail, Phone } from 'lucide-react';
+import { Check, Printer, Paintbrush, PaintBrush, Mail, Phone, PaintRoller } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PrintableProposalProps {
@@ -16,6 +17,8 @@ interface PrintableProposalProps {
     companyServices?: string;
     warranty?: string;
     logo_url?: string;
+    email?: string;
+    phone?: string;
   };
 }
 
@@ -51,11 +54,14 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
   const logoUrl = companyProfile?.logo_url || defaultLogo;
   
   // Format the current date
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: '2-digit'
   });
+  
+  // Generate document number placeholder
+  const docNumber = `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
   
   // Parse company services
   const companyServices = companyProfile?.companyServices?.split(',').map(service => 
@@ -64,6 +70,13 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      {/* Google Fonts for PDF - Will be properly loaded in print */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600&display=swap');
+        `
+      }} />
+
       {/* Print Instructions - Hidden in Print */}
       <div className="p-4 mb-6 bg-blue-50 rounded-lg print:hidden">
         <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -81,106 +94,126 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
         </p>
       </div>
 
-      {/* Proposal Content - Optimized for Print */}
+      {/* PDF Content - Optimized for Print */}
       <div className="max-w-[750px] mx-auto px-8 print:max-w-none print:px-0 print:w-full">
-        {/* Cover Logo - Top Left */}
-        <div className="mb-4">
-          <img
-            src={logoUrl}
-            alt={companyProfile?.companyName || "Company Logo"}
-            className="max-h-[100px] w-auto object-contain"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = defaultLogo;
-            }}
-          />
-        </div>
         
-        {/* Cover Image (if available) */}
-        {coverImageUrl && (
-          <div className="w-full mx-6 print:mx-0 mb-8 overflow-hidden">
-            <img
-              src={coverImageUrl}
-              alt="Proposal Cover"
-              className="w-full h-[300px] object-cover rounded-md print:rounded-none border border-gray-200"
-            />
-          </div>
-        )}
-
-        {/* Cover Summary Section - Updated for print */}
-        <div className="cover-summary grid grid-cols-1 sm:grid-cols-12 print:grid-cols-12 gap-6 relative mb-12 print:break-after-page">
-          {/* Left Column */}
-          <div className="sm:col-span-8 print:col-span-8">
-            <h1 className="font-serif text-cover-h1 font-bold mb-2">PROJECT ESTIMATE</h1>
-            <p className="text-cover-smallcaps text-gray-600 mb-6">DATE: {currentDate}</p>
-            
-            <h3 className="font-medium mb-3">We can help you with</h3>
-            <ul className="mb-6 space-y-1">
-              {companyServices.length > 0 ? (
-                companyServices.map((service, index) => (
-                  <li key={index} className="flex items-start">
-                    <Paintbrush className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
-                    <span>{service}</span>
-                  </li>
-                ))
-              ) : (
-                <>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
-                    <span>Residential & Commercial Painting</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
-                    <span>Interior & Exterior Painting</span>
-                  </li>
-                </>
-              )}
-            </ul>
-            
-            {/* Branded underline */}
-            <div className="w-24 h-0.5 bg-brand mb-6"></div>
-            
-            {/* Contact info */}
-            <div className="flex flex-wrap items-center text-sm gap-x-3 gap-y-2">
-              {companyProfile?.companyName && (
-                <a href={`mailto:info@${companyProfile.companyName.toLowerCase().replace(/\s+/g, '')}.com`} className="flex items-center">
-                  <Mail className="h-4 w-4 mr-1 text-brand" />
-                  <span>{`info@${companyProfile.companyName.toLowerCase().replace(/\s+/g, '')}.com`}</span>
-                </a>
-              )}
-              <span className="text-gray-300 hidden sm:inline">|</span>
-              <a href="tel:+15551234567" className="flex items-center">
-                <Phone className="h-4 w-4 mr-1 text-brand" />
-                <span>+1 555-123-4567</span>
-              </a>
+        {/* Cover Page - New Design */}
+        <div className="cover-page print:break-after-page">
+          {/* Top Brand Bar */}
+          <div className="w-full h-8 bg-[#0061ff] relative">
+            <div className="container mx-auto px-12 h-full flex items-center">
+              <img
+                src={logoUrl}
+                alt={companyProfile?.companyName || "Company Logo"}
+                className="h-6 w-auto object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = defaultLogo;
+                }}
+              />
             </div>
           </div>
           
-          {/* Vertical Rule (updated for all screen sizes) */}
-          <div className="hidden sm:block print:block w-px bg-brand absolute inset-y-0 left-2/3"></div>
-          
-          {/* Right Column */}
-          <div className="sm:col-span-4 print:col-span-4 relative z-10">
-            {metadata.clientName ? (
-              <>
-                <h2 className="text-lg font-bold mb-1">{metadata.clientName}</h2>
-                {metadata.jobType && (
-                  <p className="text-gray-600 mb-4">{metadata.jobType}</p>
-                )}
-              </>
-            ) : (
-              <div className="border border-dashed border-gray-300 p-4 rounded-md">
-                <p className="text-gray-400 italic">Client information not available</p>
-              </div>
-            )}
+          {/* Hero Image with Overlay */}
+          <div className="relative w-full h-[70vh] overflow-hidden">
+            {/* Background image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ 
+                backgroundImage: coverImageUrl ? `url(${coverImageUrl})` : 'url(/placeholder.svg)',
+              }}
+            />
+            
+            {/* Blue overlay */}
+            <div className="absolute inset-0 bg-[#0061ff]/40"></div>
+            
+            {/* Title & Client block */}
+            <div className="absolute bottom-0 left-0 p-8 text-white container mx-auto px-12">
+              <h1 className="font-['Playfair_Display'] text-5xl font-bold mb-2">PROJECT ESTIMATE</h1>
+              <p className="font-['Playfair_Display'] text-base">
+                Prepared for:
+                <span className="ml-2 font-semibold">
+                  {metadata.clientName || "Client Name"}
+                </span>
+              </p>
+            </div>
           </div>
           
-          {/* Diagonal accent in bottom-right corner */}
-          <div className="absolute bottom-0 right-0 w-[32%] h-[32%] bg-brand/90 print:bg-brand/70 clip-path-[polygon(70%_0,100%_0,100%_100%)] z-0"></div>
+          {/* Date + Doc ID row */}
+          <div className="container mx-auto px-12 py-4 grid grid-cols-12 items-center">
+            <div className="col-span-6 text-xs font-['Inter'] uppercase tracking-wider">
+              DATE: {today}
+            </div>
+            <div className="col-span-6 text-right text-xs font-['Inter'] text-gray-500">
+              {docNumber}
+            </div>
+          </div>
+          
+          {/* Info Card */}
+          <div className="container mx-auto px-12 py-6">
+            <div className="bg-[#f3f4f6] rounded-md shadow-md p-6 max-w-[70%]">
+              <h3 className="font-medium mb-4 font-['Inter']">Our Professional Services</h3>
+              <ul className="space-y-3">
+                {companyServices.length > 0 ? (
+                  companyServices.map((service, index) => (
+                    <li key={index} className="flex items-start">
+                      {index % 2 === 0 ? (
+                        <PaintRoller className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
+                      ) : (
+                        <Paintbrush className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
+                      )}
+                      <span className="font-['Inter']">{service}</span>
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li className="flex items-start">
+                      <PaintRoller className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
+                      <span className="font-['Inter']">Residential & Commercial Painting</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Paintbrush className="h-4 w-4 mr-2 mt-1 text-[#0061ff] flex-shrink-0" />
+                      <span className="font-['Inter']">Interior & Exterior Painting</span>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+          
+          {/* Watermark */}
+          <div className="absolute bottom-0 right-0 w-1/4 h-1/4 opacity-5 pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+              <path d="M18 3v4c0 2-2 4-4 4H6c-2 0-4-2-4-4V3" />
+              <path d="M10 11v4c0 2-2 4-4 4H2" />
+              <path d="M22 19h-4c-2 0-4-2-4-4v-4" />
+            </svg>
+          </div>
+          
+          {/* Footer Bar */}
+          <div className="w-full bg-[#0061ff] py-4 mt-auto">
+            <div className="container mx-auto px-12 grid grid-cols-12">
+              <div className="col-span-12 flex justify-end items-center text-white space-x-6">
+                {companyProfile?.email && (
+                  <a href={`mailto:${companyProfile.email}`} className="flex items-center text-white no-underline">
+                    <Mail className="h-5 w-5 mr-2" />
+                    <span className="font-['Inter'] font-semibold text-lg">{companyProfile.email}</span>
+                  </a>
+                )}
+                
+                {companyProfile?.phone && (
+                  <a href={`tel:${companyProfile.phone}`} className="flex items-center text-white no-underline">
+                    <Phone className="h-5 w-5 mr-2" />
+                    <span className="font-['Inter'] font-semibold text-lg">{companyProfile.phone}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="prose max-w-none print:prose-sm leading-relaxed">
+        <div className="prose max-w-none print:prose-sm leading-relaxed mt-8">
           {formatProposalText(proposal)}
         </div>
 

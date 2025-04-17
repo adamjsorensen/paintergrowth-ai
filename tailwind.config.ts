@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -13,7 +14,8 @@ export default {
 		'text-cover-h1',
 		'text-cover-smallcaps',
 		'paint-icon',
-		'clip-path-[polygon(70%_0,100%_0,100%_100%)]'
+		'clip-path-[polygon(70%_0,100%_0,100%_100%)]',
+		'cover-page'
 	],
 	prefix: "",
 	theme: {
@@ -25,6 +27,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'playfair': ['Playfair Display', 'serif'],
+				'inter': ['Inter', 'sans-serif'],
+			},
 			fontSize: {
 				'cover-h1': ['2rem', { lineHeight: '2.4rem' }],   // 32 pt
 				'cover-smallcaps': ['0.7rem', { letterSpacing: '0.05em', fontWeight: '600', textTransform: 'uppercase' }],
