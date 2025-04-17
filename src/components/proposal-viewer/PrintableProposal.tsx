@@ -1,7 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
 import { Printer } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PrintableProposalProps {
   proposal: string;
@@ -24,11 +25,26 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
   metadata,
   companyProfile,
 }) => {
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+
   useEffect(() => {
     // If opened in a new window, trigger print automatically
     if (window.opener) {
       window.print();
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchCoverImage = async () => {
+      const { data } = await supabase
+        .from('proposal_pdf_settings')
+        .select('cover_image_url')
+        .single();
+      
+      setCoverImageUrl(data?.cover_image_url || null);
+    };
+
+    fetchCoverImage();
   }, []);
 
   // Default logo if none provided
@@ -56,6 +72,17 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
 
       {/* Proposal Content - Optimized for Print */}
       <div className="max-w-[750px] mx-auto p-8 print:p-6 print:mx-0 print:w-full">
+        {/* Cover Image (if available) */}
+        {coverImageUrl && (
+          <div className="w-full h-64 mb-8 print:mb-6 overflow-hidden rounded-lg">
+            <img
+              src={coverImageUrl}
+              alt="Proposal Cover"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Cover Page */}
         <div className="pb-10 mb-10 border-b border-gray-200 print:pb-6 print:mb-6">
           {/* Logo */}
