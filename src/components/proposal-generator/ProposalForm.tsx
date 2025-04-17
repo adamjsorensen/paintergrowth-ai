@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ModeToggle from "@/components/proposal-generator/ModeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import ProposalBuilderModal from "@/components/proposal-generator/ProposalBuilde
 import { cn } from "@/lib/utils";
 import { Sparkles, ChevronRight, Settings2 } from "lucide-react";
 import { useGroupedPromptFields, hasModalFields } from "@/hooks/prompt-fields/useGroupedPromptFields";
+import { useStylePreferences } from "@/hooks/style-preferences/useStylePreferences";
 
 interface ProposalFormProps {
   fields: FieldConfig[];
@@ -43,7 +43,6 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   
   const visibleFields = getVisibleFields();
   
-  // Filter fields that should appear in the main form (not in modal)
   const projectFields = visibleFields.filter(
     field => !field.modalStep || field.modalStep === 'main'
   );
@@ -51,7 +50,6 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   const hasModalFieldsValue = hasModalFields(groupedFields);
   
   const submitForm = async () => {
-    // Regular form submission without modal
     await handleSubmit();
   };
   
@@ -62,6 +60,14 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   const closeModal = () => {
     setIsModalOpen(false);
   };
+  
+  const { hasSetPreferences } = useStylePreferences();
+  
+  useEffect(() => {
+    if (hasSetPreferences) {
+      setIsModalOpen(true);
+    }
+  }, [hasSetPreferences]);
   
   return (
     <Card className="border border-gray-200 shadow-md rounded-xl overflow-hidden">
@@ -127,7 +133,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
         <ProposalBuilderModal
           isOpen={isModalOpen}
           onClose={closeModal}
-          fields={fields}  // Pass all fields instead of separate arrays
+          fields={fields}
           values={fieldValues}
           onValueChange={handleFieldChange}
           onSubmit={handleSubmit}
