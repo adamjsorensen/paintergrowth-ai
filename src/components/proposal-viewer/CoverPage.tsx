@@ -79,6 +79,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
               }}
             >
               {/* Blue tint overlay */}
+              <div className="absolute inset-0 bg-[rgba(0,94,214,0.1)]" />
             </div>
             
             {/* White border along diagonal edge */}
