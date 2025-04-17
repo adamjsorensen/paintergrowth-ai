@@ -56,14 +56,14 @@ const CoverPage: React.FC<CoverPageProps> = ({
       }} />
       
       {/* Top black bar */}
-      <div className="absolute top-0 left-0 right-0 h-[100px] bg-black z-30 p-8">       
+      <div className="absolute top-0 left-0 right-0 h-[48px] bg-black z-30 p-8">       
       </div>
       
       {/* Left vertical accent stripe */}
-      <div className="absolute top-[100px] left-0 bottom-0 w-20 bg-[#005ED6] z-20" />
+      <div className="absolute top-[48px] left-0 bottom-0 w-20 bg-[#005ED6] z-20" />
       
       {/* Main content area */}
-      <div className="absolute top-[100px] left-20 right-0 bottom-0 bg-white z-10">
+      <div className="absolute top-[48px] left-20 right-0 bottom-0 bg-white z-10">
         {/* Hero section with diagonal clip */}
         <div className="relative h-[60vh] w-full overflow-hidden">
           {/* Background with white peek-through offset */}
