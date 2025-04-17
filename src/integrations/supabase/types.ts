@@ -306,6 +306,24 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_pdf_settings: {
+        Row: {
+          cover_image_url: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       saved_proposals: {
         Row: {
           client_name: string | null
