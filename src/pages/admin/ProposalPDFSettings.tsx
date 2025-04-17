@@ -3,14 +3,14 @@ import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import { useProposalPDFSettings } from "@/hooks/admin/useProposalPDFSettings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ImageUp } from "lucide-react";
+import { ImageUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 const ProposalPDFSettings = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { uploadCoverImage, coverImageUrl } = useProposalPDFSettings();
+  const { uploadCoverImage, coverImageUrl, isLoading } = useProposalPDFSettings();
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -48,13 +48,21 @@ const ProposalPDFSettings = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {coverImageUrl && (
+              {isLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : coverImageUrl ? (
                 <div className="relative w-full max-w-md">
                   <img 
                     src={coverImageUrl} 
                     alt="Current cover" 
                     className="w-full rounded-lg shadow-md"
                   />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-32 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  <p className="text-gray-500">No cover image set</p>
                 </div>
               )}
               <div className="flex items-center gap-4">
@@ -71,9 +79,19 @@ const ProposalPDFSettings = () => {
                     variant="outline" 
                     disabled={isUploading}
                     className="flex items-center gap-2"
+                    type="button"
                   >
-                    <ImageUp className="h-4 w-4" />
-                    {isUploading ? 'Uploading...' : 'Upload New Cover Image'}
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <ImageUp className="h-4 w-4" />
+                        Upload New Cover Image
+                      </>
+                    )}
                   </Button>
                 </label>
               </div>
