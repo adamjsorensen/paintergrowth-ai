@@ -103,7 +103,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
               Address: {metadata.clientAddress || "Address"}
             </p>
             <p className="font-['Inter'] text-base text-white mt-1">
-              Prepared by: {companyProfile.owner_name || PainterGrowth}
+              Prepared by: {companyProfile.owner_name || "PainterGrowth"}
             </p>
           </div>
         </div>
