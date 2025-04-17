@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -8,6 +7,13 @@ export default {
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
+	],
+	safelist: [
+		'cover-summary',
+		'text-cover-h1',
+		'text-cover-smallcaps',
+		'paint-icon',
+		'clip-path-[polygon(70%_0,100%_0,100%_100%)]'
 	],
 	prefix: "",
 	theme: {
@@ -19,7 +25,12 @@ export default {
 			}
 		},
 		extend: {
+			fontSize: {
+				'cover-h1': ['2rem', { lineHeight: '2.4rem' }],   // 32 pt
+				'cover-smallcaps': ['0.7rem', { letterSpacing: '0.05em', fontWeight: '600', textTransform: 'uppercase' }],
+			},
 			colors: {
+				brand: 'hsl(210 90% 45%)',
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

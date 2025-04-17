@@ -99,6 +99,14 @@
   .hero-gradient {
     background: linear-gradient(to bottom right, rgba(30, 64, 175, 0.05), rgba(59, 130, 246, 0.15));
   }
+  
+  .cover-summary {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  
+  .cover-summary h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
 }
 
 @layer base {
@@ -181,6 +189,12 @@
 
     /* Cover page styling */
     .cover-page {
+      page-break-after: always;
+    }
+    
+    /* Cover summary section */
+    .cover-summary {
+      margin-bottom: 2rem !important;
       page-break-after: always;
     }
   }

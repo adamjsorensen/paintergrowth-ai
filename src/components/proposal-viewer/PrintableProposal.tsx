@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
-import { Printer } from 'lucide-react';
+import { Check, Printer, PaintBrush, Mail, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PrintableProposalProps {
@@ -50,6 +50,18 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
   // Default logo if none provided
   const defaultLogo = "/placeholder.svg";
   const logoUrl = companyProfile?.logo_url || defaultLogo;
+  
+  // Format the current date
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: '2-digit'
+  });
+  
+  // Parse company services
+  const companyServices = companyProfile?.companyServices?.split(',').map(service => 
+    service.trim()
+  ).filter(Boolean) || [];
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -71,59 +83,101 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
       </div>
 
       {/* Proposal Content - Optimized for Print */}
-      <div className="max-w-[750px] mx-auto p-8 print:p-6 print:mx-0 print:w-full">
+      <div className="max-w-[750px] mx-auto px-8 print:p-6 print:mx-0 print:w-full">
+        {/* Cover Logo - Top Left */}
+        <div className="mb-4">
+          <img
+            src={logoUrl}
+            alt={companyProfile?.companyName || "Company Logo"}
+            className="max-h-[100px] w-auto object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = defaultLogo;
+            }}
+          />
+        </div>
+        
         {/* Cover Image (if available) */}
         {coverImageUrl && (
-          <div className="w-full h-64 mb-8 print:mb-6 overflow-hidden rounded-lg">
+          <div className="w-full mx-6 print:mx-0 mb-8 overflow-hidden">
             <img
               src={coverImageUrl}
               alt="Proposal Cover"
-              className="w-full h-full object-cover"
+              className="w-full h-[300px] object-cover rounded-md print:rounded-none border border-gray-200"
             />
           </div>
         )}
 
-        {/* Cover Page */}
-        <div className="pb-10 mb-10 border-b border-gray-200 print:pb-6 print:mb-6">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <img
-              src={logoUrl}
-              alt={companyProfile?.companyName || "Company Logo"}
-              className="max-h-[100px] w-auto object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = defaultLogo;
-              }}
-            />
+        {/* Cover Summary Section */}
+        <div className="cover-summary grid grid-cols-1 lg:grid-cols-12 gap-6 relative mb-12 print:break-after-page">
+          {/* Left Column */}
+          <div className="lg:col-span-8">
+            <h1 className="font-serif text-cover-h1 font-bold mb-2">PROJECT ESTIMATE</h1>
+            <p className="text-cover-smallcaps text-gray-600 mb-6">DATE: {currentDate}</p>
+            
+            <h3 className="font-medium mb-3">We can help you with</h3>
+            <ul className="mb-6 space-y-1">
+              {companyServices.length > 0 ? (
+                companyServices.map((service, index) => (
+                  <li key={index} className="flex items-start">
+                    <PaintBrush className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
+                    <span>{service}</span>
+                  </li>
+                ))
+              ) : (
+                <>
+                  <li className="flex items-start">
+                    <Check className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
+                    <span>Residential & Commercial Painting</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="h-4 w-4 mr-2 mt-1 text-brand paint-icon flex-shrink-0" />
+                    <span>Interior & Exterior Painting</span>
+                  </li>
+                </>
+              )}
+            </ul>
+            
+            {/* Branded underline */}
+            <div className="w-24 h-0.5 bg-brand mb-6"></div>
+            
+            {/* Contact info */}
+            <div className="flex flex-wrap items-center text-sm gap-x-3 gap-y-2">
+              {companyProfile?.companyName && (
+                <a href={`mailto:info@${companyProfile.companyName.toLowerCase().replace(/\s+/g, '')}.com`} className="flex items-center">
+                  <Mail className="h-4 w-4 mr-1 text-brand" />
+                  <span>{`info@${companyProfile.companyName.toLowerCase().replace(/\s+/g, '')}.com`}</span>
+                </a>
+              )}
+              <span className="text-gray-300 hidden sm:inline">|</span>
+              <a href="tel:+15551234567" className="flex items-center">
+                <Phone className="h-4 w-4 mr-1 text-brand" />
+                <span>+1 555-123-4567</span>
+              </a>
+            </div>
           </div>
-
-          {/* Company Name */}
-          {companyProfile?.companyName && (
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center print:text-2xl">
-              {companyProfile.companyName}
-            </h1>
-          )}
           
-          {/* Company Address */}
-          {companyProfile?.companyAddress && (
-            <p className="text-gray-600 text-center mb-8 print:mb-6">
-              {companyProfile.companyAddress}
-            </p>
-          )}
-
-          {/* Proposal Title */}
-          <div className="mb-8 print:mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-center print:text-xl">
-              Proposal for {metadata.clientName || "Client"}
-            </h2>
-            {metadata.jobType && (
-              <p className="text-gray-600 text-center">Project Type: {metadata.jobType}</p>
+          {/* Vertical Rule (only visible on lg screens and up) */}
+          <div className="hidden lg:block w-0.5 bg-brand absolute top-0 bottom-0 left-2/3"></div>
+          
+          {/* Right Column */}
+          <div className="lg:col-span-4 relative z-10">
+            {metadata.clientName ? (
+              <>
+                <h2 className="text-lg font-bold mb-1">{metadata.clientName}</h2>
+                {metadata.jobType && (
+                  <p className="text-gray-600 mb-4">{metadata.jobType}</p>
+                )}
+              </>
+            ) : (
+              <div className="border border-dashed border-gray-300 p-4 rounded-md">
+                <p className="text-gray-400 italic">Client information not available</p>
+              </div>
             )}
-            <p className="text-gray-600 text-center mt-1">
-              Date: {new Date().toLocaleDateString()}
-            </p>
           </div>
+          
+          {/* Diagonal accent in bottom-right corner */}
+          <div className="absolute bottom-0 right-0 w-[32%] h-[32%] bg-brand/90 print:bg-brand/70 clip-path-[polygon(70%_0,100%_0,100%_100%)] z-0"></div>
         </div>
 
         {/* Main Content */}
