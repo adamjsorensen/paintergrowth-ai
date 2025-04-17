@@ -6,14 +6,16 @@ interface CoverPageProps {
   metadata: {
     clientName?: string;
     preparedBy?: string;
+    clientAddress?: string;
   };
   companyProfile?: {
-    companyName?: string;
-    companyAddress?: string;
+    business_name?: string;
+    location?: string;
     companyServices?: string;
     logo_url?: string;
     email?: string;
     phone?: string;
+    owner_name?: string;
   };
   coverImageUrl?: string | null;
 }
@@ -98,10 +100,10 @@ const CoverPage: React.FC<CoverPageProps> = ({
               Prepared for: {metadata.clientName || "Client Name"}
             </p>
             <p className="font-['Inter'] text-base text-white mt-1">
-              Address: {companyProfile?.companyAddress}
+              Address: {metadata.clientAddress || "Address"}
             </p>
             <p className="font-['Inter'] text-base text-white mt-1">
-              Prepared by: {metadata.preparedBy}
+              Prepared by: {companyProfile.owner_name || PainterGrowth}
             </p>
           </div>
         </div>
