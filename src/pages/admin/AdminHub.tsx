@@ -1,8 +1,7 @@
-
 import PageLayout from "@/components/PageLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, FileText, Upload, Database } from "lucide-react";
+import { Settings, FileText, Upload, Database, Image } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminHub = () => {
@@ -30,6 +29,12 @@ const AdminHub = () => {
       description: "View system activity and generation logs",
       icon: <Database className="h-10 w-10 text-paintergrowth-600" />,
       link: "/admin/logs/activity"
+    },
+    {
+      title: "Proposal PDF Settings",
+      description: "Configure cover image for proposal PDFs",
+      icon: <Image className="h-10 w-10 text-paintergrowth-600" />,
+      link: "/admin/proposal-settings"
     }
   ];
 

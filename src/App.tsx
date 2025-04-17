@@ -25,6 +25,7 @@ import VectorUpload from "./pages/admin/VectorUpload";
 import DocumentManager from "./pages/admin/DocumentManager";
 import CompanyProfile from "./pages/profile/CompanyProfile";
 import PrintProposal from "./pages/PrintProposal";
+import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,11 @@ const App = () => (
               <Route path="/admin/logs/activity" element={
                 <AdminRoute>
                   <ActivityLog />
+                </AdminRoute>
+              } />
+              <Route path="/admin/proposal-settings" element={
+                <AdminRoute>
+                  <ProposalPDFSettings />
                 </AdminRoute>
               } />
               
