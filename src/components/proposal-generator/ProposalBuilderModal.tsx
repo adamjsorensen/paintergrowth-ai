@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FieldConfig } from "@/types/prompt-templates";
@@ -32,7 +32,20 @@ const ProposalBuilderModal = ({
     }
   };
 
-  useEffect(() => {
+  // Use a ref to track previous fields to prevent infinite updates
+const prevFieldsRef = useRef<FieldConfig[]>([]);
+
+useEffect(() => {
+    // Skip processing if fields haven't changed (deep comparison)
+    if (JSON.stringify(prevFieldsRef.current) === JSON.stringify(fields)) {
+      return;
+    }
+    
+    // Update the ref with current fields
+    prevFieldsRef.current = fields;
+    
+    if (fields.length === 0) return;
+    
     const modalSteps = Array.from(
       new Set(
         fields
@@ -66,7 +79,7 @@ const ProposalBuilderModal = ({
   const handleFieldChange = useCallback((fieldName: string, value: any) => {
     setHasUnsavedChanges(true);
     onFieldChange(fieldName, value);
-  }, [onFieldChange]);
+  }, [onFieldChange, setHasUnsavedChanges]);
 
   const handleNext = async () => {
     const isValid = await validateStep(currentStep, steps, fieldValues, toast);

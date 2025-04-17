@@ -37,23 +37,7 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
         <CardTitle className="text-2xl font-semibold">{templateName}</CardTitle>
         
         <div className="flex flex-row items-center space-x-2 mt-2 sm:mt-0">
-          {onReopenModal && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-1" 
-              onClick={onReopenModal}
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden md:inline">Settings</span>
-            </Button>
-          )}
-          
-          <InteriorExteriorToggle 
-            value={projectType} 
-            onChange={handleProjectTypeChange} 
-          />
-          
+          {/* Only keeping mode toggle as requested */}
           {mode && onModeChange && (
             <ModeToggle
               mode={mode}

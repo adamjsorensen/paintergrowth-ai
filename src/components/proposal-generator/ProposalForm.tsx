@@ -8,6 +8,8 @@ import ProposalFormContent from "@/components/proposal-generator/components/Prop
 import { FieldConfig } from "@/types/prompt-templates";
 import { useProposalForm } from "@/components/proposal-generator/hooks/useProposalForm";
 import ProposalBuilderModal from "@/components/proposal-generator/ProposalBuilderModal";
+import { cn } from "@/lib/utils";
+import { Sparkles, ChevronRight, Settings2 } from "lucide-react";
 
 interface ProposalFormProps {
   fields: FieldConfig[];
@@ -67,7 +69,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   };
   
   return (
-    <Card className="border shadow-sm">
+    <Card className="border border-gray-200 shadow-md rounded-xl overflow-hidden">
       <ProposalFormHeader 
         templateName={templateName}
         projectType={projectType}
@@ -78,29 +80,50 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
         onReopenModal={hasModalFields ? openModal : undefined}
       />
       
-      <div className="p-6">
+      <div className="p-6 sm:p-8">
         <ProposalFormContent
           fields={projectFields}
           values={fieldValues}
           onValueChange={handleFieldChange}
         />
         
-        <div className="mt-6 flex justify-end gap-4">
+        <div className="mt-8 border-t pt-6 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
           {hasModalFields ? (
             <Button 
               onClick={openModal}
-              className="mr-auto"
+              className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
               variant="outline"
+              size="lg"
             >
-              Style & Scope Options
+              <Settings2 className="h-4 w-4" />
+              <span>Style & Scope Options</span>
             </Button>
-          ) : null}
+          ) : <div className="sm:mr-auto" />}
           
           <Button
             onClick={submitForm}
             disabled={isGenerating}
+            size="lg"
+            className={cn(
+              "w-full sm:w-auto px-8 transition-all duration-300",
+              "bg-blue-600 hover:bg-blue-700 text-white", 
+              "shadow-md hover:shadow-lg",
+              "flex items-center justify-center gap-2",
+              "min-w-[200px]"
+            )}
           >
-            {isGenerating ? "Generating..." : "Generate Proposal"}
+            {isGenerating ? (
+              <>
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                <span>Generate Proposal</span>
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </>
+            )}
           </Button>
         </div>
       </div>
