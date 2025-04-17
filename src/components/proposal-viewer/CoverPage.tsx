@@ -75,11 +75,10 @@ const CoverPage: React.FC<CoverPageProps> = ({
               className="absolute inset-0 bg-cover bg-center"
               style={{ 
                 backgroundImage: `url(${coverImageUrl || "/placeholder.svg"})`,
-                clipPath: 'polygon(0 0, 100% 0, 100% 60%, 0% 40%)'
+                clipPath: 'polygon(0 0, 100% 0, 100% 75%, 0% 55%)'
               }}
             >
               {/* Blue tint overlay */}
-              <div className="absolute inset-0 bg-[rgba(0,94,214,0.1)]" />
             </div>
             
             {/* White border along diagonal edge */}
