@@ -60,12 +60,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
         <h1 className="font-['Playfair_Display'] text-5xl font-bold text-white uppercase mb-4">
           Project Estimate
         </h1>
-        <div className="font-['Inter'] text-base text-white space-y-2">
-          <p>Client Name: {metadata.clientName || "Client Name"}</p>
-          <p>Client Phone: {metadata.clientPhone || "Phone Number"}</p>
-          <p>Client Email: {metadata.clientEmail || "Email Address"}</p>
-          <p>Project Address: {metadata.clientAddress || "Project Address"}</p>
-        </div>
+        
       </div>
       
       {/* Left vertical accent stripe */}
@@ -107,15 +102,12 @@ const CoverPage: React.FC<CoverPageProps> = ({
             <h1 className="font-['Playfair_Display'] text-6xl font-bold text-white uppercase">
               Project Estimate
             </h1>
-            <p className="font-['Inter'] text-base italic text-white">
-              Prepared for: {metadata.clientName || "Client Name"}
-            </p>
-            <p className="font-['Inter'] text-base text-white mt-1">
-              Address: {metadata.clientAddress || "Address"}
-            </p>
-            <p className="font-['Inter'] text-base text-white mt-1">
-              Prepared by: {metadata.preparedBy || companyProfile?.owner_name || "PainterGrowth"}
-            </p>
+            <div className="font-['Inter'] text-base text-white space-y-2">
+          <p>Client Name: {metadata.clientName || "Client Name"}</p>
+          <p>Client Phone: {metadata.clientPhone || "Phone Number"}</p>
+          <p>Client Email: {metadata.clientEmail || "Email Address"}</p>
+          <p>Project Address: {metadata.clientAddress || "Project Address"}</p>
+        </div>
           </div>
         </div>
         
@@ -146,10 +138,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
           </ol>
           
           <div className="mt-6 flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-600 font-['Inter']">{today}</p>
-              <p className="text-xs text-gray-500 font-['Inter'] tracking-wider">{docNumber}</p>
-            </div>
+            
             <div>
               <p className="font-['Playfair_Display'] text-xl text-right">
                 {companyProfile?.business_name || "Company Name"}
