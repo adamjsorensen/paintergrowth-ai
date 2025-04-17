@@ -83,7 +83,7 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
       </div>
 
       {/* Proposal Content - Optimized for Print */}
-      <div className="max-w-[750px] mx-auto px-8 print:p-6 print:mx-0 print:w-full">
+      <div className="max-w-[750px] mx-auto px-8 print:max-w-none print:px-0 print:w-full">
         {/* Cover Logo - Top Left */}
         <div className="mb-4">
           <img
@@ -108,10 +108,10 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
           </div>
         )}
 
-        {/* Cover Summary Section */}
-        <div className="cover-summary grid grid-cols-1 lg:grid-cols-12 gap-6 relative mb-12 print:break-after-page">
+        {/* Cover Summary Section - Updated for print */}
+        <div className="cover-summary grid grid-cols-1 sm:grid-cols-12 print:grid-cols-12 gap-6 relative mb-12 print:break-after-page">
           {/* Left Column */}
-          <div className="lg:col-span-8">
+          <div className="sm:col-span-8 print:col-span-8">
             <h1 className="font-serif text-cover-h1 font-bold mb-2">PROJECT ESTIMATE</h1>
             <p className="text-cover-smallcaps text-gray-600 mb-6">DATE: {currentDate}</p>
             
@@ -157,11 +157,11 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
             </div>
           </div>
           
-          {/* Vertical Rule (only visible on lg screens and up) */}
-          <div className="hidden lg:block w-0.5 bg-brand absolute top-0 bottom-0 left-2/3"></div>
+          {/* Vertical Rule (updated for all screen sizes) */}
+          <div className="hidden sm:block print:block w-px bg-brand absolute inset-y-0 left-2/3"></div>
           
           {/* Right Column */}
-          <div className="lg:col-span-4 relative z-10">
+          <div className="sm:col-span-4 print:col-span-4 relative z-10">
             {metadata.clientName ? (
               <>
                 <h2 className="text-lg font-bold mb-1">{metadata.clientName}</h2>
