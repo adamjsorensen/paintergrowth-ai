@@ -13,7 +13,7 @@ export const usePromptFieldCreate = () => {
         .insert({
           name: fieldData.name,
           label: fieldData.label,
-          type: fieldData.type,
+          type: fieldData.type as any, // Use type assertion to work around the enum mismatch
           section: fieldData.section,
           required: fieldData.required || false,
           complexity: fieldData.complexity || 'basic',

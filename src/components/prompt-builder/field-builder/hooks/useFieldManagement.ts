@@ -6,6 +6,7 @@ import { FieldConfig, FieldOption, isFieldOptionArray, isMatrixConfig, createDef
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
+import { Json } from "@/integrations/supabase/types";
 
 export const useFieldManagement = (
   fields: FieldConfig[],
@@ -45,6 +46,13 @@ export const useFieldManagement = (
       // Add to state
       setFields((prev) => [...prev, newField]);
 
+      // Prepare options for database save
+      const dbOptions: Json = (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
+        ? { options } as unknown as Json
+        : values.type === "matrix-selector"
+        ? matrixConfig as unknown as Json
+        : undefined;
+
       // Save to database
       createField.mutate({
         name: values.name,
@@ -57,11 +65,7 @@ export const useFieldManagement = (
         placeholder: values.placeholder || "",
         order_position: fields.length + 1,
         modal_step: values.modalStep || "main",
-        options: (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
-          ? { options }
-          : values.type === "matrix-selector"
-          ? matrixConfig
-          : undefined,
+        options: dbOptions,
         active: true
       });
 
@@ -115,6 +119,13 @@ export const useFieldManagement = (
         prev.map((field) => (field.id === editingFieldId ? updatedField : field))
       );
 
+      // Prepare options for database save
+      const dbOptions: Json = (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
+        ? { options } as unknown as Json
+        : values.type === "matrix-selector"
+        ? matrixConfig as unknown as Json
+        : undefined;
+
       // Update in database
       updateField.mutate({
         id: editingFieldId,
@@ -127,11 +138,7 @@ export const useFieldManagement = (
         help_text: values.helpText || "",
         placeholder: values.placeholder || "",
         modal_step: values.modalStep || "main",
-        options: (values.type === "select" || values.type === "checkbox-group" || values.type === "multi-select")
-          ? { options }
-          : values.type === "matrix-selector"
-          ? matrixConfig
-          : undefined
+        options: dbOptions
       });
 
       // Reset form
@@ -183,10 +190,10 @@ export const useFieldManagement = (
     });
   };
 
-  // Convert to react-query mutation
+  // Fix the deleteField mutation to return a Promise
   const deleteField = useMutation({
-    mutationFn: (id: string) => {
-      return deleteFieldMutation.mutate(id);
+    mutationFn: async (id: string) => {
+      return deleteFieldMutation.mutate(id) as unknown as Promise<unknown>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promptFields"] });

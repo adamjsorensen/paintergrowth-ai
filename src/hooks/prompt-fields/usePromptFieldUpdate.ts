@@ -15,7 +15,7 @@ export const usePromptFieldUpdate = () => {
       const updateData: Record<string, any> = {
         name: fieldData.name,
         label: fieldData.label,
-        type: fieldData.type,
+        type: fieldData.type as any, // Use type assertion to work around any enum mismatch
         section: fieldData.section,
         required: fieldData.required,
         complexity: fieldData.complexity,
