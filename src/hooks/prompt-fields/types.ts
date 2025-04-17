@@ -1,24 +1,7 @@
 
 import { Json } from "@/integrations/supabase/types";
 import { SectionType } from "@/types/prompt-field";
-
-export type FieldType = 
-  | "text"
-  | "textarea"
-  | "quote-table"
-  | "upsell-table"
-  | "number"
-  | "select"
-  | "toggle"
-  | "checkbox-group"
-  | "multi-select"
-  | "date"
-  | "file-upload"
-  | "tax-calculator"
-  | "matrix-selector"
-  | "scope-of-work";
-
-export type ModalStepType = 'style' | 'scope' | 'main';
+import { FieldType, ModalStepType } from "@/types/prompt-templates";
 
 export interface PromptField {
   id: string;

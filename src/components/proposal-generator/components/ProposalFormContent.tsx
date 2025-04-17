@@ -1,127 +1,129 @@
 
-import { CardContent } from "@/components/ui/card";
-import { FieldConfig } from "@/types/prompt-templates";
-import FormSection from "../FormSection";
-import FormFieldRenderer from "../FormFieldRenderer";
-import { FORM_SECTIONS } from "../constants/formSections";
 import { useMemo } from "react";
-
-interface EnhancedFieldConfig extends FieldConfig {
-  value: string | number | boolean | string[] | any[];
-  onChange: (value: any) => void;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FieldConfig } from "@/types/prompt-templates";
+import FormSection from "@/components/proposal-generator/FormSection";
+import FormFieldRenderer from "@/components/proposal-generator/FormFieldRenderer";
+import { sections } from "@/components/proposal-generator/constants/formSections";
 
 interface ProposalFormContentProps {
-  fieldsBySection: Record<string, EnhancedFieldConfig[]>;
+  fields: FieldConfig[];
+  values: Record<string, any>;
+  onValueChange: (field: string, value: any) => void;
 }
 
-// Define the QuoteItem interface
-interface QuoteItem {
-  id: string;
-  price: string | number;
-  service?: string;
-  notes?: string;
-  [key: string]: any;
-}
-
-const ProposalFormContent = ({ fieldsBySection }: ProposalFormContentProps) => {
-  // Calculate subtotal from quote table for tax calculator
-  const subtotal = useMemo(() => {
-    let total = 0;
-
-    Object.values(fieldsBySection).flat().forEach((field) => {
-      if (field.type === 'quote-table' && Array.isArray(field.value)) {
-        // Type guard function to check if an item is a valid QuoteItem
-        const isValidQuoteItem = (item: any): item is QuoteItem => {
-          return item !== null && 
-                 item !== undefined && 
-                 typeof item === 'object' &&
-                 'price' in item &&
-                 (typeof item.price === 'string' || typeof item.price === 'number');
-        };
-
-        // Now we can safely process items that pass the type guard
-        const validItems = field.value.filter(isValidQuoteItem);
-
-        total += validItems.reduce<number>((sum, item) => {
-          const price = typeof item.price === 'string' 
-            ? parseFloat(item.price) || 0 
-            : (item.price as number);
-
-          return sum + price;
-        }, 0);
-      }
-    });
-
-    return total;
-  }, [fieldsBySection]);
-
-  const getFieldClass = (fieldId: string, type: string) => {
-    if (['specialNotes', 'projectAddress', 'colorPalette'].includes(fieldId)) {
-      return 'col-span-2';
-    }
-    
-    if (['quote-table', 'upsell-table', 'tax-calculator'].includes(type)) {
-      return 'col-span-2';
-    }
-    
-    return 'col-span-2 sm:col-span-1';
-  };
-
-  // Group fields by their assigned sections
+const ProposalFormContent = ({
+  fields,
+  values,
+  onValueChange,
+}: ProposalFormContentProps) => {
+  // Group fields by section
   const groupedFields = useMemo(() => {
-    const grouped: Record<string, EnhancedFieldConfig[]> = {};
+    const grouped: Record<string, FieldConfig[]> = {};
     
-    // Initialize sections with empty arrays
-    FORM_SECTIONS.forEach(section => {
+    sections.forEach((section) => {
       grouped[section.id] = [];
     });
-
-    // Group fields by their sectionId
-    Object.values(fieldsBySection).flat().forEach(field => {
-      const sectionId = field.sectionId || 'additional';
-      if (grouped[sectionId]) {
-        grouped[sectionId].push(field);
-      } else {
-        grouped['additional'].push(field);
+    
+    // Add fields to their respective sections
+    fields.forEach((field) => {
+      const sectionId = field.sectionId || 'meta';
+      if (!grouped[sectionId]) {
+        grouped[sectionId] = [];
       }
+      grouped[sectionId].push(field);
     });
-
+    
     return grouped;
-  }, [fieldsBySection]);
-
+  }, [fields]);
+  
+  // Count the number of sections with fields
+  const visibleSectionCount = useMemo(() => {
+    return sections.filter(section => 
+      groupedFields[section.id] && 
+      groupedFields[section.id].length > 0
+    ).length;
+  }, [groupedFields]);
+  
   return (
-    <CardContent className="p-6">
-      {Object.entries(groupedFields).map(([sectionId, sectionFields]) => {
-        if (sectionFields.length === 0) return null;
-        
-        const section = FORM_SECTIONS.find(s => s.id === sectionId);
-        const isClientInfoSection = sectionId === 'client';
-        
-        return (
-          <FormSection 
-            key={sectionId} 
-            title={section?.title || "Additional Information"} 
-            icon={section?.icon}
-            defaultOpen={isClientInfoSection}
-          >
-            <div className="grid grid-cols-2 gap-6">
-              {sectionFields.map((field) => (
-                <div key={field.id} className={getFieldClass(field.id, field.type)}>
-                  <FormFieldRenderer
-                    field={field}
-                    value={field.value}
-                    onChange={field.onChange}
-                    isAdvanced={field.complexity === 'advanced'}
-                    subtotal={field.type === 'tax-calculator' ? subtotal : undefined}
-                  />
+    <>
+      {visibleSectionCount <= 1 ? (
+        // If there's only one section, don't show tabs
+        <div className="space-y-8">
+          {sections.map((section) => {
+            const sectionFields = groupedFields[section.id] || [];
+            if (sectionFields.length === 0) return null;
+            
+            return (
+              <FormSection 
+                key={section.id} 
+                title={section.label}
+                description={section.description}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {sectionFields.map((field) => (
+                    <div 
+                      key={field.id} 
+                      className={field.type === 'scope-of-work' ? 'md:col-span-2' : ''}
+                    >
+                      <FormFieldRenderer
+                        field={field}
+                        value={values[field.name]}
+                        onChange={(value) => onValueChange(field.name, value)}
+                        isAdvanced={field.complexity === 'advanced'}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </FormSection>
-        );
-      })}
-    </CardContent>
+              </FormSection>
+            );
+          })}
+        </div>
+      ) : (
+        // If there are multiple sections, show tabs
+        <Tabs defaultValue={sections[0]?.id} className="w-full">
+          <TabsList className="mb-6 grid w-full" style={{ 
+            gridTemplateColumns: `repeat(${visibleSectionCount}, minmax(0, 1fr))` 
+          }}>
+            {sections.map((section) => {
+              const sectionFields = groupedFields[section.id] || [];
+              if (sectionFields.length === 0) return null;
+              
+              return (
+                <TabsTrigger key={section.id} value={section.id}>
+                  {section.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          
+          {sections.map((section) => {
+            const sectionFields = groupedFields[section.id] || [];
+            if (sectionFields.length === 0) return null;
+            
+            return (
+              <TabsContent key={section.id} value={section.id} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {sectionFields.map((field) => (
+                    <div 
+                      key={field.id} 
+                      className={field.type === 'scope-of-work' ? 'md:col-span-2' : ''}
+                    >
+                      <FormFieldRenderer
+                        field={field}
+                        value={values[field.name]}
+                        onChange={(value) => onValueChange(field.name, value)}
+                        isAdvanced={field.complexity === 'advanced'}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      )}
+    </>
   );
 };
 
