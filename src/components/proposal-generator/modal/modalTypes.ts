@@ -10,9 +10,16 @@ export interface ModalStep {
 export interface ProposalBuilderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  fields: FieldConfig[];
-  fieldValues: Record<string, any>;
-  onFieldChange: (fieldName: string, value: any) => void;
-  onComplete: () => void;
+  styleFields?: FieldConfig[];
+  scopeFields?: FieldConfig[];
+  fields?: FieldConfig[];
+  fieldValues?: Record<string, any>;
+  values?: Record<string, any>;
+  onFieldChange?: (fieldName: string, value: any) => void;
+  onValueChange?: (fieldName: string, value: any) => void;
+  onComplete?: () => void;
+  onSubmit?: () => Promise<void>;
   initialStep?: number;
+  checkRequiredFields?: (modalStep: string) => boolean;
+  stepCompleted?: Record<string, boolean>;
 }

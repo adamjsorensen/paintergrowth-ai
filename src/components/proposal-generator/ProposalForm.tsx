@@ -14,7 +14,7 @@ interface ProposalFormProps {
   isGenerating: boolean;
   onGenerate: (fieldValues: Record<string, any>, proposalId: string) => Promise<void>;
   templateName?: string;
-  projectType?: string;
+  projectType?: "interior" | "exterior";
 }
 
 const ProposalForm: React.FC<ProposalFormProps> = ({
@@ -75,8 +75,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
       
       <div className="flex items-center justify-between px-6 py-2 border-b">
         <ModeToggle
-          basic={formMode === 'basic'}
-          onChange={(mode) => setFormMode(mode)}
+          mode={formMode}
+          onModeChange={setFormMode}
         />
       </div>
       

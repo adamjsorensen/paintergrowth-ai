@@ -46,4 +46,7 @@ export interface FieldConfig {
   options?: FieldOption[] | any; // Allow for matrix config or simple options
   sectionId?: string;
   modalStep?: ModalStepType;
+  min?: number; // Add missing field for number inputs
+  max?: number; // Add missing field for number inputs
+  step?: number; // Add missing field for number inputs
 }

@@ -1,35 +1,44 @@
 
 import { User, Layers, Brush, Palette, ClipboardList, Settings } from "lucide-react";
 
-export const FORM_SECTIONS = [
+export const sections = [
   {
     id: 'client',
-    title: 'Client Information',
+    label: 'Client Information',
+    description: 'Enter your client details',
     icon: <User className="h-5 w-5" />
   },
   {
     id: 'project',
-    title: 'Project Details',
+    label: 'Project Details',
+    description: 'Specify project information',
     icon: <Layers className="h-5 w-5" />
   },
   {
     id: 'surfaces',
-    title: 'Surfaces & Preparation',
+    label: 'Surfaces & Preparation',
+    description: 'Describe the surfaces to be painted',
     icon: <Brush className="h-5 w-5" />
   },
   {
     id: 'colors',
-    title: 'Colors & Timeline',
+    label: 'Colors & Timeline',
+    description: 'Specify colors and project timeline',
     icon: <Palette className="h-5 w-5" />
   },
   {
     id: 'additional',
-    title: 'Additional Information',
+    label: 'Additional Information',
+    description: 'Any other relevant details',
     icon: <ClipboardList className="h-5 w-5" />
   },
   {
     id: 'options',
-    title: 'Proposal Options',
+    label: 'Proposal Options',
+    description: 'Configure proposal settings',
     icon: <Settings className="h-5 w-5" />
   }
 ];
+
+// For backward compatibility
+export const FORM_SECTIONS = sections;
