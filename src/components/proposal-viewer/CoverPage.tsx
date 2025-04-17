@@ -107,42 +107,40 @@ const CoverPage: React.FC<CoverPageProps> = ({
           </div>
         </div>
         
-        {/* Services info card */}
-        <div className="mx-12 -mt-12 bg-gray-100 shadow-lg rounded-lg p-8 relative z-20">
-          <div className="flex justify-between items-start mb-6">
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600 font-['Inter']">Date: {today}</p>
-              <p className="text-sm text-gray-600 font-['Inter']">Prepared By: {metadata.preparedBy || companyProfile?.owner_name || "PainterGrowth"}</p>
-              <p className="text-sm text-gray-600 font-['Inter']">Business Address: {companyProfile?.location || "Business Address"}</p>
-              <p className="text-xs text-gray-500 font-['Inter'] tracking-wider">Proposal #: {docNumber}</p>
-            </div>
-            <img
-              src={logoUrl}
-              alt={companyProfile?.business_name || "Company Logo"}
-              className="h-10 w-auto"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-              }}
-            />
-          </div>
-          
-          <ol className="list-decimal list-inside space-y-2 text-gray-800 font-['Inter']">
-            {companyServices.map((service, index) => (
-              <li key={index}>{service}</li>
-            ))}
-          </ol>
-          
-          <div className="mt-6 flex justify-between items-center">
-            
-            <div>
-              <p className="font-['Playfair_Display'] text-xl text-right">
-                {companyProfile?.business_name || "Company Name"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+{/* Services info card */}
+<div className="mx-12 -mt-12 bg-gray-100 shadow-lg rounded-lg p-8 relative z-20">
+  {/* Logo and Company Name at Top */}
+  <div className="flex justify-between items-start mb-6">
+    <div className="space-y-2">
+      <p className="text-sm text-gray-600 font-['Inter']">Date: {today}</p>
+      <p className="text-sm text-gray-600 font-['Inter']">Prepared By: {metadata.preparedBy || companyProfile?.owner_name || "PainterGrowth"}</p>
+      <p className="text-sm text-gray-600 font-['Inter']">Business Address: {companyProfile?.location || "Business Address"}</p>
+      <p className="text-xs text-gray-500 font-['Inter'] tracking-wider">Proposal #: {docNumber}</p>
+    </div>
+
+    <div className="text-right">
+      <img
+        src={logoUrl}
+        alt={companyProfile?.business_name || "Company Logo"}
+        className="h-16 w-auto mb-2"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = "/placeholder.svg";
+        }}
+      />
+      <p className="font-['Playfair_Display'] text-2xl font-bold text-gray-800">
+        {companyProfile?.business_name || "Company Name"}
+      </p>
+    </div>
+  </div>
+
+  {/* Services List */}
+  <ol className="list-decimal list-inside space-y-2 text-gray-800 font-['Inter']">
+    {companyServices.map((service, index) => (
+      <li key={index}>{service}</li>
+    ))}
+  </ol>
+</div>
       
       {/* Diagonal footer accent */}
       <div className="absolute left-0 right-0 bottom-0 h-16 z-30">
