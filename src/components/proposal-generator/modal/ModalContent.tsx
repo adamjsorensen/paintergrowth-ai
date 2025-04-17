@@ -69,11 +69,11 @@ const ModalContent = ({
       <div className="overflow-y-auto pr-1 space-y-8 mb-auto flex-1">
         {currentFields.map((field, index) => (
           <div key={field.id} className={field.type === 'scope-of-work' ? 'col-span-2' : 'col-span-1'}>
-            {index > 0 && field.section !== currentFields[index-1].section && (
+            {index > 0 && field.sectionId !== currentFields[index-1].sectionId && (
               <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent my-6"></div>
             )}
-            {field.section && index === 0 || (index > 0 && field.section !== currentFields[index-1].section) ? (
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">{field.section}</h3>
+            {field.sectionId && index === 0 || (index > 0 && field.sectionId !== currentFields[index-1].sectionId) ? (
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">{field.sectionId}</h3>
             ) : null}
             <div className="group transition-all duration-200 hover:bg-gray-50/80 rounded-lg p-3 -mx-3">
               <FormFieldRenderer
