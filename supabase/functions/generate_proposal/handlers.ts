@@ -1,26 +1,18 @@
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createErrorResponse, createSuccessResponse, callOpenRouterAPI } from "./api.ts";
+import { renderPrompt } from "./utils.ts";
 import { createSupabaseClient, updateProposalStatus, fetchPromptTemplate, fetchAISettings, logGeneration } from "./utils.ts";
-import { findUnresolvedPlaceholders } from "./validation.ts";
 
 export async function handleGenerateProposal(req: Request) {
   try {
-    // Parse request body
     const body = await req.json();
     const { proposalId, promptId, values } = body;
 
-    if (!proposalId) {
-      return createErrorResponse('Proposal ID is required');
+    if (!proposalId || !promptId) {
+      return createErrorResponse('Proposal ID and Prompt ID are required');
     }
 
-    if (!promptId) {
-      return createErrorResponse('Prompt ID is required');
-    }
-
-    if (!values || typeof values !== 'object') {
-      return createErrorResponse('Form values are required and must be an object');
-    }
-
-    // Create Supabase client
     const supabase = createSupabaseClient();
 
     // Get user info from authorization header
@@ -44,39 +36,26 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to update proposal status');
     }
 
-    // Get prompt template for system prompt
-    const { data: promptTemplate, error: promptError } = await fetchPromptTemplate(supabase, promptId);
-    if (promptError || !promptTemplate) {
+    // Fetch AI settings and prompt template
+    const { default_system_prompt, seed_prompt } = await fetchAISettings(supabase);
+    const { data: tpl, error: promptError } = await fetchPromptTemplate(supabase, promptId);
+
+    if (promptError || !tpl) {
       console.error('Failed to fetch prompt template:', promptError);
       await updateProposalStatus(supabase, proposalId, 'failed');
       return createErrorResponse('Failed to fetch prompt template');
     }
 
-    // Fetch AI settings
-    const aiSettings = await fetchAISettings(supabase);
-    console.log('Using AI settings:', aiSettings);
+    // Prepare system message with optional override
+    const systemMsg = tpl.system_prompt_override ?? default_system_prompt;
+    const bodyMsg = renderPrompt(tpl.template_prompt, values);
 
-    // Prepare system prompt
-    let systemPrompt = promptTemplate.system_prompt;
-    
-    // Replace all placeholders in the system prompt
-    if (systemPrompt.includes('{{') && systemPrompt.includes('}}')) {
-      Object.entries(values).forEach(([key, value]) => {
-        const placeholder = `{{${key}}}`;
-        if (systemPrompt.includes(placeholder)) {
-          systemPrompt = systemPrompt.replace(
-            new RegExp(placeholder, 'g'), 
-            String(value)
-          );
-        }
-      });
-
-      // Check for any unresolved placeholders using the new utility
-      const unresolvedPlaceholders = findUnresolvedPlaceholders(systemPrompt, values);
-      if (unresolvedPlaceholders.length > 0) {
-        console.warn('Warning: Unresolved placeholders:', unresolvedPlaceholders);
-      }
-    }
+    // Prepare messages array for OpenRouter
+    const messages = [
+      { role: "system", content: systemMsg },
+      { role: "user",   content: seed_prompt },
+      { role: "user",   content: bodyMsg }
+    ];
 
     // Get API key from environment
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
@@ -86,10 +65,11 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('API key not configured');
     }
 
-    // Call OpenRouter API with settings
+    // Call OpenRouter API
+    const aiSettings = await fetchAISettings(supabase);
     let response;
     try {
-      response = await callOpenRouterAPI(systemPrompt, openRouterApiKey, aiSettings);
+      response = await callOpenRouterAPI(messages, openRouterApiKey, aiSettings);
     } catch (apiError) {
       console.error('OpenRouter API error:', apiError);
       await updateProposalStatus(supabase, proposalId, 'failed');
@@ -101,8 +81,8 @@ export async function handleGenerateProposal(req: Request) {
         prompt_id: promptId,
         proposal_id: proposalId,
         model_used: aiSettings.model,
-        system_prompt: systemPrompt,
-        final_prompt: systemPrompt,
+        system_prompt: systemMsg,
+        final_prompt: bodyMsg,
         user_input: values,
         status: 'failed',
         ai_response: null,
@@ -112,7 +92,7 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to generate proposal: API error');
     }
 
-    // Extract the generated text
+    // Extract and save the generated text
     const generatedText = response?.choices?.[0]?.message?.content;
     if (!generatedText) {
       console.error('No content in API response');
@@ -125,8 +105,8 @@ export async function handleGenerateProposal(req: Request) {
         prompt_id: promptId,
         proposal_id: proposalId,
         model_used: aiSettings.model,
-        system_prompt: systemPrompt,
-        final_prompt: systemPrompt,
+        system_prompt: systemMsg,
+        final_prompt: bodyMsg,
         user_input: values,
         status: 'failed',
         ai_response: null,
@@ -150,26 +130,22 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to save generated proposal');
     }
 
-    // Log the successful generation with extended information
+    // Log the successful generation
     await logGeneration(supabase, {
       user_id: user.id,
       user_email: user.email || 'unknown',
       prompt_id: promptId,
       proposal_id: proposalId,
       model_used: aiSettings.model,
-      system_prompt: systemPrompt,
-      final_prompt: systemPrompt,
-      user_input: {
-        ...values,
-        _unresolved_placeholders: findUnresolvedPlaceholders(systemPrompt, values)
-      },
+      system_prompt: systemMsg,
+      final_prompt: bodyMsg,
+      user_input: values,
       status: 'success',
       ai_response: generatedText,
       rag_context: null
     });
 
     return createSuccessResponse({ success: true, content: generatedText });
-    
   } catch (error) {
     console.error('Error in generate_proposal function:', error);
     return createErrorResponse(`Internal server error: ${error.message}`);

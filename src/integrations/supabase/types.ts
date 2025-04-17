@@ -13,30 +13,30 @@ export type Database = {
         Row: {
           created_at: string | null
           default_system_prompt: string | null
-          default_user_prompt: string | null
           id: string
           max_tokens: number | null
           model: string | null
+          seed_prompt: string | null
           temperature: number | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           default_system_prompt?: string | null
-          default_user_prompt?: string | null
           id?: string
           max_tokens?: number | null
           model?: string | null
+          seed_prompt?: string | null
           temperature?: number | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           default_system_prompt?: string | null
-          default_user_prompt?: string | null
           id?: string
           max_tokens?: number | null
           model?: string | null
+          seed_prompt?: string | null
           temperature?: number | null
           updated_at?: string | null
         }
@@ -280,7 +280,8 @@ export type Database = {
           field_config: Json
           id: string
           name: string
-          system_prompt: string
+          system_prompt_override: string | null
+          template_prompt: string
           updated_at: string
         }
         Insert: {
@@ -289,7 +290,8 @@ export type Database = {
           field_config?: Json
           id?: string
           name: string
-          system_prompt: string
+          system_prompt_override?: string | null
+          template_prompt: string
           updated_at?: string
         }
         Update: {
@@ -298,7 +300,8 @@ export type Database = {
           field_config?: Json
           id?: string
           name?: string
-          system_prompt?: string
+          system_prompt_override?: string | null
+          template_prompt?: string
           updated_at?: string
         }
         Relationships: []
