@@ -1,33 +1,40 @@
 
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
 
 interface PreferencesFooterProps {
   onSkip: () => void;
   onContinue: () => void;
-  continueLabel?: string;
-  skipLabel?: string;
+  continueText?: string;
+  showBackButton?: boolean;
+  onBack?: () => void;
 }
 
-const PreferencesFooter = ({ 
-  onSkip, 
-  onContinue, 
-  continueLabel = "Next", 
-  skipLabel = "Skip & Continue" 
+const PreferencesFooter = ({
+  onSkip,
+  onContinue,
+  continueText = "Continue",
+  showBackButton = false,
+  onBack
 }: PreferencesFooterProps) => {
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t flex justify-between mt-auto">
+    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex justify-between items-center shadow-lg">
+      <div>
+        {showBackButton && onBack ? (
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+        ) : (
+          <Button variant="ghost" onClick={onSkip}>
+            Skip
+          </Button>
+        )}
+      </div>
       <Button 
-        variant="outline" 
-        onClick={onSkip}
+        className="bg-blue-600 hover:bg-blue-700"
+        onClick={onContinue}
       >
-        {skipLabel}
-      </Button>
-      <Button 
-        onClick={onContinue} 
-        className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white flex items-center gap-2"
-      >
-        {continueLabel} <ChevronRight className="h-4 w-4" />
+        {continueText}
       </Button>
     </div>
   );
