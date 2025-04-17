@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -81,9 +80,7 @@ const ProposalBuilderModal = ({
   const isMobile = useMediaQuery("(max-width: 640px)");
   const { toast } = useToast();
 
-  // Group fields by modal step
   useEffect(() => {
-    // Extract all unique modalStep values, excluding 'main' and undefined
     const modalSteps = Array.from(
       new Set(
         fields
@@ -92,14 +89,11 @@ const ProposalBuilderModal = ({
       )
     ) as ModalStepType[];
 
-    // Create step titles based on modalStep values
     const stepTitles = {
       'style': 'Style Preferences',
       'scope': 'Scope of Work',
-      // Add more mappings as needed
     };
 
-    // Create step objects
     const newSteps = modalSteps.map(stepType => ({
       type: stepType,
       title: stepTitles[stepType] || stepType.charAt(0).toUpperCase() + stepType.slice(1),
@@ -109,7 +103,6 @@ const ProposalBuilderModal = ({
     setSteps(newSteps);
   }, [fields]);
 
-  // Reset state when modal closes or opens
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(0);
@@ -117,13 +110,11 @@ const ProposalBuilderModal = ({
     }
   }, [isOpen]);
 
-  // Handle field changes
   const handleFieldChange = useCallback((fieldName: string, value: any) => {
     setHasUnsavedChanges(true);
     onFieldChange(fieldName, value);
   }, [onFieldChange]);
 
-  // Validation schema creation
   const getValidationSchema = (stepFields: FieldConfig[]) => {
     const schema: Record<string, any> = {};
     
@@ -160,14 +151,12 @@ const ProposalBuilderModal = ({
     return Yup.object().shape(schema);
   };
 
-  // Validation function
   const validateStep = async (stepIndex: number) => {
     if (stepIndex >= steps.length) return true;
     
     const currentStepFields = steps[stepIndex].fields;
     const requiredFields = currentStepFields.filter(field => field.required);
     
-    // Skip validation if there are no required fields
     if (requiredFields.length === 0) return true;
     
     try {
@@ -199,7 +188,6 @@ const ProposalBuilderModal = ({
     }
   };
 
-  // Navigation handlers
   const handleNext = async () => {
     const isValid = await validateStep(currentStep);
     if (!isValid) return;
@@ -207,7 +195,6 @@ const ProposalBuilderModal = ({
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Final step completed
       setHasUnsavedChanges(false);
       onComplete();
     }
@@ -237,7 +224,6 @@ const ProposalBuilderModal = ({
     setShowConfirmation(false);
   };
 
-  // Determine button text based on step requirements
   const getNextButtonText = (stepIndex: number) => {
     if (stepIndex >= steps.length - 1) {
       return "Continue to Proposal Builder";
@@ -249,27 +235,22 @@ const ProposalBuilderModal = ({
     return hasRequiredFields ? "Next" : "Skip";
   };
 
-  // If no steps, don't render
   if (steps.length === 0) return null;
 
-  // Current step content
   const currentStepData = steps[currentStep];
   const currentFields = currentStepData?.fields || [];
   const stepTitles = steps.map(step => step.title);
 
-  // Render component based on device type
-  const ModalComponent = isMobile ? Sheet : Dialog;
-  const ContentComponent = isMobile ? SheetContent : DialogContent;
-  const modalProps = isMobile ? { side: "bottom", onOpenChange: handleCloseAttempt } : { onOpenChange: handleCloseAttempt };
-  const contentProps = isMobile ? { 
-    className: "h-[90vh] px-4 pt-6 pb-8 flex flex-col" 
-  } : { 
-    className: "max-h-[90vh] overflow-y-auto p-6 max-w-3xl w-full" 
+  const ContentComponent = DialogContent;
+  const contentProps = { 
+    className: isMobile 
+      ? "max-h-[90vh] max-w-[95vw] w-full overflow-y-auto py-6 px-4 flex flex-col"
+      : "max-h-[90vh] max-w-3xl w-full overflow-y-auto p-6 flex flex-col"
   };
-  
+
   return (
     <>
-      <ModalComponent open={isOpen} {...modalProps}>
+      <Dialog open={isOpen} onOpenChange={handleCloseAttempt}>
         <ContentComponent {...contentProps}>
           <SheetHeader className="mb-4">
             <SheetTitle className="text-xl font-semibold">{currentStepData?.title || "Proposal Settings"}</SheetTitle>
@@ -283,7 +264,6 @@ const ProposalBuilderModal = ({
             />
           )}
           
-          {/* Fields for current step */}
           <div className="overflow-y-auto pr-1 space-y-6 mb-auto flex-1">
             {currentFields.map(field => (
               <div key={field.id} className={field.type === 'scope-of-work' ? 'col-span-2' : 'col-span-1'}>
@@ -297,7 +277,6 @@ const ProposalBuilderModal = ({
             ))}
           </div>
           
-          {/* Navigation buttons */}
           <div className="flex justify-between pt-6 mt-4 border-t sticky bottom-0 bg-background">
             <Button 
               variant="outline" 
@@ -311,9 +290,8 @@ const ProposalBuilderModal = ({
             </Button>
           </div>
         </ContentComponent>
-      </ModalComponent>
+      </Dialog>
       
-      {/* Confirmation dialog */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="sm:max-w-md">
           <div className="space-y-4">
