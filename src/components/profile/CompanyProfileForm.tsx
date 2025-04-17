@@ -36,6 +36,9 @@ const CompanyProfileForm = ({ userId, initialData, isLoading }: CompanyProfileFo
       preferred_tone: initialData?.preferred_tone || "professional",
       brand_keywords: [],
       currentKeyword: "",
+      owner_name: initialData?.owner_name || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
     },
   });
 
@@ -53,6 +56,9 @@ const CompanyProfileForm = ({ userId, initialData, isLoading }: CompanyProfileFo
         preferred_tone: values.preferred_tone,
         brand_keywords: keywords,
         logo_url: logoUrl,
+        owner_name: values.owner_name,
+        email: values.email,
+        phone: values.phone,
       };
 
       const { data, error } = await supabase

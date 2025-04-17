@@ -46,8 +46,11 @@ export type Database = {
         Row: {
           brand_keywords: string[] | null
           business_name: string | null
+          email: string | null
           location: string | null
           logo_url: string | null
+          owner_name: string | null
+          phone: string | null
           preferred_tone: string | null
           pricing_notes: string | null
           services_offered: string | null
@@ -58,8 +61,11 @@ export type Database = {
         Insert: {
           brand_keywords?: string[] | null
           business_name?: string | null
+          email?: string | null
           location?: string | null
           logo_url?: string | null
+          owner_name?: string | null
+          phone?: string | null
           preferred_tone?: string | null
           pricing_notes?: string | null
           services_offered?: string | null
@@ -70,8 +76,11 @@ export type Database = {
         Update: {
           brand_keywords?: string[] | null
           business_name?: string | null
+          email?: string | null
           location?: string | null
           logo_url?: string | null
+          owner_name?: string | null
+          phone?: string | null
           preferred_tone?: string | null
           pricing_notes?: string | null
           services_offered?: string | null
