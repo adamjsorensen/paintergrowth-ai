@@ -1,7 +1,7 @@
 
 import { corsHeaders } from "./utils.ts";
 
-export async function callOpenRouterAPI(systemPrompt: string, openRouterApiKey: string, settings: { temperature: number, model: string, max_tokens: number }) {
+export async function callOpenRouterAPI(messages: any[], openRouterApiKey: string, settings: { temperature: number, model: string, max_tokens: number }) {
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -12,10 +12,7 @@ export async function callOpenRouterAPI(systemPrompt: string, openRouterApiKey: 
     },
     body: JSON.stringify({
       model: settings.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: 'Generate a detailed proposal based on the information provided.' }
-      ],
+      messages: messages,
       temperature: settings.temperature,
       max_tokens: settings.max_tokens
     }),

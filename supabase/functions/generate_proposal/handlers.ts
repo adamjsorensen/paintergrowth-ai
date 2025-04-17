@@ -48,33 +48,92 @@ export async function handleGenerateProposal(req: Request) {
 
     // Prepare system message with optional override
     const systemMsg = tpl.system_prompt_override ?? default_system_prompt;
-    const bodyMsg = renderPrompt(tpl.template_prompt, values);
-
-    // Prepare messages array for OpenRouter
-    const messages = [
-      { role: "system", content: systemMsg },
-      { role: "user",   content: seed_prompt },
-      { role: "user",   content: bodyMsg }
-    ];
-
-    // Get API key from environment
-    const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
-    if (!openRouterApiKey) {
-      console.error('OpenRouter API key not found');
-      await updateProposalStatus(supabase, proposalId, 'failed');
-      return createErrorResponse('API key not configured');
-    }
-
-    // Call OpenRouter API
-    const aiSettings = await fetchAISettings(supabase);
-    let response;
+    
     try {
-      response = await callOpenRouterAPI(messages, openRouterApiKey, aiSettings);
-    } catch (apiError) {
-      console.error('OpenRouter API error:', apiError);
-      await updateProposalStatus(supabase, proposalId, 'failed');
+      // Render the template prompt with values
+      const bodyMsg = renderPrompt(tpl.template_prompt, values);
       
-      // Log the failed generation attempt
+      // Prepare messages array for OpenRouter
+      const messages = [
+        { role: "system", content: systemMsg },
+        { role: "user",   content: seed_prompt },
+        { role: "user",   content: bodyMsg }
+      ];
+
+      // Get API key from environment
+      const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+      if (!openRouterApiKey) {
+        console.error('OpenRouter API key not found');
+        await updateProposalStatus(supabase, proposalId, 'failed');
+        return createErrorResponse('API key not configured');
+      }
+
+      // Call OpenRouter API
+      const aiSettings = await fetchAISettings(supabase);
+      let response;
+      try {
+        response = await callOpenRouterAPI(messages, openRouterApiKey, aiSettings);
+      } catch (apiError) {
+        console.error('OpenRouter API error:', apiError);
+        await updateProposalStatus(supabase, proposalId, 'failed');
+        
+        // Log the failed generation attempt
+        await logGeneration(supabase, {
+          user_id: user.id,
+          user_email: user.email || 'unknown',
+          prompt_id: promptId,
+          proposal_id: proposalId,
+          model_used: aiSettings.model,
+          system_prompt: systemMsg,
+          final_prompt: bodyMsg,
+          user_input: values,
+          status: 'failed',
+          ai_response: null,
+          rag_context: null
+        });
+        
+        return createErrorResponse('Failed to generate proposal: API error');
+      }
+
+      // Extract and save the generated text
+      const generatedText = response?.choices?.[0]?.message?.content;
+      if (!generatedText) {
+        console.error('No content in API response');
+        await updateProposalStatus(supabase, proposalId, 'failed');
+        
+        // Log the failed generation attempt
+        await logGeneration(supabase, {
+          user_id: user.id,
+          user_email: user.email || 'unknown',
+          prompt_id: promptId,
+          proposal_id: proposalId,
+          model_used: aiSettings.model,
+          system_prompt: systemMsg,
+          final_prompt: bodyMsg,
+          user_input: values,
+          status: 'failed',
+          ai_response: null,
+          rag_context: null
+        });
+        
+        return createErrorResponse('Failed to generate proposal: Empty response');
+      }
+
+      // Update proposal with generated content
+      const { error: contentError } = await updateProposalStatus(
+        supabase, 
+        proposalId, 
+        'completed', 
+        generatedText
+      );
+
+      if (contentError) {
+        console.error('Failed to update proposal content:', contentError);
+        await updateProposalStatus(supabase, proposalId, 'failed');
+        return createErrorResponse('Failed to save generated proposal');
+      }
+
+      // Log the successful generation
       await logGeneration(supabase, {
         user_id: user.id,
         user_email: user.email || 'unknown',
@@ -84,68 +143,18 @@ export async function handleGenerateProposal(req: Request) {
         system_prompt: systemMsg,
         final_prompt: bodyMsg,
         user_input: values,
-        status: 'failed',
-        ai_response: null,
+        status: 'success',
+        ai_response: generatedText,
         rag_context: null
       });
-      
-      return createErrorResponse('Failed to generate proposal: API error');
-    }
 
-    // Extract and save the generated text
-    const generatedText = response?.choices?.[0]?.message?.content;
-    if (!generatedText) {
-      console.error('No content in API response');
+      return createSuccessResponse({ success: true, content: generatedText });
+    } catch (renderError) {
+      console.error('Failed to render template:', renderError);
       await updateProposalStatus(supabase, proposalId, 'failed');
       
-      // Log the failed generation attempt
-      await logGeneration(supabase, {
-        user_id: user.id,
-        user_email: user.email || 'unknown',
-        prompt_id: promptId,
-        proposal_id: proposalId,
-        model_used: aiSettings.model,
-        system_prompt: systemMsg,
-        final_prompt: bodyMsg,
-        user_input: values,
-        status: 'failed',
-        ai_response: null,
-        rag_context: null
-      });
-      
-      return createErrorResponse('Failed to generate proposal: Empty response');
+      return createErrorResponse(`Template rendering error: ${renderError.message}`);
     }
-
-    // Update proposal with generated content
-    const { error: contentError } = await updateProposalStatus(
-      supabase, 
-      proposalId, 
-      'completed', 
-      generatedText
-    );
-
-    if (contentError) {
-      console.error('Failed to update proposal content:', contentError);
-      await updateProposalStatus(supabase, proposalId, 'failed');
-      return createErrorResponse('Failed to save generated proposal');
-    }
-
-    // Log the successful generation
-    await logGeneration(supabase, {
-      user_id: user.id,
-      user_email: user.email || 'unknown',
-      prompt_id: promptId,
-      proposal_id: proposalId,
-      model_used: aiSettings.model,
-      system_prompt: systemMsg,
-      final_prompt: bodyMsg,
-      user_input: values,
-      status: 'success',
-      ai_response: generatedText,
-      rag_context: null
-    });
-
-    return createSuccessResponse({ success: true, content: generatedText });
   } catch (error) {
     console.error('Error in generate_proposal function:', error);
     return createErrorResponse(`Internal server error: ${error.message}`);

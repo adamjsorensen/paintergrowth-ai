@@ -52,7 +52,8 @@ export interface FieldConfig {
 export interface PromptTemplate {
   id: string;
   name: string;
-  system_prompt: string;
+  template_prompt: string; // Changed from system_prompt
+  system_prompt_override?: string; // Added new field
   active: boolean;
   field_config: FieldConfig[];
   created_at: string;

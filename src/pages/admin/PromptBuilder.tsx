@@ -35,10 +35,11 @@ const PromptBuilder = () => {
             ? data.field_config 
             : JSON.stringify(data.field_config);
           
-          const parsedTemplate = {
+          // Create a valid PromptTemplate object
+          const parsedTemplate: PromptTemplate = {
             ...data,
             field_config: parseFieldConfig(configStr)
-          } as PromptTemplate;
+          };
           
           setPromptTemplate(parsedTemplate);
         }

@@ -38,7 +38,8 @@ export const usePromptTemplate = (defaultFields: FieldConfig[]) => {
         const saveData = {
           name: templateName,
           active: true,
-          system_prompt: systemPrompt,
+          template_prompt: systemPrompt, // Changed from system_prompt
+          system_prompt_override: null,
           field_config: stringifyFieldConfig(fieldConfig),
         };
         
@@ -100,13 +101,14 @@ export const usePromptTemplate = (defaultFields: FieldConfig[]) => {
             ? anyTemplate.field_config 
             : JSON.stringify(anyTemplate.field_config);
           
-          const parsedTemplate = {
+          const parsedFields = parseFieldConfig(configStr);
+          const parsedTemplate: PromptTemplate = {
             ...anyTemplate,
-            field_config: parseFieldConfig(configStr)
-          } as PromptTemplate;
+            field_config: parsedFields
+          };
           
           setPromptTemplate(parsedTemplate);
-          setFields(parseFieldConfig(configStr));
+          setFields(parsedFields);
           console.log("Using fallback template:", parsedTemplate.name);
           
           return parsedTemplate;
@@ -125,13 +127,14 @@ export const usePromptTemplate = (defaultFields: FieldConfig[]) => {
           ? data.field_config 
           : JSON.stringify(data.field_config);
         
-        const parsedTemplate = {
+        const parsedFields = parseFieldConfig(configStr);
+        const parsedTemplate: PromptTemplate = {
           ...data,
-          field_config: parseFieldConfig(configStr)
-        } as PromptTemplate;
+          field_config: parsedFields
+        };
         
         setPromptTemplate(parsedTemplate);
-        setFields(parseFieldConfig(configStr));
+        setFields(parsedFields);
         console.log("Using active template:", parsedTemplate.name);
         
         return parsedTemplate;

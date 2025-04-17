@@ -6,11 +6,16 @@ import SystemPromptPreview from "./preview-sections/SystemPromptPreview";
 import { generatePreviewText } from "@/utils/promptBuilderUtils";
 
 interface PromptPreviewProps {
-  systemPrompt: string;
+  templatePrompt: string;
+  systemPromptOverride?: string;
   fields: FieldConfig[];
 }
 
-const PromptPreview: React.FC<PromptPreviewProps> = ({ systemPrompt, fields }) => {
+const PromptPreview: React.FC<PromptPreviewProps> = ({ 
+  templatePrompt, 
+  systemPromptOverride,
+  fields 
+}) => {
   const [values, setValues] = useState<Record<string, any>>({});
   const [previewOutput, setPreviewOutput] = useState<string>("");
   
@@ -19,7 +24,7 @@ const PromptPreview: React.FC<PromptPreviewProps> = ({ systemPrompt, fields }) =
   };
   
   const handleGeneratePreview = () => {
-    const preview = generatePreviewText(systemPrompt, values, fields);
+    const preview = generatePreviewText(templatePrompt, values, fields);
     setPreviewOutput(preview);
   };
   
@@ -32,7 +37,10 @@ const PromptPreview: React.FC<PromptPreviewProps> = ({ systemPrompt, fields }) =
         onGeneratePreview={handleGeneratePreview}
       />
       
-      <SystemPromptPreview previewOutput={previewOutput} />
+      <SystemPromptPreview 
+        previewOutput={previewOutput} 
+        systemPromptOverride={systemPromptOverride}
+      />
     </div>
   );
 };

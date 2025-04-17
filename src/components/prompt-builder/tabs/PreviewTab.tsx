@@ -4,11 +4,12 @@ import PromptPreview from "@/components/prompt-builder/PromptPreview";
 import { FieldConfig } from "@/types/prompt-templates";
 
 interface PreviewTabProps {
-  systemPrompt: string;
+  templatePrompt: string;
+  systemPromptOverride?: string;
   fields: FieldConfig[];
 }
 
-const PreviewTab: React.FC<PreviewTabProps> = ({ systemPrompt, fields }) => {
+const PreviewTab: React.FC<PreviewTabProps> = ({ templatePrompt, systemPromptOverride, fields }) => {
   return (
     <div>
       <h3 className="text-lg font-medium mb-4">Preview</h3>
@@ -17,7 +18,8 @@ const PreviewTab: React.FC<PreviewTabProps> = ({ systemPrompt, fields }) => {
       </p>
       
       <PromptPreview 
-        systemPrompt={systemPrompt}
+        templatePrompt={templatePrompt}
+        systemPromptOverride={systemPromptOverride}
         fields={fields} 
       />
     </div>

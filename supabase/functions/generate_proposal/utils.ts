@@ -1,5 +1,5 @@
 
-import Mustache from "mustache";
+import Mustache from "https://esm.sh/mustache@4.2.0";
 
 export function renderPrompt(tpl: string, vars: Record<string, any>) {
   // Stringify any complex objects manually

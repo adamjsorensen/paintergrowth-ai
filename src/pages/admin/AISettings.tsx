@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +21,7 @@ type FormValues = {
   temperature: number;
   max_tokens: number;
   default_system_prompt: string;
-  default_user_prompt: string;
+  seed_prompt: string; // Changed from default_user_prompt
 };
 
 const AISettingsPage = () => {
@@ -34,7 +35,7 @@ const AISettingsPage = () => {
       temperature: 0.7,
       max_tokens: 1024,
       default_system_prompt: "",
-      default_user_prompt: "",
+      seed_prompt: "", // Changed from default_user_prompt
     },
   });
 
@@ -111,7 +112,7 @@ const AISettingsPage = () => {
         temperature: aiSettings.temperature || 0.7,
         max_tokens: aiSettings.max_tokens || 1024,
         default_system_prompt: aiSettings.default_system_prompt || "",
-        default_user_prompt: aiSettings.default_user_prompt || "",
+        seed_prompt: aiSettings.seed_prompt || "", // Changed from default_user_prompt
       });
     }
   }, [aiSettings, form]);
@@ -258,19 +259,19 @@ const AISettingsPage = () => {
 
                     <FormField
                       control={form.control}
-                      name="default_user_prompt"
+                      name="seed_prompt" // Changed from default_user_prompt
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Default User Prompt</FormLabel>
+                          <FormLabel>Seed Prompt</FormLabel> {/* Changed from Default User Prompt */}
                           <FormControl>
                             <Textarea 
-                              placeholder="Enter default user prompt template"
+                              placeholder="Enter seed prompt template"
                               className="min-h-[150px]"
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            The default template for user prompts
+                            Initial content prompt that sets style and structure before template content
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

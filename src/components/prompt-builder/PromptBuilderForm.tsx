@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +23,8 @@ import { usePromptFields } from "@/hooks/prompt-fields/usePromptFields";
 const promptSchema = z.object({
   name: z.string().min(1, "Display name is required"),
   active: z.boolean().default(false),
-  system_prompt: z.string().min(1, "System prompt is required"),
+  template_prompt: z.string().min(1, "Template prompt is required"), // Changed from system_prompt
+  system_prompt_override: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof promptSchema>;
@@ -44,7 +46,8 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
     defaultValues: {
       name: initialTemplate?.name || "",
       active: initialTemplate?.active || false,
-      system_prompt: initialTemplate?.system_prompt || "",
+      template_prompt: initialTemplate?.template_prompt || "", // Changed from system_prompt
+      system_prompt_override: initialTemplate?.system_prompt_override || "",
     },
   });
 
@@ -55,7 +58,8 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
       const updatedTemplate = {
         name: values.name,
         active: values.active,
-        system_prompt: values.system_prompt,
+        template_prompt: values.template_prompt, // Changed from system_prompt
+        system_prompt_override: values.system_prompt_override,
         field_config: stringifyFieldConfig(fields),
         updated_at: new Date().toISOString(),
       };
@@ -110,7 +114,7 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
             </TabsTrigger>
             <TabsTrigger value="system-prompt" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              <span>System Prompt</span>
+              <span>Template Prompt</span> {/* Changed from System Prompt */}
             </TabsTrigger>
             <TabsTrigger value="input-fields" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -137,7 +141,8 @@ const PromptBuilderForm: React.FC<PromptBuilderFormProps> = ({ initialTemplate, 
             
             <TabsContent value="preview" className="mt-0">
               <PreviewTab 
-                systemPrompt={form.watch("system_prompt")} 
+                templatePrompt={form.watch("template_prompt")}
+                systemPromptOverride={form.watch("system_prompt_override")} 
                 fields={fields}
               />
             </TabsContent>
