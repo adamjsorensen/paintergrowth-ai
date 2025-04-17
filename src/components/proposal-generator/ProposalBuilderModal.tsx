@@ -261,7 +261,11 @@ const ProposalBuilderModal = ({
   const ModalComponent = isMobile ? Sheet : Dialog;
   const ContentComponent = isMobile ? SheetContent : DialogContent;
   const modalProps = isMobile ? { side: "bottom", onOpenChange: handleCloseAttempt } : { onOpenChange: handleCloseAttempt };
-  const contentProps = isMobile ? { className: "h-[90vh] px-4 pt-6 pb-8" } : { className: "max-h-[90vh] overflow-y-auto p-6 max-w-3xl w-full" };
+  const contentProps = isMobile ? { 
+    className: "h-[90vh] px-4 pt-6 pb-8 flex flex-col" 
+  } : { 
+    className: "max-h-[90vh] overflow-y-auto p-6 max-w-3xl w-full" 
+  };
   
   return (
     <>
@@ -280,7 +284,7 @@ const ProposalBuilderModal = ({
           )}
           
           {/* Fields for current step */}
-          <div className="overflow-y-auto pr-1 space-y-6 pb-20">
+          <div className="overflow-y-auto pr-1 space-y-6 mb-auto flex-1">
             {currentFields.map(field => (
               <div key={field.id} className={field.type === 'scope-of-work' ? 'col-span-2' : 'col-span-1'}>
                 <FormFieldRenderer
@@ -294,7 +298,7 @@ const ProposalBuilderModal = ({
           </div>
           
           {/* Navigation buttons */}
-          <div className="flex justify-between pt-6 mt-auto border-t sticky bottom-0 bg-background">
+          <div className="flex justify-between pt-6 mt-4 border-t sticky bottom-0 bg-background">
             <Button 
               variant="outline" 
               onClick={handleBack}

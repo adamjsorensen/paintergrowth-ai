@@ -69,7 +69,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
     return (
       <div className="space-y-4 md:hidden">
         {items.map((item, index) => (
-          <Card key={item.id} className="overflow-hidden">
+          <Card key={item.id} className="overflow-hidden border rounded-md">
             <CardContent className="p-4 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Scope Item {index + 1}</span>
@@ -124,7 +124,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
   };
 
   return (
-    <div className="space-y-4 col-span-2">
+    <div className="space-y-4 col-span-2 w-full">
       <div className="flex justify-between items-center">
         <Label className="text-base font-medium">
           {field.label}
@@ -192,7 +192,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
       {/* Mobile Card View */}
       {renderMobileView()}
       
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mt-4">
         <Button 
           type="button" 
           variant="outline" 
