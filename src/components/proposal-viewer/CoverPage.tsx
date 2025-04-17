@@ -82,7 +82,16 @@ const CoverPage: React.FC<CoverPageProps> = ({
               <div className="absolute inset-0 bg-[rgba(0,94,214,0.1)]" />
             </div>
             
-
+            {/* White border along diagonal edge */}
+            <div 
+              className="absolute bg-white h-8 w-[120%]" 
+              style={{ 
+                transform: 'rotate(-18.5deg) translateY(-50%)',
+                top: '40%',
+                left: '-10%'
+              }}
+            />
+          </div>
           
           {/* Title block */}
           <div className="absolute bg-black py-6 px-12 w-[90%] z-10" style={{ top: '40%', left: '5%' }}>
