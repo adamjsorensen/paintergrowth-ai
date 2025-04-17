@@ -7,7 +7,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { FieldConfig } from "@/types/prompt-templates";
 
-type FieldValue = string | number | boolean | string[];
+type FieldValue = string | number | boolean | string[] | any[];
 
 export const useProposalForm = (
   fields: FieldConfig[],
@@ -16,6 +16,7 @@ export const useProposalForm = (
 ) => {
   const [fieldValues, setFieldValues] = useState<Record<string, FieldValue>>({});
   const [formMode, setFormMode] = useState<'basic' | 'advanced'>('basic');
+  const [modalStepCompleted, setModalStepCompleted] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -35,9 +36,32 @@ export const useProposalForm = (
     }));
   };
 
+  const getRequiredFields = () => {
+    return fields.filter(field => field.required);
+  };
+  
+  const checkRequiredModalFields = (modalStep: string) => {
+    const requiredModalFields = fields
+      .filter(field => field.modalStep === modalStep && field.required)
+      .map(field => field.name);
+      
+    const allCompleted = requiredModalFields.every(
+      fieldName => fieldValues[fieldName] !== undefined && 
+                  fieldValues[fieldName] !== null && 
+                  fieldValues[fieldName] !== "" &&
+                  !(Array.isArray(fieldValues[fieldName]) && fieldValues[fieldName].length === 0)
+    );
+    
+    setModalStepCompleted(prev => ({
+      ...prev,
+      [modalStep]: allCompleted
+    }));
+    
+    return allCompleted;
+  };
+
   const handleSubmit = async () => {
-    const missingRequiredFields = fields
-      .filter(field => field.required)
+    const missingRequiredFields = getRequiredFields()
       .filter(field => !fieldValues[field.name] && fieldValues[field.name] !== false && 
         !(Array.isArray(fieldValues[field.name]) && (fieldValues[field.name] as any[]).length > 0))
       .map(field => field.label);
@@ -96,6 +120,8 @@ export const useProposalForm = (
     setFormMode,
     getVisibleFields,
     handleFieldChange,
-    handleSubmit
+    handleSubmit,
+    checkRequiredModalFields,
+    modalStepCompleted
   };
 };

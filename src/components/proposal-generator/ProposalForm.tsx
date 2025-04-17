@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { useProposalForm } from "./hooks/useProposalForm";
 import ProposalFormHeader from "./components/ProposalFormHeader";
 import ProposalFormContent from "./components/ProposalFormContent";
 import { FORM_SECTIONS } from "./constants/formSections";
+import ProposalBuilderModal from "./ProposalBuilderModal";
 
 type FieldValue = string | number | boolean | string[] | any[];
 
@@ -25,6 +26,9 @@ interface ProposalFormProps {
 }
 
 const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectType = 'interior' }: ProposalFormProps) => {
+  const [modalOpen, setModalOpen] = useState(true);
+  const [completedModalSteps, setCompletedModalSteps] = useState<string[]>([]);
+
   const {
     fieldValues,
     formMode,
@@ -34,7 +38,29 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectT
     handleSubmit
   } = useProposalForm(fields, isGenerating, onGenerate);
 
-  const visibleFields = getVisibleFields();
+  // Filter fields by location (modal or main form)
+  const modalFields = fields.filter(field => field.modalStep && field.modalStep !== 'main');
+  const mainFormFields = fields.filter(field => !field.modalStep || field.modalStep === 'main');
+
+  // Get visible fields for the main form
+  const visibleMainFormFields = getVisibleFields().filter(field => !field.modalStep || field.modalStep === 'main');
+
+  // Mark modal as complete when closed
+  const handleModalComplete = () => {
+    const modalSteps = Array.from(
+      new Set(
+        modalFields.map(field => field.modalStep)
+      )
+    );
+    
+    setCompletedModalSteps(modalSteps as string[]);
+    setModalOpen(false);
+  };
+
+  // Re-open modal if user wants to edit
+  const handleReopenModal = () => {
+    setModalOpen(true);
+  };
 
   const getFieldsBySection = () => {
     const result: Record<string, EnhancedFieldConfig[]> = {};
@@ -43,7 +69,7 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectT
       result[section.id] = [];
     });
     
-    visibleFields.forEach(field => {
+    visibleMainFormFields.forEach(field => {
       const sectionId = field.sectionId || 'additional';
       
       if (result[sectionId]) {
@@ -87,34 +113,50 @@ const ProposalForm = ({ fields, isGenerating, onGenerate, templateName, projectT
 
   const fieldsBySection = getFieldsBySection();
 
-  return (
-    <Card className="border-none shadow-md">
-      <ProposalFormHeader 
-        templateName={templateName}
-        mode={formMode}
-        onModeChange={setFormMode}
-        visibleFieldCount={visibleFields.length}
-        totalFieldCount={fields.length}
-        projectType={projectType}
-      />
-      
-      <ProposalFormContent fieldsBySection={fieldsBySection} />
+  // Show the modal settings button if there are modal fields and modal has been completed
+  const showModalSettingsButton = modalFields.length > 0 && completedModalSteps.length > 0;
 
-      <div className="p-6 pt-2">
-        <Button 
-          className="w-full py-6 text-base bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white" 
-          onClick={handleSubmit}
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <>
-              <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
-              Generating...
-            </>
-          ) : "Generate Proposal"}
-        </Button>
-      </div>
-    </Card>
+  return (
+    <>
+      {/* Builder modal */}
+      <ProposalBuilderModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        fields={modalFields}
+        fieldValues={fieldValues}
+        onFieldChange={handleFieldChange}
+        onComplete={handleModalComplete}
+      />
+
+      <Card className="border-none shadow-md">
+        <ProposalFormHeader 
+          templateName={templateName}
+          mode={formMode}
+          onModeChange={setFormMode}
+          visibleFieldCount={visibleMainFormFields.length}
+          totalFieldCount={mainFormFields.length}
+          projectType={projectType}
+          onReopenModal={showModalSettingsButton ? handleReopenModal : undefined}
+        />
+        
+        <ProposalFormContent fieldsBySection={fieldsBySection} />
+
+        <div className="p-6 pt-2">
+          <Button 
+            className="w-full py-6 text-base bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white" 
+            onClick={handleSubmit}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
+                Generating...
+              </>
+            ) : "Generate Proposal"}
+          </Button>
+        </div>
+      </Card>
+    </>
   );
 };
 

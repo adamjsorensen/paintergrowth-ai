@@ -11,7 +11,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 10,
     placeholder: 'Enter client name',
     complexity: 'basic',
-    sectionId: 'client'
+    sectionId: 'client',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-project-address',
@@ -22,7 +23,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 15,
     placeholder: 'Enter the full project address',
     complexity: 'basic',
-    sectionId: 'project'
+    sectionId: 'project',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-job-type',
@@ -39,7 +41,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'commercial', label: 'Commercial' }
     ],
     complexity: 'basic',
-    sectionId: 'project'
+    sectionId: 'project',
+    modalStep: 'style'
   },
   {
     id: 'enhanced-square-footage',
@@ -50,7 +53,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 30,
     placeholder: 'Approx. square footage',
     complexity: 'advanced',
-    sectionId: 'project'
+    sectionId: 'project',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-surfaces-to-paint',
@@ -67,7 +71,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'cabinets', label: 'Cabinets' }
     ],
     complexity: 'basic',
-    sectionId: 'surfaces'
+    sectionId: 'surfaces',
+    modalStep: 'scope'
   },
   {
     id: 'enhanced-prep-needs',
@@ -85,7 +90,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
       { value: 'priming', label: 'Priming' }
     ],
     complexity: 'advanced',
-    sectionId: 'scope'
+    sectionId: 'scope',
+    modalStep: 'scope'
   },
   {
     id: 'enhanced-quote-items',
@@ -96,7 +102,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 55,
     helpText: 'Add services and their costs to the quote',
     complexity: 'basic',
-    sectionId: 'pricing'
+    sectionId: 'pricing',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-upsell-options',
@@ -107,7 +114,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 56,
     helpText: 'Add premium options your client might be interested in',
     complexity: 'advanced',
-    sectionId: 'pricing'
+    sectionId: 'pricing',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-tax-settings',
@@ -118,7 +126,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 57,
     helpText: 'Configure tax settings for this quote',
     complexity: 'advanced',
-    sectionId: 'pricing'
+    sectionId: 'pricing',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-color-palette',
@@ -129,7 +138,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 60,
     placeholder: 'Describe your color preferences',
     complexity: 'advanced',
-    sectionId: 'colors'
+    sectionId: 'colors',
+    modalStep: 'style'
   },
   {
     id: 'enhanced-timeline',
@@ -139,7 +149,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 70,
     complexity: 'basic',
-    sectionId: 'project'
+    sectionId: 'project',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-special-notes',
@@ -150,7 +161,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 80,
     placeholder: 'Any additional details or requirements',
     complexity: 'advanced',
-    sectionId: 'notes'
+    sectionId: 'notes',
+    modalStep: 'main'
   },
   {
     id: 'enhanced-show-detailed-scope',
@@ -160,7 +172,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 90,
     complexity: 'advanced',
-    sectionId: 'meta'
+    sectionId: 'meta',
+    modalStep: 'style'
   },
   {
     id: 'enhanced-breakout-quote',
@@ -170,7 +183,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 100,
     complexity: 'advanced',
-    sectionId: 'meta'
+    sectionId: 'meta',
+    modalStep: 'style'
   },
   {
     id: 'enhanced-include-terms',
@@ -180,7 +194,8 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     required: false,
     order: 110,
     complexity: 'advanced',
-    sectionId: 'terms'
+    sectionId: 'terms',
+    modalStep: 'style'
   },
   {
     id: 'enhanced-upload-files',
@@ -191,6 +206,7 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     order: 120,
     helpText: 'Upload reference images or documents',
     complexity: 'advanced',
-    sectionId: 'meta'
+    sectionId: 'meta',
+    modalStep: 'main'
   }
 ];

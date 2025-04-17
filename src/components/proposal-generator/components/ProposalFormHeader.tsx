@@ -1,7 +1,10 @@
 
+import React from "react";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import ModeToggle from "@/components/proposal-generator/ModeToggle";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
+import ModeToggle from "../ModeToggle";
+import InteriorExteriorToggle from "../InteriorExteriorToggle";
 
 interface ProposalFormHeaderProps {
   templateName: string;
@@ -9,46 +12,52 @@ interface ProposalFormHeaderProps {
   onModeChange: (mode: 'basic' | 'advanced') => void;
   visibleFieldCount: number;
   totalFieldCount: number;
-  projectType?: 'interior' | 'exterior';
+  projectType: 'interior' | 'exterior';
+  onReopenModal?: () => void;
 }
 
-const ProposalFormHeader = ({
+const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
   templateName,
   mode,
   onModeChange,
   visibleFieldCount,
   totalFieldCount,
-  projectType
-}: ProposalFormHeaderProps) => {
+  projectType,
+  onReopenModal
+}) => {
   return (
-    <CardHeader className="border-b bg-muted/20">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
-        <div>
-          <CardTitle className="text-xl font-semibold">{templateName}</CardTitle>
-          <CardDescription>Fill out the form to generate your custom proposal</CardDescription>
-        </div>
+    <CardHeader className="pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+        <CardTitle className="text-2xl font-semibold">{templateName}</CardTitle>
         
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-          {projectType && (
-            <Badge 
+        <div className="flex flex-row items-center space-x-2 mt-2 sm:mt-0">
+          {onReopenModal && (
+            <Button 
               variant="outline" 
-              className="capitalize"
+              size="sm" 
+              className="flex items-center gap-1" 
+              onClick={onReopenModal}
             >
-              {projectType} Project
-            </Badge>
+              <Settings className="h-4 w-4" />
+              <span className="hidden md:inline">Settings</span>
+            </Button>
           )}
-          <ModeToggle mode={mode} onModeChange={onModeChange} />
+          
+          <InteriorExteriorToggle initialValue={projectType} />
+          
+          <ModeToggle
+            mode={mode}
+            onModeChange={onModeChange}
+          />
         </div>
       </div>
       
-      {mode === 'basic' && totalFieldCount > visibleFieldCount && (
-        <div className="text-xs text-muted-foreground mt-2">
-          Showing {visibleFieldCount} of {totalFieldCount} fields. 
-          <span className="font-medium ml-1">
-            Switch to Advanced mode to see all fields.
-          </span>
-        </div>
-      )}
+      <CardDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm text-muted-foreground">
+        <span>Complete the fields below to customize your proposal</span>
+        <span className="mt-1 sm:mt-0">
+          Showing {visibleFieldCount} of {totalFieldCount} fields
+        </span>
+      </CardDescription>
     </CardHeader>
   );
 };

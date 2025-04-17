@@ -26,6 +26,9 @@ export type FieldType =
   | 'matrix-selector'
   | 'scope-of-work';
 
+// Modal step types for multi-step form flow
+export type ModalStepType = 'style' | 'scope' | 'main';
+
 // Core field configuration
 export interface FieldConfig {
   id: string;
@@ -42,6 +45,7 @@ export interface FieldConfig {
   min?: number;
   max?: number;
   step?: number;
+  modalStep?: ModalStepType; // Which modal step this field belongs to (if any)
 }
 
 // Prompt template definition
