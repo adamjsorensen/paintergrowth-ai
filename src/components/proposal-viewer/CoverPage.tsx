@@ -1,12 +1,13 @@
-
 import React from 'react';
 import { Mail, Phone } from 'lucide-react';
 
 interface CoverPageProps {
   metadata: {
     clientName?: string;
-    preparedBy?: string;
+    clientPhone?: string;
+    clientEmail?: string;
     clientAddress?: string;
+    preparedBy?: string;
   };
   companyProfile?: {
     business_name?: string;
@@ -55,13 +56,23 @@ const CoverPage: React.FC<CoverPageProps> = ({
       }} />
       
       {/* Top black bar */}
-      <div className="absolute top-0 left-0 right-0 h-16 bg-black z-30" />
+      <div className="absolute top-0 left-0 right-0 h-[200px] bg-black z-30 p-8">
+        <h1 className="font-['Playfair_Display'] text-5xl font-bold text-white uppercase mb-4">
+          Project Estimate
+        </h1>
+        <div className="font-['Inter'] text-base text-white space-y-2">
+          <p>Client Name: {metadata.clientName || "Client Name"}</p>
+          <p>Client Phone: {metadata.clientPhone || "Phone Number"}</p>
+          <p>Client Email: {metadata.clientEmail || "Email Address"}</p>
+          <p>Project Address: {metadata.clientAddress || "Project Address"}</p>
+        </div>
+      </div>
       
       {/* Left vertical accent stripe */}
-      <div className="absolute top-16 left-0 bottom-0 w-20 bg-[#005ED6] z-20" />
+      <div className="absolute top-[200px] left-0 bottom-0 w-20 bg-[#005ED6] z-20" />
       
       {/* Main content area */}
-      <div className="absolute top-16 left-20 right-0 bottom-0 bg-white z-10">
+      <div className="absolute top-[200px] left-20 right-0 bottom-0 bg-white z-10">
         {/* Hero section with diagonal clip */}
         <div className="relative h-[60vh] w-full overflow-hidden">
           {/* Background with white peek-through offset */}
@@ -111,9 +122,12 @@ const CoverPage: React.FC<CoverPageProps> = ({
         {/* Services info card */}
         <div className="mx-12 -mt-12 bg-gray-100 shadow-lg rounded-lg p-8 relative z-20">
           <div className="flex justify-between items-start mb-6">
-            <h3 className="font-['Inter'] text-xl font-medium text-gray-800">
-              We can help you with
-            </h3>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 font-['Inter']">Date: {today}</p>
+              <p className="text-sm text-gray-600 font-['Inter']">Prepared By: {metadata.preparedBy || companyProfile?.owner_name || "PainterGrowth"}</p>
+              <p className="text-sm text-gray-600 font-['Inter']">Business Address: {companyProfile?.location || "Business Address"}</p>
+              <p className="text-xs text-gray-500 font-['Inter'] tracking-wider">Proposal #: {docNumber}</p>
+            </div>
             <img
               src={logoUrl}
               alt={companyProfile?.business_name || "Company Logo"}
