@@ -15,6 +15,7 @@ export default {
 		'text-cover-smallcaps',
 		'paint-icon',
 		'clip-path-[polygon(70%_0,100%_0,100%_100%)]',
+		'clip-path-[polygon(0_0,100%_0,100%_70%,0%_30%)]',
 		'cover-page'
 	],
 	prefix: "",
