@@ -10,7 +10,7 @@ import ProposalBuilderModal from "@/components/proposal-generator/ProposalBuilde
 import { cn } from "@/lib/utils";
 import { Sparkles, ChevronRight, Settings2 } from "lucide-react";
 import { useGroupedPromptFields, hasModalFields } from "@/hooks/prompt-fields/useGroupedPromptFields";
-import { useStylePreferences } from "@/hooks/style-preferences/useStylePreferences";
+import { useStylePreferences } from "@/context/StylePreferencesContext";
 
 interface ProposalFormProps {
   fields: FieldConfig[];

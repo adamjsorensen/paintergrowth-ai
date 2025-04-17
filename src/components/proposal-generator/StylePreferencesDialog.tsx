@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 import { useNavigate } from "react-router-dom";
@@ -102,7 +101,6 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
           onSkip={handleSkip}
           onContinue={handleContinue}
           continueText="Continue to Proposal Builder"
-          showBackButton={false}
         />
       </DialogContent>
     </Dialog>

@@ -6,12 +6,14 @@ interface PreferencesFooterProps {
   onSkip: () => void;
   onContinue: () => void;
   continueText?: string;
+  showBackButton?: boolean;
 }
 
 const PreferencesFooter = ({
   onSkip,
   onContinue,
-  continueText = "Continue"
+  continueText = "Continue",
+  showBackButton = false
 }: PreferencesFooterProps) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex justify-between items-center shadow-lg">
