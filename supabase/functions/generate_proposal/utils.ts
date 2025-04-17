@@ -83,12 +83,16 @@ export async function logGeneration(supabase, {
 }
 
 export async function fetchAISettings(supabase) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('ai_settings')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
+
+  // TODO: Remove diagnostic logs in production
+  console.log('AI-settings row 👉', JSON.stringify(data));
+  if (error) console.error('AI-settings query error ❗', error);
 
   return {
     temperature: data?.temperature ?? 0.7,
