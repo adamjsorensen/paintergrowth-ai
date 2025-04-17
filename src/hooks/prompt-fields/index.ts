@@ -1,9 +1,14 @@
 
 // Export all prompt fields related hooks and types from this index file
-export * from './usePromptFields';
 export * from './usePromptFieldQuery';
 export * from './usePromptFieldCreate';
 export * from './usePromptFieldUpdate'; 
 export * from './usePromptFieldDelete';
 export * from './useGroupedPromptFields';
 export * from './types';
+
+// Export from usePromptFields without the ModalStepType to avoid conflict
+export { 
+  usePromptFields,
+  PromptField
+} from './usePromptFields';
