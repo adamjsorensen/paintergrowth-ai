@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PageLayout from "@/components/PageLayout";
 import { useProposalPDFSettings } from "@/hooks/admin/useProposalPDFSettings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ProposalPDFSettings = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { uploadCoverImage, coverImageUrl, isLoading } = useProposalPDFSettings();
 
@@ -33,6 +34,16 @@ const ProposalPDFSettings = () => {
       });
     } finally {
       setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -72,28 +83,28 @@ const ProposalPDFSettings = () => {
                   onChange={handleImageUpload}
                   className="hidden"
                   id="cover-image-upload"
+                  ref={fileInputRef}
                   disabled={isUploading}
                 />
-                <label htmlFor="cover-image-upload">
-                  <Button 
-                    variant="outline" 
-                    disabled={isUploading}
-                    className="flex items-center gap-2"
-                    type="button"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <ImageUp className="h-4 w-4" />
-                        Upload New Cover Image
-                      </>
-                    )}
-                  </Button>
-                </label>
+                <Button 
+                  variant="outline" 
+                  disabled={isUploading}
+                  className="flex items-center gap-2"
+                  type="button"
+                  onClick={triggerFileInput}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <ImageUp className="h-4 w-4" />
+                      Upload New Cover Image
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </CardContent>

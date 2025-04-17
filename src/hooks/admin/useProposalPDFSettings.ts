@@ -61,7 +61,7 @@ export const useProposalPDFSettings = () => {
         .from('proposal_pdf_settings')
         .upsert({ 
           cover_image_url: publicUrl,
-          id: existingRecord?.id || 1 // Use existing id or default to 1 for new record
+          id: existingRecord?.id || undefined // Use undefined instead of a number to let DB use the default
         });
 
       if (updateError) {
