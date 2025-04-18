@@ -14,10 +14,9 @@ import {
 } from "@/components/ui/table";
 import { HelpText } from "./components/HelpText";
 
-// Define the structure of a matrix row for the form data
 export interface MatrixItem {
   id: string;
-  selected?: boolean; // Added to track row selection
+  selected?: boolean;
   [key: string]: string | number | boolean | undefined;
 }
 
@@ -36,14 +35,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   isAdvanced,
   matrixConfig: externalMatrixConfig
 }) => {
-  // Get matrix configuration from field options or use provided external config
   const getMatrixConfig = (): MatrixConfig => {
-    // Use external config if provided
     if (externalMatrixConfig) {
       return externalMatrixConfig;
     }
     
-    // Default configuration if none is provided
     const defaultConfig: MatrixConfig = {
       type: 'matrix-config',
       rows: [
@@ -67,10 +63,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       ]
     };
     
-    // Check if options exist and are in the right format
     if (field.options && typeof field.options === "object" && !Array.isArray(field.options) &&
         'rows' in field.options && 'columns' in field.options) {
-      // Ensure the type property exists
       return {
         type: 'matrix-config',
         ...field.options
@@ -82,27 +76,23 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   
   const matrixConfig = getMatrixConfig();
   
-  // Track internal matrix values (including unselected rows)
   const [internalMatrixValue, setInternalMatrixValue] = useState<MatrixItem[]>([]);
 
-  // Initialize with default values and selection state
   useEffect(() => {
     const initializeMatrix = () => {
       if (!value || !Array.isArray(value) || value.length === 0) {
-        // Create initial value based on the configuration with all rows deselected
         const initialValue = matrixConfig.rows.map(row => {
           const item: MatrixItem = {
             id: row.id,
             label: row.label,
-            selected: false, // Default to unselected
+            selected: false,
           };
           
-          // Initialize all columns with default values
           matrixConfig.columns.forEach(col => {
             if (col.type === "number") {
-              item[col.id] = 1; // Default number value
+              item[col.id] = 1;
             } else if (col.type === "checkbox") {
-              item[col.id] = false; // Default checkbox value
+              item[col.id] = false;
             }
           });
           
@@ -110,31 +100,26 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         });
         setInternalMatrixValue(initialValue);
       } else {
-        // If we have existing values, ensure they all have the selected property
         const initialValue = matrixConfig.rows.map(row => {
-          // Try to find existing row data
           const existingRow = value.find(item => item.id === row.id);
           
           if (existingRow) {
-            // Use existing data and ensure selected property exists
             return {
               ...existingRow,
-              selected: existingRow.selected !== undefined ? existingRow.selected : true // Default to selected for existing data
+              selected: existingRow.selected !== undefined ? existingRow.selected : true
             };
           } else {
-            // Create a new unselected row with default values
             const newRow: MatrixItem = {
               id: row.id,
               label: row.label,
-              selected: false // Default to unselected
+              selected: false
             };
             
-            // Initialize with default values
             matrixConfig.columns.forEach(col => {
               if (col.type === "number") {
-                newRow[col.id] = 1; // Default number value
+                newRow[col.id] = 1;
               } else if (col.type === "checkbox") {
-                newRow[col.id] = false; // Default checkbox value
+                newRow[col.id] = false;
               }
             });
             
@@ -149,14 +134,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     initializeMatrix();
   }, [matrixConfig.rows, matrixConfig.columns]);
 
-  // Update parent when internal values change
   useEffect(() => {
-    // Only include selected rows in the onChange event
     const selectedRows = internalMatrixValue.filter(row => row.selected);
     onChange(selectedRows);
   }, [internalMatrixValue, onChange]);
 
-  // Handle row selection toggle
   const handleRowSelection = (rowId: string, selected: boolean) => {
     setInternalMatrixValue(prev => 
       prev.map(row => 
@@ -165,7 +147,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     );
   };
   
-  // Toggle all checkboxes in a row
   const handleSelectAllInRow = (rowId: string) => {
     setInternalMatrixValue(prev => {
       const row = prev.find(r => r.id === rowId);
@@ -188,14 +169,12 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     });
   };
 
-  // Check if all checkboxes in a row are selected
   const areAllCheckboxesSelected = (row: MatrixItem): boolean => {
     const checkboxColumns = matrixConfig.columns.filter(col => col.type === "checkbox");
     if (checkboxColumns.length === 0) return false;
     return checkboxColumns.every(col => Boolean(row[col.id]));
   };
 
-  // Handle all rows selection
   const handleToggleAllRows = () => {
     const allSelected = internalMatrixValue.every(row => row.selected);
     
@@ -204,7 +183,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     );
   };
 
-  // Handle value changes for each cell
   const handleValueChange = (rowId: string, columnId: string, newValue: any) => {
     setInternalMatrixValue(prev => 
       prev.map(row => 
@@ -213,7 +191,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     );
   };
 
-  // Render a cell based on the column type
   const renderCell = (row: MatrixItem, column: { id: string; type: string; label: string }) => {
     if (column.type === "number") {
       return (
@@ -237,28 +214,22 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     return null;
   };
 
-  // Organize rows by groups
   const organizeRows = () => {
-    // If no groups defined, just return all rows
     if (!matrixConfig.groups || matrixConfig.groups.length === 0) {
       return { ungrouped: matrixConfig.rows.map(row => row.id) };
     }
     
-    // Get rows organized by groups
     const groupedRows: Record<string, string[]> = {};
     
-    // First add all defined groups
     matrixConfig.groups.forEach(group => {
       groupedRows[group.id] = group.rowIds;
     });
     
-    // Find any rows not in a group
     const allGroupedRowIds = Object.values(groupedRows).flat();
     const ungroupedRowIds = matrixConfig.rows
       .map(row => row.id)
       .filter(id => !allGroupedRowIds.includes(id));
     
-    // Add ungrouped rows if any exist
     if (ungroupedRowIds.length > 0) {
       groupedRows.ungrouped = ungroupedRowIds;
     }
@@ -268,13 +239,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
 
   const groupedRows = organizeRows();
   
-  // Get a mapping of row IDs to their corresponding MatrixItem
   const rowMapping: Record<string, MatrixItem> = {};
   internalMatrixValue.forEach(item => {
     rowMapping[item.id] = item;
   });
 
-  // Calculate if all rows are selected
   const areAllRowsSelected = internalMatrixValue.length > 0 && internalMatrixValue.every(row => row.selected);
 
   return (
@@ -287,7 +256,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         {field.helpText && <HelpText>{field.helpText}</HelpText>}
       </div>
       
-      {/* Global select all rows control */}
       <div className="flex items-center mb-2 gap-2">
         <Checkbox
           id="select-all-rows"
@@ -301,9 +269,9 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       
       <div className="overflow-auto border rounded-md max-h-[70vh]">
         <Table className="relative">
-          <TableHeader className="sticky top-0 z-20 bg-background">
+          <TableHeader className="sticky top-0 z-30 bg-background">
             <TableRow className="bg-muted/50">
-              <TableHead className="w-10 px-2">Select</TableHead>
+              <TableHead className="pl-2 pr-0 w-10">Select</TableHead>
               <TableHead className="w-1/4 px-2">Room</TableHead>
               {matrixConfig.columns.map(column => (
                 <TableHead key={column.id} className="text-center px-1">
@@ -315,12 +283,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           </TableHeader>
           <TableBody>
             {matrixConfig.groups && matrixConfig.groups.length > 0 ? (
-              // Render grouped rows with category headers
               <>
                 {matrixConfig.groups.map(group => (
                   <React.Fragment key={group.id}>
-                    {/* Group header row - sticky */}
-                    <TableRow className="bg-muted/20 font-medium sticky z-10" style={{ top: '40px' }}>
+                    <TableRow className="bg-muted/20 font-medium sticky z-20" style={{ top: '40px' }}>
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 3}
                         className="py-2 px-3 text-sm font-semibold bg-muted"
@@ -330,10 +296,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                       </TableCell>
                     </TableRow>
                     
-                    {/* Group rows */}
                     {group.rowIds.map(rowId => {
                       const rowItem = rowMapping[rowId];
-                      // Skip if the row doesn't exist in values
                       if (!rowItem) return null;
                       
                       return (
@@ -375,10 +339,9 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   </React.Fragment>
                 ))}
                 
-                {/* Ungrouped rows if any */}
                 {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
                   <>
-                    <TableRow className="bg-muted/20 font-medium sticky z-10" style={{ top: '40px' }}>
+                    <TableRow className="bg-muted/20 font-medium sticky z-20" style={{ top: '40px' }}>
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 3}
                         className="py-2 px-3 text-sm font-semibold bg-muted"
@@ -432,7 +395,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                 )}
               </>
             ) : (
-              // Render rows without groups (backward compatibility)
               internalMatrixValue.map((row) => (
                 <TableRow 
                   key={row.id}
@@ -473,9 +435,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         </Table>
       </div>
       
-      {/* Mobile view with responsive cards */}
       <div className="md:hidden space-y-4 mt-4">
-        {/* Mobile global select all control */}
         <div className="flex items-center gap-2 mb-2 sticky top-0 z-10 bg-background pt-2 pb-2">
           <Checkbox
             id="mobile-select-all-rows"
@@ -488,16 +448,13 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         </div>
         
         {matrixConfig.groups && matrixConfig.groups.length > 0 ? (
-          // Grouped mobile view
           <>
             {matrixConfig.groups.map(group => (
               <div key={group.id} className="space-y-2">
-                {/* Group header - sticky on mobile */}
                 <h3 className="text-muted-foreground text-sm font-medium pt-2 pb-1 sticky top-12 z-10 bg-background border-b">
                   {group.label}
                 </h3>
                 
-                {/* Group rows */}
                 {group.rowIds.map(rowId => {
                   const rowItem = rowMapping[rowId];
                   if (!rowItem) return null;
@@ -549,7 +506,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
               </div>
             ))}
             
-            {/* Ungrouped rows if any */}
             {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
               <div className="space-y-2">
                 <h3 className="text-muted-foreground text-sm font-medium pt-2 pb-1 sticky top-12 z-10 bg-background border-b">
@@ -608,7 +564,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
             )}
           </>
         ) : (
-          // Ungrouped mobile view
           internalMatrixValue.map((row) => (
             <div 
               key={row.id} 
