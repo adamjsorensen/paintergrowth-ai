@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Label } from "@/components/ui/label";
@@ -6,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash, Plus, AlertCircle, DollarSign, FileText, Package2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { QuoteItem, FieldConfig } from "@/types/prompt-templates";
 import { formatCurrency } from "@/utils/formatUtils";
 import { cn } from "@/lib/utils";
@@ -22,38 +22,16 @@ interface QuoteTableFieldProps {
 const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTableFieldProps) => {
   // Initialize with at least one row if empty
   const [items, setItems] = useState<QuoteItem[]>(() => {
-    if (value && value.length > 0) return value.map(item => ({
-      ...item,
-      selected: item.selected !== undefined ? item.selected : false
-    }));
+    if (value && value.length > 0) return value;
     return [{ 
       id: uuidv4(), 
       service: "", 
       price: 0, 
-      notes: "",
-      selected: false
+      notes: "" 
     }];
   });
 
   const [subtotal, setSubtotal] = useState<number>(0);
-
-  // Selection handlers
-  const handleToggleSelection = (id: string) => {
-    setItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, selected: !item.selected } : item
-      )
-    );
-  };
-
-  const handleToggleAllSelection = () => {
-    const allSelected = items.every(item => item.selected);
-    setItems(prev => 
-      prev.map(item => ({ ...item, selected: !allSelected }))
-    );
-  };
-
-  const areAllItemsSelected = () => items.length > 0 && items.every(item => item.selected);
 
   useEffect(() => {
     // Calculate subtotal whenever items change
@@ -69,14 +47,13 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
       id: uuidv4(), 
       service: "", 
       price: 0, 
-      notes: "",
-      selected: false
+      notes: "" 
     };
     setItems([...items, newItem]);
   };
 
   const handleRemoveRow = (id: string) => {
-    if (items.length <= 1) return;
+    if (items.length <= 1) return; // Always keep at least one row
     setItems(items.filter(item => item.id !== id));
   };
 
@@ -93,33 +70,21 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
     return (
       <div className="space-y-4 md:hidden">
         {items.map((item, index) => (
-          <Card 
-            key={item.id} 
-            className={cn(
-              "overflow-hidden border-blue-100 hover:border-blue-200 transition-colors shadow-sm hover:shadow",
-              item.selected && "bg-blue-50 border-blue-300"
-            )}>
+          <Card key={item.id} className="overflow-hidden border-blue-100 hover:border-blue-200 transition-colors shadow-sm hover:shadow">
             <CardContent className="p-4 space-y-4">
               <div className="flex justify-between items-center border-b pb-2">
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 px-3 py-1 font-medium">
                   Item {index + 1}
                 </Badge>
-                <div className="flex items-center gap-2">
-                  <Checkbox 
-                    checked={item.selected || false} 
-                    onCheckedChange={() => handleToggleSelection(item.id)}
-                    aria-label={`Select ${item.service}`}
-                  />
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleRemoveRow(item.id)}
-                    disabled={items.length <= 1}
-                    className="hover:bg-red-50 hover:text-red-600 transition-colors rounded-full aspect-square p-0 h-8 w-8"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => handleRemoveRow(item.id)}
+                  disabled={items.length <= 1}
+                  className="hover:bg-red-50 hover:text-red-600 transition-colors rounded-full aspect-square p-0 h-8 w-8"
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
               </div>
               
               <div className="space-y-2">
@@ -211,16 +176,7 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
         <Table>
           <TableHeader className="bg-gray-50">
             <TableRow className="border-b border-gray-200">
-              <TableHead className="w-[5%] font-semibold text-gray-700">
-                <div className="flex items-center justify-center">
-                  <Checkbox
-                    checked={areAllItemsSelected()}
-                    onCheckedChange={handleToggleAllSelection}
-                    aria-label="Select all items"
-                  />
-                </div>
-              </TableHead>
-              <TableHead className="w-[35%] font-semibold text-gray-700">
+              <TableHead className="w-[40%] font-semibold text-gray-700">
                 <div className="flex items-center gap-2">
                   <Package2 className="h-4 w-4 text-blue-500" />
                   <span>Service</span>
@@ -248,16 +204,8 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
                 className={cn(
                   "border-b border-gray-100 transition-colors", 
                   index % 2 === 0 ? "bg-white" : "bg-gray-50/50",
-                  item.selected && "bg-blue-50 hover:bg-blue-100/70",
                   "hover:bg-blue-50/30"
                 )}>
-                <TableCell className="text-center">
-                  <Checkbox 
-                    checked={item.selected || false} 
-                    onCheckedChange={() => handleToggleSelection(item.id)}
-                    aria-label={`Select ${item.service}`}
-                  />
-                </TableCell>
                 <TableCell>
                   <Input 
                     value={item.service} 
@@ -307,32 +255,15 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
       {renderMobileView()}
       
       <div className="flex justify-between items-center pt-2">
-        <div className="flex items-center gap-2">
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={handleAddRow}
-            className="flex items-center gap-1 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 hover:shadow-sm"
-          >
-            <Plus className="h-4 w-4 text-blue-500" /> Add Item
-          </Button>
-          
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleToggleAllSelection}
-            className={cn(
-              "flex items-center gap-1 transition-all duration-200 hover:shadow-sm",
-              areAllItemsSelected() 
-                ? "border-blue-500 bg-blue-50 hover:bg-blue-100" 
-                : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
-            )}
-          >
-            {areAllItemsSelected() ? "Unselect All" : "Select All"}
-          </Button>
-        </div>
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm" 
+          onClick={handleAddRow}
+          className="flex items-center gap-1 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 hover:shadow-sm"
+        >
+          <Plus className="h-4 w-4 text-blue-500" /> Add Item
+        </Button>
         
         <div className="font-medium text-right bg-green-50 text-green-800 px-3 py-1 rounded-md shadow-sm flex items-center gap-1.5">
           <span className="text-xs text-green-700">SUBTOTAL</span>

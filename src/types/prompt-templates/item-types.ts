@@ -17,7 +17,6 @@ export interface QuoteItem {
   service: string;
   price: number;
   notes?: string;
-  selected?: boolean;  // Added this field
   
   // Making the original fields optional to maintain compatibility
   description?: string;
