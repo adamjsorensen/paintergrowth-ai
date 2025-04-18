@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FieldConfig } from "@/types/prompt-templates";
 import { ScopeOfWorkItem } from "@/types/prompt-templates/item-types";
 import { formatCurrency } from "@/utils/formatUtils";
@@ -21,12 +22,19 @@ interface ScopeOfWorkFieldProps {
 const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWorkFieldProps) => {
   // Initialize with at least one row if empty
   const [items, setItems] = useState<ScopeOfWorkItem[]>(() => {
-    if (value && value.length > 0) return value;
+    if (value && value.length > 0) {
+      // Handle existing data that might not have the selected property
+      return value.map(item => ({ 
+        ...item, 
+        selected: item.selected !== undefined ? item.selected : false 
+      }));
+    }
     return [{ 
       id: uuidv4(), 
       service: "", 
       description: "",
-      price: 0 
+      price: 0,
+      selected: false // Default to unselected
     }];
   });
 
@@ -46,7 +54,8 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
       id: uuidv4(), 
       service: "", 
       description: "",
-      price: 0 
+      price: 0,
+      selected: false // New items are unselected by default
     };
     setItems([...items, newItem]);
   };
@@ -56,7 +65,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
     setItems(items.filter(item => item.id !== id));
   };
 
-  const handleChange = (id: string, field: keyof ScopeOfWorkItem, value: string | number) => {
+  const handleChange = (id: string, field: keyof ScopeOfWorkItem, value: string | number | boolean) => {
     setItems(prev => 
       prev.map(item => 
         item.id === id ? { ...item, [field]: value } : item
@@ -64,15 +73,54 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
     );
   };
 
+  // New handlers for selection functionality
+  const handleToggleSelection = (id: string) => {
+    setItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, selected: !item.selected } : item
+      )
+    );
+  };
+
+  const handleToggleAll = () => {
+    const areAllSelected = items.length > 0 && items.every(item => item.selected);
+    setItems(prev => 
+      prev.map(item => ({ ...item, selected: !areAllSelected }))
+    );
+  };
+
   // Render a mobile-friendly card view for small screens
   const renderMobileView = () => {
     return (
       <div className="space-y-4 md:hidden">
+        <div className="flex items-center gap-2 mb-2">
+          <Checkbox 
+            id="select-all-mobile"
+            checked={items.length > 0 && items.every(item => item.selected)} 
+            onCheckedChange={handleToggleAll}
+          />
+          <Label htmlFor="select-all-mobile" className="text-sm">
+            {items.length > 0 && items.every(item => item.selected) 
+              ? "Deselect all" 
+              : "Select all"}
+          </Label>
+        </div>
+
         {items.map((item, index) => (
-          <Card key={item.id} className="overflow-hidden border rounded-md">
+          <Card 
+            key={item.id} 
+            className={`overflow-hidden border rounded-md ${item.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""}`}
+          >
             <CardContent className="p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="font-medium">Scope Item {index + 1}</span>
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    checked={item.selected} 
+                    onCheckedChange={() => handleToggleSelection(item.id)}
+                    aria-label="Select item"
+                  />
+                  <span className="font-medium">Scope Item {index + 1}</span>
+                </div>
                 <Button 
                   variant="ghost" 
                   size="sm"
@@ -136,12 +184,29 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
         <p className="text-sm text-muted-foreground">{field.helpText}</p>
       )}
       
+      {/* Desktop global select all control */}
+      <div className="hidden md:flex items-center gap-2 mb-2">
+        <Checkbox 
+          id="select-all-desktop"
+          checked={items.length > 0 && items.every(item => item.selected)} 
+          onCheckedChange={handleToggleAll}
+        />
+        <Label htmlFor="select-all-desktop" className="text-sm">
+          {items.length > 0 && items.every(item => item.selected) 
+            ? "Deselect all" 
+            : "Select all"}
+        </Label>
+      </div>
+      
       {/* Desktop Table View - Full Width */}
       <div className="hidden md:block overflow-x-auto border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[30%]">Service</TableHead>
+              <TableHead className="w-[5%]">
+                <span className="sr-only">Select</span>
+              </TableHead>
+              <TableHead className="w-[25%]">Service</TableHead>
               <TableHead className="w-[40%]">Description</TableHead>
               <TableHead className="w-[20%]">Price</TableHead>
               <TableHead className="w-[10%]"></TableHead>
@@ -149,7 +214,17 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
           </TableHeader>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.id}>
+              <TableRow 
+                key={item.id}
+                className={item.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+              >
+                <TableCell>
+                  <Checkbox 
+                    checked={item.selected} 
+                    onCheckedChange={() => handleToggleSelection(item.id)}
+                    aria-label="Select row"
+                  />
+                </TableCell>
                 <TableCell>
                   <Input 
                     value={item.service} 
@@ -207,6 +282,10 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
           Subtotal: {formatCurrency(subtotal)}
         </div>
       </div>
+      
+      <p className="text-xs text-muted-foreground mt-1">
+        Only selected items will be included in the final proposal.
+      </p>
     </div>
   );
 };

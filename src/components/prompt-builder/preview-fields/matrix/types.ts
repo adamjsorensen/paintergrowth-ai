@@ -5,6 +5,7 @@ import { MatrixConfig } from "@/types/prompt-templates";
 export interface MatrixItem {
   id: string;
   label?: string;
+  selected?: boolean; // Added to track row selection
   [key: string]: string | number | boolean | undefined;
 }
 

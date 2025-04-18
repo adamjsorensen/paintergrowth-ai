@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableHeader,
@@ -17,7 +18,8 @@ import { HelpText } from "./components/HelpText";
 // Define the structure of a matrix row for the form data
 export interface MatrixItem {
   id: string;
-  [key: string]: string | number | boolean;
+  selected?: boolean; // Added to track row selection
+  [key: string]: string | number | boolean | undefined;
 }
 
 interface MatrixSelectorFieldProps {
@@ -81,37 +83,135 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   
   const matrixConfig = getMatrixConfig();
   
-  // Initialize the matrix with default values if empty
-  const matrixValue = React.useMemo(() => {
-    if (!value || !Array.isArray(value) || value.length === 0) {
-      // Create initial value based on the configuration
-      return matrixConfig.rows.map(row => {
-        const item: MatrixItem = {
-          id: row.id,
-          label: row.label, // Store the label for display
-        };
-        
-        // Initialize all columns with default values
-        matrixConfig.columns.forEach(col => {
-          if (col.type === "number") {
-            item[col.id] = 1; // Default number value
-          } else if (col.type === "checkbox") {
-            item[col.id] = false; // Default checkbox value
+  // Track internal matrix values (including unselected rows)
+  const [internalMatrixValue, setInternalMatrixValue] = useState<MatrixItem[]>([]);
+
+  // Initialize with default values and selection state
+  useEffect(() => {
+    const initializeMatrix = () => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        // Create initial value based on the configuration with all rows deselected
+        const initialValue = matrixConfig.rows.map(row => {
+          const item: MatrixItem = {
+            id: row.id,
+            label: row.label,
+            selected: false, // Default to unselected
+          };
+          
+          // Initialize all columns with default values
+          matrixConfig.columns.forEach(col => {
+            if (col.type === "number") {
+              item[col.id] = 1; // Default number value
+            } else if (col.type === "checkbox") {
+              item[col.id] = false; // Default checkbox value
+            }
+          });
+          
+          return item;
+        });
+        setInternalMatrixValue(initialValue);
+      } else {
+        // If we have existing values, ensure they all have the selected property
+        const initialValue = matrixConfig.rows.map(row => {
+          // Try to find existing row data
+          const existingRow = value.find(item => item.id === row.id);
+          
+          if (existingRow) {
+            // Use existing data and ensure selected property exists
+            return {
+              ...existingRow,
+              selected: existingRow.selected !== undefined ? existingRow.selected : true // Default to selected for existing data
+            };
+          } else {
+            // Create a new unselected row with default values
+            const newRow: MatrixItem = {
+              id: row.id,
+              label: row.label,
+              selected: false // Default to unselected
+            };
+            
+            // Initialize with default values
+            matrixConfig.columns.forEach(col => {
+              if (col.type === "number") {
+                newRow[col.id] = 1; // Default number value
+              } else if (col.type === "checkbox") {
+                newRow[col.id] = false; // Default checkbox value
+              }
+            });
+            
+            return newRow;
           }
         });
         
-        return item;
+        setInternalMatrixValue(initialValue);
+      }
+    };
+
+    initializeMatrix();
+  }, [matrixConfig.rows, matrixConfig.columns]);
+
+  // Update parent when internal values change
+  useEffect(() => {
+    // Only include selected rows in the onChange event
+    const selectedRows = internalMatrixValue.filter(row => row.selected);
+    onChange(selectedRows);
+  }, [internalMatrixValue, onChange]);
+
+  // Handle row selection toggle
+  const handleRowSelection = (rowId: string, selected: boolean) => {
+    setInternalMatrixValue(prev => 
+      prev.map(row => 
+        row.id === rowId ? { ...row, selected } : row
+      )
+    );
+  };
+  
+  // Toggle all checkboxes in a row
+  const handleSelectAllInRow = (rowId: string) => {
+    setInternalMatrixValue(prev => {
+      const row = prev.find(r => r.id === rowId);
+      if (!row) return prev;
+      
+      const allSelected = areAllCheckboxesSelected(row);
+      
+      return prev.map(r => {
+        if (r.id !== rowId) return r;
+        
+        const updatedRow = { ...r };
+        matrixConfig.columns.forEach(col => {
+          if (col.type === "checkbox") {
+            updatedRow[col.id] = !allSelected;
+          }
+        });
+        
+        return updatedRow;
       });
-    }
-    return value;
-  }, [value, matrixConfig]);
+    });
+  };
+
+  // Check if all checkboxes in a row are selected
+  const areAllCheckboxesSelected = (row: MatrixItem): boolean => {
+    const checkboxColumns = matrixConfig.columns.filter(col => col.type === "checkbox");
+    if (checkboxColumns.length === 0) return false;
+    return checkboxColumns.every(col => Boolean(row[col.id]));
+  };
+
+  // Handle all rows selection
+  const handleToggleAllRows = () => {
+    const allSelected = internalMatrixValue.every(row => row.selected);
+    
+    setInternalMatrixValue(prev => 
+      prev.map(row => ({ ...row, selected: !allSelected }))
+    );
+  };
 
   // Handle value changes for each cell
   const handleValueChange = (rowId: string, columnId: string, newValue: any) => {
-    const updatedMatrix = matrixValue.map(row => 
-      row.id === rowId ? { ...row, [columnId]: newValue } : row
+    setInternalMatrixValue(prev => 
+      prev.map(row => 
+        row.id === rowId ? { ...row, [columnId]: newValue } : row
+      )
     );
-    onChange(updatedMatrix);
   };
 
   // Render a cell based on the column type
@@ -171,9 +271,12 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   
   // Get a mapping of row IDs to their corresponding MatrixItem
   const rowMapping: Record<string, MatrixItem> = {};
-  matrixValue.forEach(item => {
+  internalMatrixValue.forEach(item => {
     rowMapping[item.id] = item;
   });
+
+  // Calculate if all rows are selected
+  const areAllRowsSelected = internalMatrixValue.length > 0 && internalMatrixValue.every(row => row.selected);
 
   return (
     <div className="space-y-2">
@@ -185,16 +288,30 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         {field.helpText && <HelpText>{field.helpText}</HelpText>}
       </div>
       
+      {/* Global select all rows control */}
+      <div className="flex items-center mb-2 gap-2">
+        <Checkbox
+          id="select-all-rows"
+          checked={areAllRowsSelected}
+          onCheckedChange={handleToggleAllRows}
+        />
+        <Label htmlFor="select-all-rows" className="text-sm">
+          {areAllRowsSelected ? "Deselect all rooms" : "Select all rooms"}
+        </Label>
+      </div>
+      
       <div className="overflow-x-auto border rounded-md">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
+              <TableHead className="w-10">Select</TableHead>
               <TableHead className="w-1/4">Room</TableHead>
               {matrixConfig.columns.map(column => (
                 <TableHead key={column.id} className="text-center">
                   {column.label}
                 </TableHead>
               ))}
+              <TableHead className="w-24 text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -206,7 +323,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                     {/* Group header row */}
                     <TableRow className="bg-muted/20 font-medium">
                       <TableCell 
-                        colSpan={matrixConfig.columns.length + 1}
+                        colSpan={matrixConfig.columns.length + 3}
                         className="py-2 px-3 text-sm font-semibold bg-muted"
                         role="rowheader"
                       >
@@ -221,13 +338,34 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                       if (!rowItem) return null;
                       
                       return (
-                        <TableRow key={rowId}>
+                        <TableRow 
+                          key={rowId}
+                          className={rowItem.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+                        >
+                          <TableCell className="pl-3 pr-0 w-10">
+                            <Checkbox 
+                              checked={rowItem.selected}
+                              onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
+                              aria-label={`Select ${rowItem.label || rowItem.id}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{rowItem.label || rowItem.id}</TableCell>
                           {matrixConfig.columns.map(column => (
                             <TableCell key={`${rowId}-${column.id}`} className="text-center">
                               {renderCell(rowItem, column)}
                             </TableCell>
                           ))}
+                          <TableCell className="text-center">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSelectAllInRow(rowId)}
+                              className="text-xs h-7 px-2"
+                            >
+                              {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -239,7 +377,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   <>
                     <TableRow className="bg-muted/20 font-medium">
                       <TableCell 
-                        colSpan={matrixConfig.columns.length + 1}
+                        colSpan={matrixConfig.columns.length + 3}
                         className="py-2 px-3 text-sm font-semibold bg-muted"
                         role="rowheader"
                       >
@@ -252,13 +390,34 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                       if (!rowItem) return null;
                       
                       return (
-                        <TableRow key={rowId}>
+                        <TableRow 
+                          key={rowId}
+                          className={rowItem.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+                        >
+                          <TableCell className="pl-3 pr-0 w-10">
+                            <Checkbox 
+                              checked={rowItem.selected}
+                              onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
+                              aria-label={`Select ${rowItem.label || rowItem.id}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{rowItem.label || rowItem.id}</TableCell>
                           {matrixConfig.columns.map(column => (
                             <TableCell key={`${rowId}-${column.id}`} className="text-center">
                               {renderCell(rowItem, column)}
                             </TableCell>
                           ))}
+                          <TableCell className="text-center">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSelectAllInRow(rowId)}
+                              className="text-xs h-7 px-2"
+                            >
+                              {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -267,14 +426,35 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
               </>
             ) : (
               // Render rows without groups (backward compatibility)
-              matrixValue.map((row) => (
-                <TableRow key={row.id}>
+              internalMatrixValue.map((row) => (
+                <TableRow 
+                  key={row.id}
+                  className={row.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+                >
+                  <TableCell className="pl-3 pr-0 w-10">
+                    <Checkbox 
+                      checked={row.selected}
+                      onCheckedChange={(checked) => handleRowSelection(row.id, Boolean(checked))}
+                      aria-label={`Select ${row.label || row.id}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{row.label || row.id}</TableCell>
                   {matrixConfig.columns.map(column => (
                     <TableCell key={`${row.id}-${column.id}`} className="text-center">
                       {renderCell(row, column)}
                     </TableCell>
                   ))}
+                  <TableCell className="text-center">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSelectAllInRow(row.id)}
+                      className="text-xs h-7 px-2"
+                    >
+                      {areAllCheckboxesSelected(row) ? "Deselect All" : "Select All"}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -284,6 +464,18 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       
       {/* Mobile view with responsive cards */}
       <div className="md:hidden space-y-6 mt-4">
+        {/* Mobile global select all control */}
+        <div className="flex items-center gap-2 mb-2">
+          <Checkbox
+            id="mobile-select-all-rows"
+            checked={areAllRowsSelected}
+            onCheckedChange={handleToggleAllRows}
+          />
+          <Label htmlFor="mobile-select-all-rows" className="text-sm">
+            {areAllRowsSelected ? "Deselect all rooms" : "Select all rooms"}
+          </Label>
+        </div>
+        
         {matrixConfig.groups && matrixConfig.groups.length > 0 ? (
           // Grouped mobile view
           <>
@@ -300,8 +492,32 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   if (!rowItem) return null;
                   
                   return (
-                    <div key={rowId} className="border rounded-md p-4 bg-card">
-                      <h4 className="font-medium mb-3">{rowItem.label || rowItem.id}</h4>
+                    <div 
+                      key={rowId} 
+                      className={`border rounded-md p-4 bg-card ${
+                        rowItem.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            checked={rowItem.selected}
+                            onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
+                            aria-label={`Select ${rowItem.label || rowItem.id}`}
+                          />
+                          <h4 className="font-medium">{rowItem.label || rowItem.id}</h4>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSelectAllInRow(rowId)}
+                          className="text-xs h-7 px-2"
+                        >
+                          {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                        </Button>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-3">
                         {matrixConfig.columns.map(column => (
                           <div key={`${rowId}-${column.id}`} className="flex justify-between items-center">
@@ -330,8 +546,32 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   if (!rowItem) return null;
                   
                   return (
-                    <div key={rowId} className="border rounded-md p-4 bg-card">
-                      <h4 className="font-medium mb-3">{rowItem.label || rowItem.id}</h4>
+                    <div 
+                      key={rowId} 
+                      className={`border rounded-md p-4 bg-card ${
+                        rowItem.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            checked={rowItem.selected}
+                            onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
+                            aria-label={`Select ${rowItem.label || rowItem.id}`}
+                          />
+                          <h4 className="font-medium">{rowItem.label || rowItem.id}</h4>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSelectAllInRow(rowId)}
+                          className="text-xs h-7 px-2"
+                        >
+                          {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                        </Button>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-3">
                         {matrixConfig.columns.map(column => (
                           <div key={`${rowId}-${column.id}`} className="flex justify-between items-center">
@@ -350,9 +590,33 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           </>
         ) : (
           // Ungrouped mobile view
-          matrixValue.map((row) => (
-            <div key={row.id} className="border rounded-md p-4 bg-card">
-              <h4 className="font-medium mb-3">{row.label || row.id}</h4>
+          internalMatrixValue.map((row) => (
+            <div 
+              key={row.id} 
+              className={`border rounded-md p-4 bg-card ${
+                row.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""
+              }`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    checked={row.selected}
+                    onCheckedChange={(checked) => handleRowSelection(row.id, Boolean(checked))}
+                    aria-label={`Select ${row.label || row.id}`}
+                  />
+                  <h4 className="font-medium">{row.label || row.id}</h4>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleSelectAllInRow(row.id)}
+                  className="text-xs h-7 px-2"
+                >
+                  {areAllCheckboxesSelected(row) ? "Deselect All" : "Select All"}
+                </Button>
+              </div>
+              
               <div className="grid grid-cols-2 gap-3">
                 {matrixConfig.columns.map(column => (
                   <div key={`${row.id}-${column.id}`} className="flex justify-between items-center">
@@ -373,6 +637,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           Set quantity to 0 for rooms not included in the project.
         </p>
       )}
+      
+      <p className="text-xs text-muted-foreground mt-1">
+        Only selected rooms will be included in the final proposal.
+      </p>
     </div>
   );
 };
