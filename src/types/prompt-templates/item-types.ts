@@ -42,4 +42,6 @@ export interface ScopeOfWorkItem {
   service: string;
   description?: string;
   price: number;
+  selected?: boolean;
 }
+
