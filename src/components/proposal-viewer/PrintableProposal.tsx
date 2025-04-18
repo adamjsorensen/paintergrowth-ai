@@ -5,6 +5,14 @@ import { Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import CoverPage from './CoverPage';
 
+// Add print-specific styles
+const printStyles = `
+  @page {
+    margin: 0.75in;
+    size: 8.5in 11in;
+  }
+`;
+
 interface PrintableProposalProps {
   proposal: string;
   metadata: {
@@ -51,6 +59,9 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      {/* Inject print styles */}
+      <style dangerouslySetInnerHTML={{ __html: printStyles }} />
+      
       <div className="p-4 mb-6 bg-blue-50 rounded-lg print:hidden">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Printer className="h-5 w-5" />
@@ -67,16 +78,18 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
         </p>
       </div>
 
-      <div className="max-w-[750px] mx-auto px-8 print:max-w-none print:px-0 print:w-full">
+      <div className="max-w-[750px] mx-auto px-8 print:max-w-none print:w-full print:mx-0">
         
         {/* Cover Page */}
-        <CoverPage 
-          metadata={metadata}
-          companyProfile={companyProfile}
-          coverImageUrl={coverImageUrl}
-        />
+        <div className="print:page-break-after">
+          <CoverPage 
+            metadata={metadata}
+            companyProfile={companyProfile}
+            coverImageUrl={coverImageUrl}
+          />
+        </div>
 
-        <div className="prose max-w-none print:prose-sm leading-relaxed mt-8">
+        <div className="prose max-w-none print:prose-sm leading-relaxed mt-8 print:mt-4">
           {formatProposalText(proposal)}
         </div>
 
