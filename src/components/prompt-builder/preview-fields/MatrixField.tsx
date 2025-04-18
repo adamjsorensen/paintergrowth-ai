@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import {
@@ -70,13 +69,13 @@ const MatrixField: React.FC<MatrixFieldProps> = ({
         {helpText && <p className="text-xs text-gray-500 mt-1">{helpText}</p>}
       </div>
       
-      <div className="overflow-x-auto border rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="w-1/4">Room</TableHead>
+      <div className="overflow-auto border rounded-md max-h-[70vh]">
+        <Table className="relative">
+          <TableHeader className="sticky top-0 z-20 bg-background">
+            <TableRow className="bg-muted/50">
+              <TableHead className="w-1/4 px-2">Room</TableHead>
               {matrixConfig.columns.map(column => (
-                <TableHead key={column.id} className="text-center">
+                <TableHead key={column.id} className="text-center px-1">
                   {column.label}
                 </TableHead>
               ))}

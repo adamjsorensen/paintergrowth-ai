@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,7 +18,7 @@ const MatrixCell: React.FC<MatrixCellProps> = ({ row, column, onChange }) => {
         min="0"
         value={row[column.id] as number}
         onChange={(e) => onChange(row.id, column.id, parseInt(e.target.value) || 0)}
-        className="h-8 w-16 text-center"
+        className="h-8 w-14 text-center"
       />
     );
   } else if (column.type === "checkbox") {

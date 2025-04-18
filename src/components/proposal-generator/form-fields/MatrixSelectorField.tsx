@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
 import { Label } from "@/components/ui/label";
@@ -223,7 +222,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           min="0"
           value={row[column.id] as number}
           onChange={(e) => handleValueChange(row.id, column.id, parseInt(e.target.value) || 0)}
-          className="h-8 w-16 text-center"
+          className="h-8 w-14 text-center"
         />
       );
     } else if (column.type === "checkbox") {
@@ -300,18 +299,18 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         </Label>
       </div>
       
-      <div className="overflow-x-auto border rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="w-10">Select</TableHead>
-              <TableHead className="w-1/4">Room</TableHead>
+      <div className="overflow-auto border rounded-md max-h-[70vh]">
+        <Table className="relative">
+          <TableHeader className="sticky top-0 z-20 bg-background">
+            <TableRow className="bg-muted/50">
+              <TableHead className="w-10 px-2">Select</TableHead>
+              <TableHead className="w-1/4 px-2">Room</TableHead>
               {matrixConfig.columns.map(column => (
-                <TableHead key={column.id} className="text-center">
+                <TableHead key={column.id} className="text-center px-1">
                   {column.label}
                 </TableHead>
               ))}
-              <TableHead className="w-24 text-center">Actions</TableHead>
+              <TableHead className="w-20 text-center px-1">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -320,8 +319,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
               <>
                 {matrixConfig.groups.map(group => (
                   <React.Fragment key={group.id}>
-                    {/* Group header row */}
-                    <TableRow className="bg-muted/20 font-medium">
+                    {/* Group header row - sticky */}
+                    <TableRow className="bg-muted/20 font-medium sticky z-10" style={{ top: '40px' }}>
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 3}
                         className="py-2 px-3 text-sm font-semibold bg-muted"
@@ -340,30 +339,34 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                       return (
                         <TableRow 
                           key={rowId}
-                          className={rowItem.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+                          className={rowItem.selected
+                            ? "bg-muted/50 border-l-4 border-l-primary shadow-sm"
+                            : "opacity-75 hover:opacity-100 transition-opacity"}
                         >
-                          <TableCell className="pl-3 pr-0 w-10">
+                          <TableCell className="pl-2 pr-0 w-10">
                             <Checkbox 
                               checked={rowItem.selected}
                               onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
                               aria-label={`Select ${rowItem.label || rowItem.id}`}
                             />
                           </TableCell>
-                          <TableCell className="font-medium">{rowItem.label || rowItem.id}</TableCell>
+                          <TableCell className={`font-medium px-2 ${rowItem.selected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                            {rowItem.label || rowItem.id}
+                          </TableCell>
                           {matrixConfig.columns.map(column => (
-                            <TableCell key={`${rowId}-${column.id}`} className="text-center">
+                            <TableCell key={`${rowId}-${column.id}`} className="text-center px-1">
                               {renderCell(rowItem, column)}
                             </TableCell>
                           ))}
-                          <TableCell className="text-center">
+                          <TableCell className="text-center px-1">
                             <Button
                               type="button"
                               size="sm"
                               variant="outline"
                               onClick={() => handleSelectAllInRow(rowId)}
-                              className="text-xs h-7 px-2"
+                              className="text-xs h-7 px-1 w-full"
                             >
-                              {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                              {areAllCheckboxesSelected(rowItem) ? "Deselect" : "Select"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -375,7 +378,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                 {/* Ungrouped rows if any */}
                 {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
                   <>
-                    <TableRow className="bg-muted/20 font-medium">
+                    <TableRow className="bg-muted/20 font-medium sticky z-10" style={{ top: '40px' }}>
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 3}
                         className="py-2 px-3 text-sm font-semibold bg-muted"
@@ -392,30 +395,34 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                       return (
                         <TableRow 
                           key={rowId}
-                          className={rowItem.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+                          className={rowItem.selected
+                            ? "bg-muted/50 border-l-4 border-l-primary shadow-sm"
+                            : "opacity-75 hover:opacity-100 transition-opacity"}
                         >
-                          <TableCell className="pl-3 pr-0 w-10">
+                          <TableCell className="pl-2 pr-0 w-10">
                             <Checkbox 
                               checked={rowItem.selected}
                               onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
                               aria-label={`Select ${rowItem.label || rowItem.id}`}
                             />
                           </TableCell>
-                          <TableCell className="font-medium">{rowItem.label || rowItem.id}</TableCell>
+                          <TableCell className={`font-medium px-2 ${rowItem.selected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                            {rowItem.label || rowItem.id}
+                          </TableCell>
                           {matrixConfig.columns.map(column => (
-                            <TableCell key={`${rowId}-${column.id}`} className="text-center">
+                            <TableCell key={`${rowId}-${column.id}`} className="text-center px-1">
                               {renderCell(rowItem, column)}
                             </TableCell>
                           ))}
-                          <TableCell className="text-center">
+                          <TableCell className="text-center px-1">
                             <Button
                               type="button"
                               size="sm"
                               variant="outline"
                               onClick={() => handleSelectAllInRow(rowId)}
-                              className="text-xs h-7 px-2"
+                              className="text-xs h-7 px-1 w-full"
                             >
-                              {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                              {areAllCheckboxesSelected(rowItem) ? "Deselect" : "Select"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -429,30 +436,34 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
               internalMatrixValue.map((row) => (
                 <TableRow 
                   key={row.id}
-                  className={row.selected ? "bg-muted/50 border-l-2 border-l-primary" : ""}
+                  className={row.selected
+                    ? "bg-muted/50 border-l-4 border-l-primary shadow-sm"
+                    : "opacity-75 hover:opacity-100 transition-opacity"}
                 >
-                  <TableCell className="pl-3 pr-0 w-10">
+                  <TableCell className="pl-2 pr-0 w-10">
                     <Checkbox 
                       checked={row.selected}
                       onCheckedChange={(checked) => handleRowSelection(row.id, Boolean(checked))}
                       aria-label={`Select ${row.label || row.id}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{row.label || row.id}</TableCell>
+                  <TableCell className={`font-medium px-2 ${row.selected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                    {row.label || row.id}
+                  </TableCell>
                   {matrixConfig.columns.map(column => (
-                    <TableCell key={`${row.id}-${column.id}`} className="text-center">
+                    <TableCell key={`${row.id}-${column.id}`} className="text-center px-1">
                       {renderCell(row, column)}
                     </TableCell>
                   ))}
-                  <TableCell className="text-center">
+                  <TableCell className="text-center px-1">
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
                       onClick={() => handleSelectAllInRow(row.id)}
-                      className="text-xs h-7 px-2"
+                      className="text-xs h-7 px-1 w-full"
                     >
-                      {areAllCheckboxesSelected(row) ? "Deselect All" : "Select All"}
+                      {areAllCheckboxesSelected(row) ? "Deselect" : "Select"}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -463,9 +474,9 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       </div>
       
       {/* Mobile view with responsive cards */}
-      <div className="md:hidden space-y-6 mt-4">
+      <div className="md:hidden space-y-4 mt-4">
         {/* Mobile global select all control */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 sticky top-0 z-10 bg-background pt-2 pb-2">
           <Checkbox
             id="mobile-select-all-rows"
             checked={areAllRowsSelected}
@@ -480,9 +491,9 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           // Grouped mobile view
           <>
             {matrixConfig.groups.map(group => (
-              <div key={group.id} className="space-y-3">
-                {/* Group header */}
-                <h3 className="text-muted-foreground text-sm font-medium mt-6 mb-2">
+              <div key={group.id} className="space-y-2">
+                {/* Group header - sticky on mobile */}
+                <h3 className="text-muted-foreground text-sm font-medium pt-2 pb-1 sticky top-12 z-10 bg-background border-b">
                   {group.label}
                 </h3>
                 
@@ -494,18 +505,22 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   return (
                     <div 
                       key={rowId} 
-                      className={`border rounded-md p-4 bg-card ${
-                        rowItem.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""
+                      className={`border rounded-md p-3 ${
+                        rowItem.selected
+                          ? "bg-muted/30 border-l-4 border-l-primary shadow-sm"
+                          : "opacity-75 bg-card"
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between items-center mb-3">
                         <div className="flex items-center gap-2">
                           <Checkbox 
                             checked={rowItem.selected}
                             onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
                             aria-label={`Select ${rowItem.label || rowItem.id}`}
                           />
-                          <h4 className="font-medium">{rowItem.label || rowItem.id}</h4>
+                          <h4 className={`font-medium ${rowItem.selected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                            {rowItem.label || rowItem.id}
+                          </h4>
                         </div>
                         <Button
                           type="button"
@@ -514,11 +529,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                           onClick={() => handleSelectAllInRow(rowId)}
                           className="text-xs h-7 px-2"
                         >
-                          {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                          {areAllCheckboxesSelected(rowItem) ? "Deselect" : "Select"}
                         </Button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {matrixConfig.columns.map(column => (
                           <div key={`${rowId}-${column.id}`} className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">{column.label}:</span>
@@ -536,8 +551,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
             
             {/* Ungrouped rows if any */}
             {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-muted-foreground text-sm font-medium mt-6 mb-2">
+              <div className="space-y-2">
+                <h3 className="text-muted-foreground text-sm font-medium pt-2 pb-1 sticky top-12 z-10 bg-background border-b">
                   Other Rooms
                 </h3>
                 
@@ -548,18 +563,22 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   return (
                     <div 
                       key={rowId} 
-                      className={`border rounded-md p-4 bg-card ${
-                        rowItem.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""
+                      className={`border rounded-md p-3 ${
+                        rowItem.selected
+                          ? "bg-muted/30 border-l-4 border-l-primary shadow-sm"
+                          : "opacity-75 bg-card"
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between items-center mb-3">
                         <div className="flex items-center gap-2">
                           <Checkbox 
                             checked={rowItem.selected}
                             onCheckedChange={(checked) => handleRowSelection(rowId, Boolean(checked))}
                             aria-label={`Select ${rowItem.label || rowItem.id}`}
                           />
-                          <h4 className="font-medium">{rowItem.label || rowItem.id}</h4>
+                          <h4 className={`font-medium ${rowItem.selected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                            {rowItem.label || rowItem.id}
+                          </h4>
                         </div>
                         <Button
                           type="button"
@@ -568,11 +587,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                           onClick={() => handleSelectAllInRow(rowId)}
                           className="text-xs h-7 px-2"
                         >
-                          {areAllCheckboxesSelected(rowItem) ? "Deselect All" : "Select All"}
+                          {areAllCheckboxesSelected(rowItem) ? "Deselect" : "Select"}
                         </Button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {matrixConfig.columns.map(column => (
                           <div key={`${rowId}-${column.id}`} className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">{column.label}:</span>
@@ -593,18 +612,22 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
           internalMatrixValue.map((row) => (
             <div 
               key={row.id} 
-              className={`border rounded-md p-4 bg-card ${
-                row.selected ? "bg-muted/50 border-l-4 border-l-primary" : ""
+              className={`border rounded-md p-3 ${
+                row.selected
+                  ? "bg-muted/30 border-l-4 border-l-primary shadow-sm"
+                  : "opacity-75 bg-card"
               }`}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2">
                   <Checkbox 
                     checked={row.selected}
                     onCheckedChange={(checked) => handleRowSelection(row.id, Boolean(checked))}
                     aria-label={`Select ${row.label || row.id}`}
                   />
-                  <h4 className="font-medium">{row.label || row.id}</h4>
+                  <h4 className={`font-medium ${row.selected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                    {row.label || row.id}
+                  </h4>
                 </div>
                 <Button
                   type="button"
@@ -613,11 +636,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                   onClick={() => handleSelectAllInRow(row.id)}
                   className="text-xs h-7 px-2"
                 >
-                  {areAllCheckboxesSelected(row) ? "Deselect All" : "Select All"}
+                  {areAllCheckboxesSelected(row) ? "Deselect" : "Select"}
                 </Button>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 {matrixConfig.columns.map(column => (
                   <div key={`${row.id}-${column.id}`} className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">{column.label}:</span>
