@@ -267,8 +267,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         </Label>
       </div>
       
-      <div className="overflow-auto border rounded-md max-h-[70vh]">
-        <Table className="relative">
+      <div className="overflow-auto border rounded-md max-h-[70vh] relative">
+        <Table>
           <TableHeader className="sticky top-0 z-30 bg-background">
             <TableRow className="bg-muted/50">
               <TableHead className="pl-2 pr-0 w-10">Select</TableHead>
@@ -286,10 +286,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
               <>
                 {matrixConfig.groups.map(group => (
                   <React.Fragment key={group.id}>
-                    <TableRow className="bg-muted/20 font-medium sticky z-20" style={{ top: '40px' }}>
+                    <TableRow className="bg-muted/20 font-medium sticky top-[40px] z-20">
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 3}
-                        className="py-2 px-3 text-sm font-semibold bg-muted"
+                        className="py-2 px-3 text-sm font-semibold bg-muted/95 shadow-sm"
                         role="rowheader"
                       >
                         {group.label}
@@ -341,10 +341,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
                 
                 {groupedRows.ungrouped && groupedRows.ungrouped.length > 0 && (
                   <>
-                    <TableRow className="bg-muted/20 font-medium sticky z-20" style={{ top: '40px' }}>
+                    <TableRow className="bg-muted/20 font-medium sticky top-[40px] z-20">
                       <TableCell 
                         colSpan={matrixConfig.columns.length + 3}
-                        className="py-2 px-3 text-sm font-semibold bg-muted"
+                        className="py-2 px-3 text-sm font-semibold bg-muted/95 shadow-sm"
                         role="rowheader"
                       >
                         Other Rooms
