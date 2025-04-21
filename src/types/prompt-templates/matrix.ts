@@ -1,4 +1,3 @@
-
 /**
  * Matrix field specific types
  */
@@ -13,6 +12,7 @@ export interface MatrixColumn {
   id: string;
   label: string;
   type: 'number' | 'checkbox' | 'text';
+  tooltip?: string; // Optional tooltip text for the column header/label
 }
 
 export interface MatrixGroup {
@@ -26,6 +26,7 @@ export interface MatrixConfig {
   rows: MatrixRow[];
   columns: MatrixColumn[];
   groups?: MatrixGroup[];
+  quantityColumnId?: string; // Optional: Specify which column controls quantity for +/- buttons
 }
 
 // Helper function to create a default matrix configuration

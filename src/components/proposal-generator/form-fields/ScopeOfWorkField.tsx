@@ -92,8 +92,8 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
   // Render a mobile-friendly card view for small screens
   const renderMobileView = () => {
     return (
-      <div className="space-y-4 md:hidden">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="space-y-4 md:hidden relative">
+        <div className="flex items-center gap-2 mb-2 sticky top-0 z-30 bg-background pt-2 pb-2 shadow-sm">
           <Checkbox 
             id="select-all-mobile"
             checked={items.length > 0 && items.every(item => item.selected)} 
@@ -199,10 +199,10 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
       </div>
       
       {/* Desktop Table View - Full Width */}
-      <div className="hidden md:block overflow-x-auto border rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
+      <div className="hidden md:block overflow-x-auto border rounded-md max-h-[70vh]">
+        <Table className="relative">
+          <TableHeader className="sticky top-0 z-30 bg-background shadow-sm">
+            <TableRow className="bg-muted/50">
               <TableHead className="w-[5%]">
                 <span className="sr-only">Select</span>
               </TableHead>

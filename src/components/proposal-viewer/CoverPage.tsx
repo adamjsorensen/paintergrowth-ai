@@ -1,5 +1,4 @@
 import React from 'react';
-import { Mail, Phone } from 'lucide-react';
 
 interface CoverPageProps {
   metadata: {
@@ -33,137 +32,66 @@ const CoverPage: React.FC<CoverPageProps> = ({
   });
   
   const docNumber = `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
-  
-  const companyServices = companyProfile?.services_offered?.split(',').map(service => 
-    service.trim()
-  ).filter(Boolean) || [
-    'Residential & Commercial Painting',
-    'Interior & Exterior Painting',
-    'Cabinet Refinishing',
-    'Color Consultation'
-  ];
-
   const defaultLogo = "/placeholder.svg";
   const logoUrl = companyProfile?.logo_url || defaultLogo;
 
   return (
-    <div className="cover-page relative min-h-screen overflow-hidden print:break-after-page">
-      {/* Style imports */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500&display=swap');
-        `
-      }} />
-      
-      {/* Top black bar */}
-      <div className="absolute top-0 left-0 right-0 h-[48px] bg-black z-30 p-8">       
+    <div className="cover-page min-h-screen bg-white p-8 print:break-after-page">
+      {/* Logo section */}
+      <div className="text-center mb-2">
+        <img
+          src={logoUrl}
+          alt={companyProfile?.business_name || "YOUR LOGO PLACEHOLDER"}
+          className="h-24 mx-auto"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/placeholder.svg";
+          }}
+        />
       </div>
       
-      {/* Left vertical accent stripe */}
-      <div className="absolute top-[48px] left-0 bottom-0 w-20 bg-[#005ED6] z-20" />
-      
-      {/* Main content area */}
-      <div className="absolute top-[48px] left-20 right-0 bottom-0 bg-white z-10">
-        {/* Hero section with diagonal clip */}
-        <div className="relative h-[60vh] w-full overflow-hidden">
-          {/* Background with white peek-through offset */}
-          <div className="absolute inset-0 bg-white transform translate-x-2 translate-y-2" />
-          
-          {/* Background image with clip path and blue overlay */}
-          <div className="absolute inset-0 transform translate-x-4 translate-y-2">
-            <div 
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ 
-                backgroundImage: `url(${coverImageUrl || "/placeholder.svg"})`,
-                clipPath: 'polygon(0 0, 100% 0, 100% 75%, 0% 55%)'
-              }}
-            >
-              {/* Blue tint overlay */}
-              <div className="absolute inset-0 bg-[rgba(0,94,214,0.1)]" />
-            </div>
-            
-            {/* White border along diagonal edge */}
-            <div 
-              className="absolute bg-white h-8 w-[120%]" 
-              style={{ 
-                transform: 'rotate(-18.5deg) translateY(-50%)',
-                top: '40%',
-                left: '-10%'
-              }}
-            />
-          </div>
-          
-          {/* Title block */}
-          <div className="absolute bg-black py-6 px-12 w-[90%] z-10" style={{ top: '40%', left: '5%' }}>
-            <h1 className="font-['Playfair_Display'] text-6xl font-bold text-white uppercase">
-              Project Estimate
-            </h1>
-            <div className="font-['Inter'] text-base text-white space-y-2">
-          <p>Client Name: {metadata.clientName || "Client Name"}</p>
-          <p>Client Phone: {metadata.clientPhone || "Phone Number"}</p>
-          <p>Client Email: {metadata.clientEmail || "Email Address"}</p>
-          <p>Project Address: {metadata.clientAddress || "Project Address"}</p>
-        </div>
-          </div>
-        </div>
-        
-{/* Services info card */}
-<div className="mx-12 -mt-12 bg-gray-100 shadow-lg rounded-lg p-8 relative z-20">
-  {/* Logo and Company Name at Top */}
-  <div className="flex justify-between items-start mb-6">
-    <div className="space-y-2">
-      <p className="text-sm text-gray-600 font-['Inter']">Date: {today}</p>
-      <p className="text-sm text-gray-600 font-['Inter']">Prepared By: {metadata.preparedBy || companyProfile?.owner_name || "PainterGrowth"}</p>
-      <p className="text-sm text-gray-600 font-['Inter']">Business Address: {companyProfile?.location || "Business Address"}</p>
-      <p className="text-xs text-gray-500 font-['Inter'] tracking-wider">Proposal #: {docNumber}</p>
-    </div>
-
-    <div className="text-right">
-      <img
-        src={logoUrl}
-        alt={companyProfile?.business_name || "Company Logo"}
-        className="h-16 w-auto mb-2"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.src = "/placeholder.svg";
-        }}
-      />
-      <p className="font-['Playfair_Display'] text-2xl font-bold text-gray-800">
-        {companyProfile?.business_name || "Company Name"}
-      </p>
-    </div>
-  </div>
-
-  {/* Services List */}
-  <ol className="list-decimal list-inside space-y-2 text-gray-800 font-['Inter']">
-    {companyServices.map((service, index) => (
-      <li key={index}>{service}</li>
-    ))}
-  </ol>
-</div>
+      {/* Property image */}
+      <div className="mb-2">
+        <img 
+          src={coverImageUrl || "/placeholder.svg"} 
+          alt="Property" 
+          className="w-full h-auto object-cover"
+          style={{ maxHeight: '400px' }}
+        />
       </div>
       
-      {/* Diagonal footer accent */}
-      <div className="absolute left-0 right-0 bottom-0 h-16 z-30">
-        <div className="absolute right-0 bottom-0 bg-[#005ED6] w-20 h-32 transform rotate-12 translate-x-8 translate-y-8" />
-        
-        <div className="absolute inset-0 bg-black py-4 flex justify-center items-center">
-          <div className="flex items-center space-x-8">
-            {companyProfile?.email && (
-              <a href={`mailto:${companyProfile.email}`} className="flex items-center text-white no-underline group">
-                <Mail className="h-5 w-5 mr-2 text-white" />
-                <span className="font-['Inter'] text-sm">{companyProfile.email}</span>
-              </a>
-            )}
-            
-            {companyProfile?.phone && (
-              <a href={`tel:${companyProfile.phone}`} className="flex items-center text-white no-underline group">
-                <Phone className="h-5 w-5 mr-2 text-white" />
-                <span className="font-['Inter'] text-sm">{companyProfile.phone}</span>
-              </a>
-            )}
-          </div>
+      {/* Project Estimate Title */}
+      <div className="mb-1">
+        <h1 className="text-4xl font-bold uppercase tracking-wide">
+          <strong>PROJECT ESTIMATE</strong><br></br> {metadata.clientAddress || "123 Anywhere St, Richmond VT"}
+        </h1>
+      </div>
+      
+      {/* Date line */}
+      <div className="mb-2">
+        <p><strong>Date:</strong> {today}</p>
+      </div>
+      
+      {/* Information Grid */}
+      <div className="flex justify-between mb-2">
+        {/* Left Column - Estimator Info */}
+        <div className="max-w-xs">
+          <p className="mb-1"><strong>Estimator Name:</strong> {metadata.preparedBy || companyProfile?.owner_name || ""}<br></br>
+            <strong>Estimator Email:</strong> {companyProfile?.email || ""}<br></br>
+            <strong>Estimator Phone:</strong> {companyProfile?.phone || ""}<br></br></p>
         </div>
+        
+        {/* Right Column - Proposal # */}
+        <div>
+          <p className="text-lg font-bold">Proposal #: {docNumber}</p>
+        </div>
+      </div>
+      
+      {/* Client Information */}
+      <div className="mb-2">
+        <p className="mb-1"><strong>Client Name:</strong> {metadata.clientName || ""}<br></br>
+          <strong>Client Phone:</strong> {metadata.clientPhone || ""}<br></br>
+          <strong>Client Email:</strong> {metadata.clientEmail || ""}</p>
       </div>
     </div>
   );

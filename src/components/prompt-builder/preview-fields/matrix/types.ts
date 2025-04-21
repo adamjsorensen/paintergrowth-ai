@@ -1,10 +1,9 @@
-
 import { MatrixConfig } from "@/types/prompt-templates";
 
 // Interface for matrix items in the form
 export interface MatrixItem {
   id: string;
-  label?: string;
+  label?: string; // Ensure label is part of the type
   selected?: boolean; // Added to track row selection
   [key: string]: string | number | boolean | undefined;
 }

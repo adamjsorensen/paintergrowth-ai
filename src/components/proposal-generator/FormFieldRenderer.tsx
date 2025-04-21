@@ -74,12 +74,28 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       return <TaxCalculatorField field={field} value={value} onChange={onChange} subtotal={subtotal} />;
     
     case "matrix-selector":
+      console.log('MatrixSelectorField field:', field);
+      console.log('MatrixSelectorField field.options:', field.options);
+      console.log('MatrixSelectorField isMatrixConfig(field.options):', isMatrixConfig(field.options));
       return <MatrixSelectorField 
         field={field} 
         value={value || []} 
         onChange={onChange}
         isAdvanced={isAdvanced}
-        matrixConfig={isMatrixConfig(field.options) ? field.options : undefined}
+        matrixConfig={isMatrixConfig(field.options) 
+          ? field.options 
+          : (typeof field.options === 'string' 
+             ? (() => {
+                 try {
+                   const parsedConfig = JSON.parse(field.options as string);
+                   console.log('Successfully parsed matrix config:', parsedConfig);
+                   return isMatrixConfig(parsedConfig) ? parsedConfig : undefined;
+                 } catch (error) {
+                   console.error('Failed to parse matrix config:', error);
+                   return undefined;
+                 }
+               })()
+             : undefined)}
       />;
 
     case "scope-of-work":

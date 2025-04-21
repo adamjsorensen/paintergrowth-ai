@@ -66,9 +66,19 @@ const ModalContent = ({
         />
       )}
       
-      <div className="overflow-y-auto pr-1 space-y-8 mb-auto flex-1">
+      <div 
+        className="overflow-y-auto pr-1 space-y-8 mb-auto flex-1" 
+        style={{
+          position: 'relative',
+          contain: 'paint',
+          overflowAnchor: 'none',
+          isolation: 'isolate' // Creates a new stacking context for z-index
+        }}
+        id="modal-scrollable-content"
+      >
         {currentFields.map((field, index) => (
-          <div key={field.id} className={field.type === 'scope-of-work' ? 'col-span-2' : 'col-span-1'}>
+          // Removed col-span classes as the parent is not a grid
+          <div key={field.id}>
             {index > 0 && field.sectionId !== currentFields[index-1].sectionId && (
               <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent my-6"></div>
             )}
