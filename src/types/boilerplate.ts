@@ -14,3 +14,10 @@ export interface PlaceholderDefault {
   placeholder: string;
   default_value: string;
 }
+
+// Interface for merged content result
+export interface MergedContent {
+  content: string;
+  resolvedPlaceholders: Map<string, string>;
+  unresolvedPlaceholders: string[];
+}

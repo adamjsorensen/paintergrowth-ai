@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BoilerplateText, BoilerplateType } from '@/types/boilerplate';
+import { BoilerplateText, BoilerplateType, PlaceholderDefault } from '@/types/boilerplate';
 import { useToast } from '@/hooks/use-toast';
 
 export const useBoilerplateTexts = () => {
@@ -34,6 +34,44 @@ export const useBoilerplateText = (id: string) => {
       return data as BoilerplateText;
     },
     enabled: !!id,
+  });
+};
+
+export const useBoilerplateByType = (type: BoilerplateType, locale: string = 'en-US') => {
+  return useQuery({
+    queryKey: ['boilerplate-texts', type, locale],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('boilerplate_texts')
+        .select('*')
+        .eq('type', type)
+        .eq('locale', locale)
+        .single();
+      
+      if (error) throw error;
+      return data as BoilerplateText;
+    },
+  });
+};
+
+export const usePlaceholderDefaults = () => {
+  return useQuery({
+    queryKey: ['placeholder-defaults'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('placeholder_defaults')
+        .select('*');
+      
+      if (error) throw error;
+      
+      // Transform array to Record for easier lookup
+      const defaultsMap: Record<string, string> = {};
+      (data as PlaceholderDefault[]).forEach(item => {
+        defaultsMap[item.placeholder] = item.default_value;
+      });
+      
+      return defaultsMap;
+    },
   });
 };
 
@@ -121,9 +159,37 @@ export const useBoilerplateMutations = () => {
     },
   });
 
+  const createPlaceholderDefault = useMutation({
+    mutationFn: async (placeholderDefault: PlaceholderDefault) => {
+      const { data, error } = await supabase
+        .from('placeholder_defaults')
+        .insert(placeholderDefault)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['placeholder-defaults'] });
+      toast({
+        title: "Success",
+        description: "Placeholder default created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create placeholder default",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     createBoilerplate,
     updateBoilerplate,
     deleteBoilerplate,
+    createPlaceholderDefault
   };
 };

@@ -8,10 +8,12 @@ import { BoilerplateForm } from "@/components/boilerplate/BoilerplateForm";
 import { BoilerplateText } from "@/types/boilerplate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Trash, Plus } from "lucide-react";
+import { PlaceholderManager } from "@/components/boilerplate/PlaceholderManager";
 
 export default function BoilerplateManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("content");
   const { data: boilerplateTexts, isLoading } = useBoilerplateTexts();
   const { createBoilerplate, updateBoilerplate, deleteBoilerplate } = useBoilerplateMutations();
 
@@ -53,77 +55,90 @@ export default function BoilerplateManager() {
   return (
     <PageLayout title="Boilerplate Manager">
       <div className="space-y-6">
-        {!isCreating && !editingId && (
-          <Button onClick={() => setIsCreating(true)} className="mb-4">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Boilerplate Text
-          </Button>
-        )}
+        <Tabs defaultValue="content" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="content">Boilerplate Content</TabsTrigger>
+            <TabsTrigger value="placeholders">Placeholder Defaults</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="content" className="space-y-6">
+            {!isCreating && !editingId && (
+              <Button onClick={() => setIsCreating(true)} className="mb-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Boilerplate Text
+              </Button>
+            )}
 
-        {isCreating && (
-          <BoilerplateForm
-            onSubmit={handleCreate}
-            onCancel={() => setIsCreating(false)}
-          />
-        )}
+            {isCreating && (
+              <BoilerplateForm
+                onSubmit={handleCreate}
+                onCancel={() => setIsCreating(false)}
+              />
+            )}
 
-        {editingId && (
-          <BoilerplateForm
-            initialData={boilerplateTexts?.find(t => t.id === editingId)}
-            onSubmit={handleUpdate}
-            onCancel={() => setEditingId(null)}
-          />
-        )}
+            {editingId && (
+              <BoilerplateForm
+                initialData={boilerplateTexts?.find(t => t.id === editingId)}
+                onSubmit={handleUpdate}
+                onCancel={() => setEditingId(null)}
+              />
+            )}
 
-        {!isCreating && !editingId && (
-          <Tabs defaultValue="terms_conditions">
-            <TabsList>
-              <TabsTrigger value="terms_conditions">Terms & Conditions</TabsTrigger>
-              <TabsTrigger value="warranty">Warranty</TabsTrigger>
-              <TabsTrigger value="invoice_note">Invoice Notes</TabsTrigger>
-            </TabsList>
+            {!isCreating && !editingId && (
+              <Tabs defaultValue="terms_conditions">
+                <TabsList>
+                  <TabsTrigger value="terms_conditions">Terms & Conditions</TabsTrigger>
+                  <TabsTrigger value="warranty">Warranty</TabsTrigger>
+                  <TabsTrigger value="invoice_note">Invoice Notes</TabsTrigger>
+                </TabsList>
 
-            {Object.entries(groupedTexts).map(([type, texts]) => (
-              <TabsContent key={type} value={type}>
-                <div className="grid gap-4">
-                  {texts.map((text) => (
-                    <Card key={text.id}>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-lg">
-                          {text.locale === 'en-US' ? 'English (US)' : 'French (Canada)'}
-                        </CardTitle>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingId(text.id)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(text.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-sm text-muted-foreground">
-                          Version: {text.version}
-                        </div>
-                        <pre className="mt-2 whitespace-pre-wrap text-sm">
-                          {text.content}
-                        </pre>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        )}
+                {Object.entries(groupedTexts).map(([type, texts]) => (
+                  <TabsContent key={type} value={type}>
+                    <div className="grid gap-4">
+                      {texts.map((text) => (
+                        <Card key={text.id}>
+                          <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-lg">
+                              {text.locale === 'en-US' ? 'English (US)' : 'French (Canada)'}
+                            </CardTitle>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingId(text.id)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(text.id)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-sm text-muted-foreground">
+                              Version: {text.version}
+                            </div>
+                            <pre className="mt-2 whitespace-pre-wrap text-sm">
+                              {text.content}
+                            </pre>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="placeholders">
+            <PlaceholderManager />
+          </TabsContent>
+        </Tabs>
       </div>
     </PageLayout>
   );
