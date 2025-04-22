@@ -1,3 +1,4 @@
+
 import { BoilerplateText, MergedContent } from "@/types/boilerplate";
 
 /**
@@ -103,7 +104,9 @@ export const mergeWithBoilerplate = (
         sectionTitle = '## Invoice Notes';
         break;
       default:
-        sectionTitle = `## ${boilerplate.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+        // Type cast to ensure TypeScript knows we have a string
+        const boilerplateTypeAsString = String(boilerplate.type);
+        sectionTitle = `## ${boilerplateTypeAsString.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
     }
     
     // Append boilerplate content with proper spacing and heading
@@ -154,7 +157,9 @@ export function mergeBoilerplateContent(
         sectionTitle = '## Invoice Notes';
         break;
       default:
-        sectionTitle = `## ${boilerplate.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+        // Type cast to ensure TypeScript knows we have a string
+        const boilerplateTypeAsString = String(boilerplate.type);
+        sectionTitle = `## ${boilerplateTypeAsString.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
     }
 
     fullContent += `\n\n${sectionTitle}\n\n${processedContent}`;
