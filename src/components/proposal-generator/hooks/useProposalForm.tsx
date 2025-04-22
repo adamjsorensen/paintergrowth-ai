@@ -114,6 +114,10 @@ export const useProposalForm = (
     }
   };
 
+  const hasAdvancedFields = () => {
+    return fields.some(field => field.complexity === 'advanced');
+  };
+
   return {
     fieldValues,
     formMode,
@@ -122,6 +126,7 @@ export const useProposalForm = (
     handleFieldChange,
     handleSubmit,
     checkRequiredModalFields,
-    modalStepCompleted
+    modalStepCompleted,
+    hasAdvancedFields
   };
 };

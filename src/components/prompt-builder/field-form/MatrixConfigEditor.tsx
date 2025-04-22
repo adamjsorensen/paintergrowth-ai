@@ -19,11 +19,34 @@ const MatrixConfigEditor: React.FC<MatrixConfigEditorProps> = ({ config, onChang
   const [newColumnLabel, setNewColumnLabel] = useState("");
   const [newColumnType, setNewColumnType] = useState<"number" | "checkbox">("checkbox");
 
+  // Generate a semantic ID based on the row label
+  const generateSemanticRowId = (label: string): string => {
+    // Convert to lowercase, replace spaces with underscores, remove special chars
+    const baseId = label.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    
+    // Check if this ID already exists
+    const existingIds = config.rows.map(row => row.id);
+    if (!existingIds.includes(baseId)) {
+      return baseId;
+    }
+    
+    // If ID exists, add a numeric suffix
+    let counter = 1;
+    while (existingIds.includes(`${baseId}_${counter}`)) {
+      counter++;
+    }
+    return `${baseId}_${counter}`;
+  };
+
   // Add a new row
   const handleAddRow = () => {
     if (!newRowLabel.trim()) return;
+    
+    // Use semantic ID based on the label instead of timestamp
+    const semanticId = generateSemanticRowId(newRowLabel);
+    
     const newRow = {
-      id: `row_${Date.now()}`,
+      id: semanticId,
       label: newRowLabel.trim(),
     };
     onChange({
@@ -33,11 +56,34 @@ const MatrixConfigEditor: React.FC<MatrixConfigEditorProps> = ({ config, onChang
     setNewRowLabel("");
   };
 
+  // Generate a semantic ID based on the column label
+  const generateSemanticColumnId = (label: string): string => {
+    // Convert to lowercase, replace spaces with underscores, remove special chars
+    const baseId = label.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    
+    // Check if this ID already exists
+    const existingIds = config.columns.map(col => col.id);
+    if (!existingIds.includes(baseId)) {
+      return baseId;
+    }
+    
+    // If ID exists, add a numeric suffix
+    let counter = 1;
+    while (existingIds.includes(`${baseId}_${counter}`)) {
+      counter++;
+    }
+    return `${baseId}_${counter}`;
+  };
+
   // Add a new column
   const handleAddColumn = () => {
     if (!newColumnLabel.trim()) return;
+    
+    // Use semantic ID based on the label instead of timestamp
+    const semanticId = generateSemanticColumnId(newColumnLabel);
+    
     const newColumn = {
-      id: `col_${Date.now()}`,
+      id: semanticId,
       label: newColumnLabel.trim(),
       type: newColumnType,
     };

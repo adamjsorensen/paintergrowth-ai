@@ -21,7 +21,7 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
   mode,
   onModeChange,
   visibleFieldCount = 0,
-  totalFieldCount = 0,
+  totalFieldCount,
   projectType,
   onReopenModal
 }) => {
@@ -49,7 +49,7 @@ const ProposalFormHeader: React.FC<ProposalFormHeaderProps> = ({
       
       <CardDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm text-muted-foreground">
         <span>Complete the fields below to customize your proposal</span>
-        {visibleFieldCount > 0 && totalFieldCount > 0 && (
+        {visibleFieldCount > 0 && totalFieldCount && totalFieldCount > 0 && (
           <span className="mt-1 sm:mt-0">
             Showing {visibleFieldCount} of {totalFieldCount} fields
           </span>

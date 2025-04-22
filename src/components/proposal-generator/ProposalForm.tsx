@@ -38,7 +38,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     handleFieldChange,
     handleSubmit,
     checkRequiredModalFields,
-    modalStepCompleted
+    modalStepCompleted,
+    hasAdvancedFields
   } = useProposalForm(fields, isGenerating, onGenerate);
   
   const visibleFields = getVisibleFields();
@@ -74,10 +75,10 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
       <ProposalFormHeader 
         templateName={templateName}
         projectType={projectType}
-        mode={formMode}
-        onModeChange={setFormMode}
+        mode={hasAdvancedFields() ? formMode : undefined}
+        onModeChange={hasAdvancedFields() ? setFormMode : undefined}
         visibleFieldCount={visibleFields.length}
-        totalFieldCount={fields.length}
+        totalFieldCount={hasAdvancedFields() ? fields.length : undefined}
         onReopenModal={hasModalFieldsValue ? openModal : undefined}
       />
       

@@ -40,7 +40,7 @@ const QuoteTableField = ({ field, value = [], onChange, isAdvanced }: QuoteTable
     
     // Notify parent component of changes
     onChange(items);
-  }, [items, onChange]);
+  }, [items]); // Removed onChange from dependencies to prevent infinite loop
 
   const handleAddRow = () => {
     const newItem: QuoteItem = { 
