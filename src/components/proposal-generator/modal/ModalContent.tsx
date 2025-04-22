@@ -51,7 +51,7 @@ const ModalContent = ({
     };
   }, [handleNext, handleBack]);
 
-  // Main structure: header, scrollable content, sticky footer in a full-height flex column.
+  // Full height flex column with fixed footer at the bottom
   return (
     <div className="flex flex-col h-full w-full">
       {/* HEADER */}
@@ -69,7 +69,7 @@ const ModalContent = ({
         )}
       </header>
 
-      {/* SCROLLABLE MAIN CONTENT */}
+      {/* SCROLLABLE MAIN CONTENT - Made to fill available space and scroll */}
       <main 
         className="flex-1 overflow-y-auto px-6 sm:px-8 pb-24"
         id="modal-scrollable-content"
@@ -94,8 +94,8 @@ const ModalContent = ({
         ))}
       </main>
       
-      {/* STICKY FOOTER - Changed from footer to div to match StylePreferencesDialog structure */}
-      <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 pb-6 border-t flex justify-between items-center z-10">
+      {/* ABSOLUTELY POSITIONED FOOTER - Changed from sticky to absolute positioning */}
+      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 pb-6 border-t flex justify-between items-center z-10">
         <Button 
           variant="outline" 
           onClick={handleBack}
