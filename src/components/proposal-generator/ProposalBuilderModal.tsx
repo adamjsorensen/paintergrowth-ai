@@ -159,10 +159,12 @@ const ProposalBuilderModal = ({
   const currentStepData = stepData[currentStep];
   const currentFields = currentStepData?.fields || [];
 
+  // Here, we structure modal content as a full-height flex column, header/main/footer.
+  // ModalContent is now responsible for setting flex-grow/overflow.
   const contentProps = { 
     className: isMobile 
-      ? "max-h-[90vh] max-w-[95vw] w-full overflow-y-auto py-6 px-4 flex flex-col"
-      : "max-h-[90vh] max-w-3xl w-full overflow-y-auto p-6 flex flex-col"
+      ? "flex flex-col h-[90vh] max-h-[90vh] max-w-[95vw] w-full py-0 px-0"
+      : "flex flex-col h-[90vh] max-h-[90vh] max-w-3xl w-full py-0 px-0"
   };
 
   return (
