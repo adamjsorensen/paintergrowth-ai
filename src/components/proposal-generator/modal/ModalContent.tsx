@@ -94,31 +94,29 @@ const ModalContent = ({
         ))}
       </main>
       
-      {/* STICKY FOOTER */}
-      <footer className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 pb-6 border-t z-10 mt-auto">
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="outline" 
-            onClick={handleBack}
-            disabled={currentStep === 0}
-            className="transition-all hover:shadow-sm"
-          >
-            Back
-          </Button>
-          <div className="text-xs text-muted-foreground flex items-center">
-            <kbd className="px-2 py-1 bg-muted rounded text-xs mr-1">Ctrl</kbd>
-            +
-            <kbd className="px-2 py-1 bg-muted rounded text-xs mx-1">Enter</kbd>
-            to continue
-          </div>
-          <Button 
-            onClick={handleNext}
-            className="bg-blue-600 hover:bg-blue-700 transition-all hover:shadow-md"
-          >
-            {getNextButtonText(currentStep)}
-          </Button>
+      {/* STICKY FOOTER - Changed from footer to div to match StylePreferencesDialog structure */}
+      <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 pb-6 border-t flex justify-between items-center z-10">
+        <Button 
+          variant="outline" 
+          onClick={handleBack}
+          disabled={currentStep === 0}
+          className="transition-all hover:shadow-sm"
+        >
+          Back
+        </Button>
+        <div className="text-xs text-muted-foreground flex items-center">
+          <kbd className="px-2 py-1 bg-muted rounded text-xs mr-1">Ctrl</kbd>
+          +
+          <kbd className="px-2 py-1 bg-muted rounded text-xs mx-1">Enter</kbd>
+          to continue
         </div>
-      </footer>
+        <Button 
+          onClick={handleNext}
+          className="bg-blue-600 hover:bg-blue-700 transition-all hover:shadow-md"
+        >
+          {getNextButtonText(currentStep)}
+        </Button>
+      </div>
     </div>
   );
 };
