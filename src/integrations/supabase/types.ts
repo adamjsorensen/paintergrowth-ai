@@ -42,6 +42,33 @@ export type Database = {
         }
         Relationships: []
       }
+      boilerplate_texts: {
+        Row: {
+          content: string
+          id: string
+          locale: string
+          type: Database["public"]["Enums"]["boilerplate_type"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          content: string
+          id?: string
+          locale: string
+          type: Database["public"]["Enums"]["boilerplate_type"]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          content?: string
+          id?: string
+          locale?: string
+          type?: Database["public"]["Enums"]["boilerplate_type"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       company_profiles: {
         Row: {
           brand_keywords: string[] | null
@@ -188,6 +215,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      placeholder_defaults: {
+        Row: {
+          default_value: string
+          placeholder: string
+        }
+        Insert: {
+          default_value: string
+          placeholder: string
+        }
+        Update: {
+          default_value?: string
+          placeholder?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -488,6 +530,7 @@ export type Database = {
       }
     }
     Enums: {
+      boilerplate_type: "terms_conditions" | "warranty" | "invoice_note"
       complexity_level: "basic" | "advanced"
       field_type:
         | "text"
@@ -632,6 +675,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      boilerplate_type: ["terms_conditions", "warranty", "invoice_note"],
       complexity_level: ["basic", "advanced"],
       field_type: [
         "text",

@@ -35,6 +35,12 @@ const AdminHub = () => {
       description: "Configure cover image for proposal PDFs",
       icon: <Image className="h-10 w-10 text-paintergrowth-600" />,
       link: "/admin/proposal-settings"
+    },
+    {
+      title: "Boilerplate Manager",
+      description: "Manage proposal boilerplate content and placeholders",
+      icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
+      link: "/admin/boilerplate"
     }
   ];
 

@@ -26,6 +26,7 @@ import DocumentManager from "./pages/admin/DocumentManager";
 import CompanyProfile from "./pages/profile/CompanyProfile";
 import PrintProposal from "./pages/PrintProposal";
 import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
+import BoilerplateManager from "./pages/admin/BoilerplateManager";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,11 @@ const App = () => (
               <Route path="/admin/proposal-settings" element={
                 <AdminRoute>
                   <ProposalPDFSettings />
+                </AdminRoute>
+              } />
+              <Route path="/admin/boilerplate" element={
+                <AdminRoute>
+                  <BoilerplateManager />
                 </AdminRoute>
               } />
               
