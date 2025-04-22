@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import ModeToggle from "@/components/proposal-generator/ModeToggle";
 import { Button } from "@/components/ui/button";
@@ -73,25 +72,20 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     }
   }, [hasSetPreferences]);
 
-  // Boilerplate inclusion toggles
   const [includeBoilerplate, setIncludeBoilerplate] = useState(false);
   const [includeTerms, setIncludeTerms] = useState(true);
   const [includeWarranty, setIncludeWarranty] = useState(true);
 
-  // Update field values when toggles change
   useEffect(() => {
     handleFieldChange('includeBoilerplate', includeBoilerplate);
     handleFieldChange('includeTerms', includeTerms);
     handleFieldChange('includeWarranty', includeWarranty);
-    // Set locale to en-US by default
     handleFieldChange('locale', 'en-US');
-    // eslint-disable-next-line
   }, [includeBoilerplate, includeTerms, includeWarranty]);
 
-  // --- NEW: Separate modal completion handler
-  const handleModalComplete = () => {
-    // Just save modal progress and close modal, do not submit form.
+  const handleModalComplete = async (): Promise<void> => {
     setIsModalOpen(false);
+    return Promise.resolve();
   };
 
   return (
@@ -113,7 +107,6 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           onValueChange={handleFieldChange}
         />
         
-        {/* Boilerplate inclusion options */}
         <div className="mt-6 border-t border-gray-200 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -199,7 +192,6 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           fields={fields}
           values={fieldValues}
           onValueChange={handleFieldChange}
-          // --- KEY CHANGE: Use the new handler here!
           onSubmit={handleModalComplete}
           checkRequiredFields={checkRequiredModalFields}
           stepCompleted={modalStepCompleted}
