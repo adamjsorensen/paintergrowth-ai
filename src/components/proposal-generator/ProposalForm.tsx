@@ -13,6 +13,8 @@ import { useGroupedPromptFields, hasModalFields } from "@/hooks/prompt-fields/us
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import ProposalBoilerplateToggles from "@/components/proposal-generator/ProposalBoilerplateToggles";
+import ProposalFormActions from "@/components/proposal-generator/ProposalFormActions";
 
 interface ProposalFormProps {
   fields: FieldConfig[];
@@ -107,82 +109,22 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           onValueChange={handleFieldChange}
         />
         
-        <div className="mt-6 border-t border-gray-200 pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <FileText className="h-4 w-4 text-gray-500" />
-              <h3 className="text-sm font-medium">Include Standard Content</h3>
-            </div>
-            <Switch
-              checked={includeBoilerplate}
-              onCheckedChange={setIncludeBoilerplate}
-              id="include-boilerplate"
-            />
-          </div>
-          
-          {includeBoilerplate && (
-            <div className="mt-4 pl-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="include-terms" className="text-sm">Terms & Conditions</Label>
-                <Switch
-                  checked={includeTerms}
-                  onCheckedChange={setIncludeTerms}
-                  id="include-terms"
-                  disabled={!includeBoilerplate}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="include-warranty" className="text-sm">Warranty Information</Label>
-                <Switch
-                  checked={includeWarranty}
-                  onCheckedChange={setIncludeWarranty}
-                  id="include-warranty"
-                  disabled={!includeBoilerplate}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-8 border-t pt-6 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
-          {hasModalFieldsValue ? (
-            <Button 
-              onClick={openModal}
-              className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
-              variant="outline"
-              size="lg"
-            >
-              <Settings2 className="h-4 w-4" />
-              <span>Style & Scope Options</span>
-            </Button>
-          ) : <div className="sm:mr-auto" />}
-          
-          <Button
-            onClick={submitForm}
-            disabled={isGenerating}
-            size="lg"
-            className={cn(
-              "w-full sm:w-auto px-8 transition-all duration-300",
-              "bg-blue-600 hover:bg-blue-700 text-white", 
-              "shadow-md hover:shadow-lg",
-              "flex items-center justify-center gap-2",
-              "min-w-[200px]"
-            )}
-          >
-            {isGenerating ? (
-              <>
-                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Generating...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4" />
-                <span>Generate Proposal</span>
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </>
-            )}
-          </Button>
-        </div>
+        <ProposalBoilerplateToggles
+          includeBoilerplate={includeBoilerplate}
+          setIncludeBoilerplate={setIncludeBoilerplate}
+          includeTerms={includeTerms}
+          setIncludeTerms={setIncludeTerms}
+          includeWarranty={includeWarranty}
+          setIncludeWarranty={setIncludeWarranty}
+        />
+
+        <ProposalFormActions
+          hasModalFields={hasModalFieldsValue}
+          isModalOpen={isModalOpen}
+          openModal={openModal}
+          submitForm={submitForm}
+          isGenerating={isGenerating}
+        />
       </div>
       
       {hasModalFieldsValue && (
