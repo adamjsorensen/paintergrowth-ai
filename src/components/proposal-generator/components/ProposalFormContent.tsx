@@ -64,7 +64,7 @@ const ProposalFormContent = ({
                   {sectionFields.map((field) => (
                     <div 
                       key={field.id} 
-                      className={field.type === 'scope-of-work' ? 'md:col-span-2' : ''}
+                      className={['scope-of-work', 'quote-table', 'upsell-table', 'matrix-selector'].includes(field.type) ? 'md:col-span-2' : ''}
                     >
                       <FormFieldRenderer
                         field={field}
@@ -107,7 +107,7 @@ const ProposalFormContent = ({
                   {sectionFields.map((field) => (
                     <div 
                       key={field.id} 
-                      className={field.type === 'scope-of-work' ? 'md:col-span-2' : ''}
+                      className={['scope-of-work', 'quote-table', 'upsell-table', 'matrix-selector'].includes(field.type) ? 'md:col-span-2' : ''}
                     >
                       <FormFieldRenderer
                         field={field}
