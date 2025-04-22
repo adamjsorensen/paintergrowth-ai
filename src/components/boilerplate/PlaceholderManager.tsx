@@ -150,7 +150,7 @@ export function PlaceholderManager() {
               <TableBody>
                 {Object.entries(placeholderDefaults).map(([placeholder, defaultValue]) => (
                   <TableRow key={placeholder}>
-                    <TableCell className="font-medium">{{'{{'}{placeholder}{'}}'}}}</TableCell>
+                    <TableCell className="font-medium">{`{{${placeholder}}}`}</TableCell>
                     <TableCell>
                       <Input
                         defaultValue={defaultValue}
