@@ -71,7 +71,7 @@ const ModalContent = ({
 
       {/* SCROLLABLE MAIN CONTENT */}
       <main 
-        className="flex-1 overflow-y-auto px-6 sm:px-8 pb-6"
+        className="flex-1 overflow-y-auto px-6 sm:px-8 pb-24"
         id="modal-scrollable-content"
       >
         {currentFields.map((field, index) => (
@@ -95,8 +95,8 @@ const ModalContent = ({
       </main>
       
       {/* STICKY FOOTER */}
-      <footer className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 border-t z-10">
-        <div className="flex justify-between items-center pb-6">
+      <footer className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 pb-6 border-t z-10 mt-auto">
+        <div className="flex justify-between items-center">
           <Button 
             variant="outline" 
             onClick={handleBack}

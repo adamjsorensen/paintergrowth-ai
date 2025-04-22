@@ -65,8 +65,8 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
         />
 
         {/* Make the content area scrollable with flex-1 and overflow-y-auto */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col space-y-8 pb-20">
+        <div className="flex-1 overflow-y-auto pb-24">
+          <div className="flex flex-col space-y-8">
             {/* Group 1: Job Type */}
             <div className="space-y-5">
               <PreferencesSectionHeading title="Job Type" />
