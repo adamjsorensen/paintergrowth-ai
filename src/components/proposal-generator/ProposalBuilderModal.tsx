@@ -92,10 +92,13 @@ const ProposalBuilderModal = ({
       // Save progress when advancing steps
       sessionStorage.setItem('proposalModalStep', nextStep.toString());
     } else {
-      // Last step completed, submit form
+      // Last step completed, just finish the modal
       setHasUnsavedChanges(false);
       sessionStorage.removeItem('proposalModalStep'); // Clear on completion
-      await onSubmit();
+      if (onSubmit) {
+        await onSubmit(); // Save modal state but DO NOT submit main form
+      }
+      // Only close self
       onClose();
     }
   };

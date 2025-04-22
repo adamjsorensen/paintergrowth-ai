@@ -32,7 +32,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const groupedFields = useGroupedPromptFields(fields);
-  
+
   const {
     fieldValues,
     formMode,
@@ -44,29 +44,29 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     modalStepCompleted,
     hasAdvancedFields
   } = useProposalForm(fields, isGenerating, onGenerate);
-  
+
   const visibleFields = getVisibleFields();
-  
+
   const projectFields = visibleFields.filter(
     field => !field.modalStep || field.modalStep === 'main'
   );
-  
+
   const hasModalFieldsValue = hasModalFields(groupedFields);
-  
+
   const submitForm = async () => {
     await handleSubmit();
   };
-  
+
   const openModal = () => {
     setIsModalOpen(true);
   };
-  
+
   const closeModal = () => {
     setIsModalOpen(false);
   };
-  
+
   const { hasSetPreferences } = useStylePreferences();
-  
+
   useEffect(() => {
     if (hasSetPreferences) {
       setIsModalOpen(true);
@@ -77,7 +77,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   const [includeBoilerplate, setIncludeBoilerplate] = useState(false);
   const [includeTerms, setIncludeTerms] = useState(true);
   const [includeWarranty, setIncludeWarranty] = useState(true);
-  
+
   // Update field values when toggles change
   useEffect(() => {
     handleFieldChange('includeBoilerplate', includeBoilerplate);
@@ -85,8 +85,15 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     handleFieldChange('includeWarranty', includeWarranty);
     // Set locale to en-US by default
     handleFieldChange('locale', 'en-US');
+    // eslint-disable-next-line
   }, [includeBoilerplate, includeTerms, includeWarranty]);
-  
+
+  // --- NEW: Separate modal completion handler
+  const handleModalComplete = () => {
+    // Just save modal progress and close modal, do not submit form.
+    setIsModalOpen(false);
+  };
+
   return (
     <Card className="border border-gray-200 shadow-md rounded-xl overflow-hidden">
       <ProposalFormHeader 
@@ -192,7 +199,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           fields={fields}
           values={fieldValues}
           onValueChange={handleFieldChange}
-          onSubmit={handleSubmit}
+          // --- KEY CHANGE: Use the new handler here!
+          onSubmit={handleModalComplete}
           checkRequiredFields={checkRequiredModalFields}
           stepCompleted={modalStepCompleted}
         />
