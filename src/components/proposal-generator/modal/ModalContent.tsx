@@ -53,7 +53,7 @@ const ModalContent = ({
 
   // Main structure: header, scrollable content, sticky footer in a full-height flex column.
   return (
-    <div className="flex flex-col min-h-0 flex-1 h-full w-full">
+    <div className="flex flex-col h-full w-full">
       {/* HEADER */}
       <header className="pt-6 px-6 sm:px-8 flex-shrink-0">
         <SheetHeader className="mb-6">
@@ -72,10 +72,6 @@ const ModalContent = ({
       {/* SCROLLABLE MAIN CONTENT */}
       <main 
         className="flex-1 overflow-y-auto px-6 sm:px-8 pb-6"
-        style={{
-          // Ensures main content grows and scrolls; footer remains in view
-          minHeight: 0,
-        }}
         id="modal-scrollable-content"
       >
         {currentFields.map((field, index) => (
@@ -99,8 +95,8 @@ const ModalContent = ({
       </main>
       
       {/* STICKY FOOTER */}
-      <footer className="flex-shrink-0 border-t bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8">
-        <div className="flex justify-between items-center">
+      <footer className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-6 px-6 sm:px-8 border-t z-10">
+        <div className="flex justify-between items-center pb-6">
           <Button 
             variant="outline" 
             onClick={handleBack}

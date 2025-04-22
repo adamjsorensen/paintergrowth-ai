@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 import { useNavigate } from "react-router-dom";
@@ -55,7 +56,7 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-lg h-[90vh] overflow-y-auto px-4 md:px-6 pt-6 pb-0">
+      <DialogContent className="w-full max-w-lg h-[90vh] flex flex-col overflow-hidden px-4 md:px-6 pt-6 pb-0">
         <DialogTitle className="sr-only">Style Preferences</DialogTitle>
         
         <PreferencesDialogHeader 
@@ -63,40 +64,44 @@ const StylePreferencesDialog = ({ open, onOpenChange }: StylePreferencesDialogPr
           subtitle="Pick style preferences—or skip straight to the job info."
         />
 
-        <div className="flex flex-col space-y-8 pb-20">
-          {/* Group 1: Job Type */}
-          <div className="space-y-5">
-            <PreferencesSectionHeading title="Job Type" />
+        {/* Make the content area scrollable with flex-1 and overflow-y-auto */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col space-y-8 pb-20">
+            {/* Group 1: Job Type */}
+            <div className="space-y-5">
+              <PreferencesSectionHeading title="Job Type" />
+              
+              <div className="flex justify-center py-2">
+                <InteriorExteriorToggle 
+                  value={preferences.jobType}
+                  onChange={handleJobTypeChange} 
+                />
+              </div>
+            </div>
             
-            <div className="flex justify-center py-2">
-              <InteriorExteriorToggle 
-                value={preferences.jobType}
-                onChange={handleJobTypeChange} 
+            {/* Group 2: Style */}
+            <div className="space-y-5">
+              <PreferencesSectionHeading title="Style" />
+              
+              <TonePreference 
+                value={preferences.tone} 
+                onChange={handleToneChange} 
+              />
+            </div>
+
+            {/* Group 3: Length */}
+            <div className="space-y-5">
+              <PreferencesSectionHeading title="Format" />
+              
+              <LengthPreference 
+                value={preferences.length} 
+                onChange={handleLengthChange} 
               />
             </div>
           </div>
-          
-          {/* Group 2: Style */}
-          <div className="space-y-5">
-            <PreferencesSectionHeading title="Style" />
-            
-            <TonePreference 
-              value={preferences.tone} 
-              onChange={handleToneChange} 
-            />
-          </div>
-
-          {/* Group 3: Length */}
-          <div className="space-y-5">
-            <PreferencesSectionHeading title="Format" />
-            
-            <LengthPreference 
-              value={preferences.length} 
-              onChange={handleLengthChange} 
-            />
-          </div>
         </div>
 
+        {/* Footer will be positioned at the bottom of the modal */}
         <PreferencesFooter
           onSkip={handleSkip}
           onContinue={handleContinue}

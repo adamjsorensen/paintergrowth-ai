@@ -16,7 +16,7 @@ const PreferencesFooter = ({
   showBackButton = false
 }: PreferencesFooterProps) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex justify-between items-center shadow-lg">
+    <div className="sticky bottom-0 left-0 right-0 mt-auto p-4 bg-white border-t flex justify-between items-center shadow-lg z-10">
       <Button variant="ghost" onClick={onSkip}>
         Skip
       </Button>
