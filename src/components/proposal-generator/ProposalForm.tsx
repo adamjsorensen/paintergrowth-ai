@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import ProposalBoilerplateToggles from "@/components/proposal-generator/ProposalBoilerplateToggles";
 import ProposalFormActions from "@/components/proposal-generator/ProposalFormActions";
+import { sections } from "@/components/proposal-generator/constants/formSections";
 
 interface ProposalFormProps {
   fields: FieldConfig[];
