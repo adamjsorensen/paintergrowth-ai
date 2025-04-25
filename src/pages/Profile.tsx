@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ProfileCompanyLink from "@/components/ProfileCompanyLink";
+import AvatarUpload from "@/components/AvatarUpload";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -70,7 +71,6 @@ const Profile = () => {
       const updates = {
         id: user.id,
         full_name: fullName,
-        avatar_url: avatarUrl,
         business_name: businessName,
         location: location,
         updated_at: new Date().toISOString(),
@@ -130,7 +130,13 @@ const Profile = () => {
                 <div className="text-sm">{businessName && `${businessName}${location ? `, ${location}` : ""}`}</div>
               </div>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
+
+            <AvatarUpload 
+              currentAvatar={avatarUrl} 
+              onAvatarUpdated={(url) => setAvatarUrl(url || "")} 
+            />
+
+            <form onSubmit={handleSubmit} className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
@@ -142,18 +148,6 @@ const Profile = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="avatar">Avatar URL</Label>
-                  <Input
-                    id="avatar"
-                    value={avatarUrl || ""}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://example.com/avatar.png"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name</Label>
                   <Input
                     id="businessName"
@@ -162,6 +156,9 @@ const Profile = () => {
                     placeholder="Enter your business name"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
                   <Input
@@ -171,6 +168,7 @@ const Profile = () => {
                     placeholder="City, State"
                   />
                 </div>
+                <div />
               </div>
 
               <Button type="submit" disabled={loading}>
@@ -180,7 +178,6 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Company Profile Link */}
         <ProfileCompanyLink />
       </div>
     </PageLayout>
