@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentAvatar);
+  const [localFile, setLocalFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0] || !user?.id) return;
@@ -43,18 +45,27 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
       return;
     }
 
+    // Create local preview
+    const previewUrl = URL.createObjectURL(file);
+    setPreview(previewUrl);
+    setLocalFile(file);
+  };
+
+  const handleUpload = async () => {
+    if (!localFile || !user?.id) return;
+
     try {
       setUploading(true);
       
       // Create a unique file path using the user ID
-      const fileExt = file.name.split('.').pop();
+      const fileExt = localFile.name.split('.').pop();
       const fileName = `${user.id}-avatar.${fileExt}`;
       const filePath = `${fileName}`;
       
       // Upload the file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
+        .upload(filePath, localFile, {
           cacheControl: '3600',
           upsert: true
         });
@@ -68,9 +79,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
         .from('avatars')
         .getPublicUrl(filePath);
         
-      // Update preview
-      setPreview(publicUrl);
-      
       // Update profile in users table
       const { error: profileUpdateError } = await supabase
         .from('profiles')
@@ -88,6 +96,11 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
         title: "Avatar uploaded",
         description: "Your profile picture has been updated",
       });
+
+      // Clean up local preview
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
       toast({
@@ -97,56 +110,24 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
       });
     } finally {
       setUploading(false);
+      setLocalFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const handleRemoveAvatar = async () => {
-    if (!preview || !user?.id) return;
+  const handleCancel = () => {
+    // Clean up local preview
+    if (preview && preview !== currentAvatar) {
+      URL.revokeObjectURL(preview);
+    }
     
-    try {
-      setUploading(true);
-      
-      // Extract the filename from the URL
-      const fileName = preview.split('/').pop();
-      
-      if (fileName) {
-        // Remove file from storage
-        const { error: storageError } = await supabase.storage
-          .from('avatars')
-          .remove([fileName]);
-          
-        if (storageError) throw storageError;
-      }
-      
-      // Clear avatar in profiles table
-      const { error: profileUpdateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: null })
-        .eq('id', user.id);
-
-      if (profileUpdateError) {
-        throw profileUpdateError;
-      }
-      
-      // Clear the preview
-      setPreview(null);
-      
-      // Notify parent component
-      onAvatarUpdated(null);
-      
-      toast({
-        title: "Avatar removed",
-        description: "Your profile picture has been removed",
-      });
-    } catch (error: any) {
-      console.error('Error removing avatar:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to remove the avatar",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
+    // Reset to current avatar
+    setPreview(currentAvatar);
+    setLocalFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -173,7 +154,7 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
           <Button
             type="button"
             variant="outline"
-            onClick={() => document.getElementById('avatar-upload')?.click()}
+            onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             className="flex items-center gap-2"
           >
@@ -181,20 +162,31 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
             {preview ? 'Change Picture' : 'Upload Picture'}
           </Button>
           
-          {preview && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleRemoveAvatar}
-              disabled={uploading}
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" />
-              Remove
-            </Button>
+          {localFile && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleUpload}
+                disabled={uploading}
+                className="flex items-center gap-2"
+              >
+                Confirm Upload
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={uploading}
+                className="flex items-center gap-2"
+              >
+                Cancel
+              </Button>
+            </>
           )}
           
           <input
+            ref={fileInputRef}
             id="avatar-upload"
             type="file"
             accept="image/png, image/jpeg, image/jpg"
@@ -213,3 +205,4 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
 };
 
 export default AvatarUpload;
+
