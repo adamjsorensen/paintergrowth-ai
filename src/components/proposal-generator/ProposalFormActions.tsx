@@ -10,6 +10,9 @@ interface ProposalFormActionsProps {
   openModal: () => void;
   submitForm: () => void;
   isGenerating: boolean;
+  currentTab: string;
+  onNext: () => void;
+  isLastTab: boolean;
 }
 
 const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
@@ -17,7 +20,18 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
   openModal,
   submitForm,
   isGenerating,
+  currentTab,
+  onNext,
+  isLastTab,
 }) => {
+  const handleMainButtonClick = () => {
+    if (isLastTab) {
+      submitForm();
+    } else {
+      onNext();
+    }
+  };
+
   return (
     <div className="mt-8 border-t pt-6 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
       {hasModalFields ? (
@@ -33,7 +47,7 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
       ) : <div className="sm:mr-auto" />}
 
       <Button
-        onClick={submitForm}
+        onClick={handleMainButtonClick}
         disabled={isGenerating}
         size="lg"
         className={cn(
@@ -49,11 +63,16 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
             <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             <span>Generating...</span>
           </>
-        ) : (
+        ) : isLastTab ? (
           <>
             <Sparkles className="h-4 w-4" />
             <span>Generate Proposal</span>
             <ChevronRight className="h-4 w-4 ml-1" />
+          </>
+        ) : (
+          <>
+            <span>Next</span>
+            <ChevronRight className="h-4 w-4" />
           </>
         )}
       </Button>

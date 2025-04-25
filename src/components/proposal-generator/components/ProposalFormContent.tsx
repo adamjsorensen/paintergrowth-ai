@@ -10,12 +10,16 @@ interface ProposalFormContentProps {
   fields: FieldConfig[];
   values: Record<string, any>;
   onValueChange: (field: string, value: any) => void;
+  currentTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 const ProposalFormContent = ({
   fields,
   values,
   onValueChange,
+  currentTab,
+  onTabChange,
 }: ProposalFormContentProps) => {
   // Group fields by section
   const groupedFields = useMemo(() => {
@@ -25,7 +29,6 @@ const ProposalFormContent = ({
       grouped[section.id] = [];
     });
     
-    // Add fields to their respective sections
     fields.forEach((field) => {
       const sectionId = field.sectionId || 'meta';
       if (!grouped[sectionId]) {
@@ -37,13 +40,14 @@ const ProposalFormContent = ({
     return grouped;
   }, [fields]);
   
-  // Count the number of sections with fields
   const visibleSectionCount = useMemo(() => {
     return sections.filter(section => 
       groupedFields[section.id] && 
       groupedFields[section.id].length > 0
     ).length;
   }, [groupedFields]);
+
+  const defaultTab = sections[0]?.id;
   
   return (
     <>
@@ -80,8 +84,11 @@ const ProposalFormContent = ({
           })}
         </div>
       ) : (
-        // If there are multiple sections, show tabs
-        <Tabs defaultValue={sections[0]?.id} className="w-full">
+        <Tabs 
+          value={currentTab || defaultTab} 
+          onValueChange={onTabChange}
+          className="w-full"
+        >
           <TabsList className="mb-6 grid w-full" style={{ 
             gridTemplateColumns: `repeat(${visibleSectionCount}, minmax(0, 1fr))` 
           }}>

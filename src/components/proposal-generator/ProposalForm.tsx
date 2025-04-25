@@ -90,6 +90,27 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     return Promise.resolve();
   };
 
+  const [currentTab, setCurrentTab] = useState(() => {
+    const firstSection = sections.find(section => 
+      fields.some(field => field.sectionId === section.id)
+    );
+    return firstSection?.id || sections[0]?.id;
+  });
+
+  const visibleSections = sections.filter(section =>
+    fields.some(field => field.sectionId === section.id)
+  );
+
+  const currentTabIndex = visibleSections.findIndex(section => section.id === currentTab);
+  const isLastTab = currentTabIndex === visibleSections.length - 1;
+
+  const handleNext = () => {
+    const nextSection = visibleSections[currentTabIndex + 1];
+    if (nextSection) {
+      setCurrentTab(nextSection.id);
+    }
+  };
+
   return (
     <Card className="border border-gray-200 shadow-md rounded-xl overflow-hidden">
       <ProposalFormHeader 
@@ -107,6 +128,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           fields={projectFields}
           values={fieldValues}
           onValueChange={handleFieldChange}
+          currentTab={currentTab}
+          onTabChange={setCurrentTab}
         />
         
         <ProposalBoilerplateToggles
@@ -124,6 +147,9 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           openModal={openModal}
           submitForm={submitForm}
           isGenerating={isGenerating}
+          currentTab={currentTab}
+          onNext={handleNext}
+          isLastTab={isLastTab}
         />
       </div>
       
