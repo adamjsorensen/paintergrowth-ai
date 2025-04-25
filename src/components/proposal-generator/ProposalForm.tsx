@@ -112,6 +112,15 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     }
   };
 
+  const handlePrevious = () => {
+    const prevSection = visibleSections[currentTabIndex - 1];
+    if (prevSection) {
+      setCurrentTab(prevSection.id);
+    }
+  };
+
+  const isFirstTab = currentTabIndex === 0;
+
   return (
     <Card className="border border-gray-200 shadow-md rounded-xl overflow-hidden">
       <ProposalFormHeader 
@@ -150,7 +159,9 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           isGenerating={isGenerating}
           currentTab={currentTab}
           onNext={handleNext}
+          onPrevious={handlePrevious}
           isLastTab={isLastTab}
+          isFirstTab={isFirstTab}
         />
       </div>
       

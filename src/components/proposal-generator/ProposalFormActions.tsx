@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Sparkles, ChevronRight, Settings2 } from "lucide-react";
+import { Sparkles, ChevronRight, ChevronLeft, Settings2 } from "lucide-react";
 
 interface ProposalFormActionsProps {
   hasModalFields: boolean;
@@ -12,7 +12,9 @@ interface ProposalFormActionsProps {
   isGenerating: boolean;
   currentTab: string;
   onNext: () => void;
+  onPrevious: () => void;
   isLastTab: boolean;
+  isFirstTab: boolean;
 }
 
 const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
@@ -20,9 +22,10 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
   openModal,
   submitForm,
   isGenerating,
-  currentTab,
   onNext,
+  onPrevious,
   isLastTab,
+  isFirstTab,
 }) => {
   const handleMainButtonClick = () => {
     if (isLastTab) {
@@ -34,7 +37,7 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
 
   return (
     <div className="mt-8 border-t pt-6 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
-      {hasModalFields ? (
+      {isFirstTab && hasModalFields ? (
         <Button 
           onClick={openModal}
           className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
@@ -43,6 +46,16 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
         >
           <Settings2 className="h-4 w-4" />
           <span>Style & Scope Options</span>
+        </Button>
+      ) : !isFirstTab ? (
+        <Button
+          onClick={onPrevious}
+          variant="outline"
+          size="lg"
+          className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Back</span>
         </Button>
       ) : <div className="sm:mr-auto" />}
 
