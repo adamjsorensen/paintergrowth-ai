@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
 
     const file = e.target.files[0];
     
-    // Validate file type
     if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
       toast({
         title: "Invalid file type",
@@ -35,7 +33,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
       return;
     }
     
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -45,7 +42,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
       return;
     }
 
-    // Create local preview
     const previewUrl = URL.createObjectURL(file);
     setPreview(previewUrl);
     setLocalFile(file);
@@ -57,12 +53,9 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
     try {
       setUploading(true);
       
-      // Create a unique file path using the user ID
       const fileExt = localFile.name.split('.').pop();
-      const fileName = `${user.id}-avatar.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
       
-      // Upload the file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, localFile, {
@@ -74,12 +67,10 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
         throw uploadError;
       }
       
-      // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
         
-      // Update profile in users table
       const { error: profileUpdateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -89,7 +80,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
         throw profileUpdateError;
       }
       
-      // Notify parent component
       onAvatarUpdated(publicUrl);
       
       toast({
@@ -97,8 +87,7 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
         description: "Your profile picture has been updated",
       });
 
-      // Clean up local preview
-      if (preview) {
+      if (preview && preview !== currentAvatar) {
         URL.revokeObjectURL(preview);
       }
     } catch (error: any) {
@@ -118,12 +107,10 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
   };
 
   const handleCancel = () => {
-    // Clean up local preview
     if (preview && preview !== currentAvatar) {
       URL.revokeObjectURL(preview);
     }
     
-    // Reset to current avatar
     setPreview(currentAvatar);
     setLocalFile(null);
     if (fileInputRef.current) {
@@ -136,7 +123,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
       <Label htmlFor="avatar">Profile Picture</Label>
       
       <div className="border rounded-lg p-4 space-y-4">
-        {/* Avatar preview */}
         {preview && (
           <div className="flex flex-col items-center space-y-2">
             <div className="bg-gray-50 p-4 rounded border w-full max-w-xs flex justify-center items-center h-[200px]">
@@ -149,7 +135,6 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
           </div>
         )}
         
-        {/* Upload controls */}
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -205,4 +190,3 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdated }: AvatarUploadProps) => 
 };
 
 export default AvatarUpload;
-
