@@ -31,6 +31,7 @@ const Navbar = () => {
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,6 +75,33 @@ const Navbar = () => {
     checkAdminStatus();
   }, [user]);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+        
+        if (data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -113,11 +141,9 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
             <>
-              {/* App Navigation for Authenticated Users */}
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
@@ -130,7 +156,7 @@ const Navbar = () => {
                       Saved Proposals
                     </Link>
                   </NavigationMenuItem>
-                  </NavigationMenuList>
+                </NavigationMenuList>
               </NavigationMenu>
               
               {isAdmin && (
@@ -159,14 +185,13 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}   
+              )}
               
-              {/* User Profile Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 pl-2 pr-3 hover:bg-accent">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.user_metadata?.avatar_url} />
+                      <AvatarImage src={avatarUrl} />
                       <AvatarFallback>{getInitials()}</AvatarFallback>
                     </Avatar>
                     <ChevronDown className="h-4 w-4" />
@@ -189,7 +214,6 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              {/* Marketing Navigation for Non-Authenticated Users */}
               <a href="#features" className="text-gray-600 hover:text-paintergrowth-600 transition-colors">
                 Features
               </a>
@@ -209,7 +233,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Navigation */}
         <div className="md:hidden">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -223,7 +246,7 @@ const Navbar = () => {
                   <>
                     <div className="flex items-center mb-6">
                       <Avatar className="h-10 w-10 mr-3">
-                        <AvatarImage src={user.user_metadata?.avatar_url} />
+                        <AvatarImage src={avatarUrl} />
                         <AvatarFallback>{getInitials()}</AvatarFallback>
                       </Avatar>
                       <div>
