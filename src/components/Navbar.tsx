@@ -1,106 +1,37 @@
-import { Button } from "@/components/ui/button";
+
 import { useState, useEffect } from "react";
-import { useAuth } from "./AuthProvider";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthProvider";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle
+  NavigationMenuItem,
+  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, Menu, X } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { NavLogo } from "./navbar/NavLogo";
+import { AdminMenu } from "./navbar/AdminMenu";
+import { UserMenu } from "./navbar/UserMenu";
+import { MobileMenu } from "./navbar/MobileMenu";
+import { useNavProfile } from "@/hooks/useNavProfile";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { avatarUrl, isAdmin, getInitials } = useNavProfile();
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 10);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", user.id)
-          .single();
-          
-        if (error) {
-          console.error("Error checking admin status:", error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data.is_admin);
-        }
-      } catch (error) {
-        console.error("Failed to check admin status:", error);
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching profile:', error);
-          return;
-        }
-        
-        if (data?.avatar_url) {
-          setAvatarUrl(data.avatar_url);
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-      }
-    };
-
-    fetchProfile();
-  }, [user]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -118,11 +49,6 @@ const Navbar = () => {
     }
   };
 
-  const getInitials = () => {
-    if (!user?.email) return "U";
-    return user.email.charAt(0).toUpperCase();
-  };
-
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -132,14 +58,7 @@ const Navbar = () => {
       }`}
     >
       <div className="container flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="bg-paintergrowth-600 h-8 w-8 rounded-md flex items-center justify-center">
-            <span className="text-white font-bold text-xl">P</span>
-          </div>
-          <Link to={user ? "/dashboard" : "/"} className="text-paintergrowth-800 font-bold text-xl">
-            Paintergrowth.ai
-          </Link>
-        </div>
+        <NavLogo isAuthenticated={!!user} />
 
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
@@ -159,58 +78,8 @@ const Navbar = () => {
                 </NavigationMenuList>
               </NavigationMenu>
               
-              {isAdmin && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 px-3">
-                      Admin
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="w-full">Admin Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/prompt-builder" className="w-full">Prompt Builder</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/ai-settings" className="w-full">AI Settings</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/vector-upload" className="w-full">Vector Upload</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/logs/activity" className="w-full">Activity Logs</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 pl-2 pr-3 hover:bg-accent">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={avatarUrl} />
-                      <AvatarFallback>{getInitials()}</AvatarFallback>
-                    </Avatar>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile/company" className="cursor-pointer">Company Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {isAdmin && <AdminMenu />}
+              <UserMenu avatarUrl={avatarUrl} getInitials={getInitials} />
             </>
           ) : (
             <>
@@ -234,141 +103,15 @@ const Navbar = () => {
         </div>
 
         <div className="md:hidden">
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10">
-                {sheetOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <div className="flex flex-col gap-4 pt-8">
-                {user ? (
-                  <>
-                    <div className="flex items-center mb-6">
-                      <Avatar className="h-10 w-10 mr-3">
-                        <AvatarImage src={avatarUrl} />
-                        <AvatarFallback>{getInitials()}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{user.email}</p>
-                      </div>
-                    </div>
-                    <Link 
-                      to="/generate" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Generate
-                    </Link>
-                    <Link 
-                      to="/saved" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Saved Proposals
-                    </Link>
-                    <Link 
-                      to="/profile" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Profile
-                    </Link>
-                    <Link 
-                      to="/profile/company" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Company Profile
-                    </Link>
-                    {isAdmin && (
-                      <>
-                        <div className="h-px bg-border my-2"></div>
-                        <p className="text-sm text-muted-foreground mb-2">Admin</p>
-                        <Link 
-                          to="/admin" 
-                          className="text-lg py-2 hover:text-paintergrowth-600"
-                          onClick={() => setSheetOpen(false)}
-                        >
-                          Admin Dashboard
-                        </Link>
-                        <Link 
-                          to="/admin/prompt-builder" 
-                          className="text-lg py-2 hover:text-paintergrowth-600"
-                          onClick={() => setSheetOpen(false)}
-                        >
-                          Prompt Builder
-                        </Link>
-                        <Link 
-                          to="/admin/ai-settings" 
-                          className="text-lg py-2 hover:text-paintergrowth-600"
-                          onClick={() => setSheetOpen(false)}
-                        >
-                          AI Settings
-                        </Link>
-                        <Link 
-                          to="/admin/vector-upload" 
-                          className="text-lg py-2 hover:text-paintergrowth-600"
-                          onClick={() => setSheetOpen(false)}
-                        >
-                          Vector Upload
-                        </Link>
-                        <Link 
-                          to="/admin/logs/activity" 
-                          className="text-lg py-2 hover:text-paintergrowth-600"
-                          onClick={() => setSheetOpen(false)}
-                        >
-                          Activity Logs
-                        </Link>
-                      </>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      className="justify-start p-0 text-lg py-2 hover:text-paintergrowth-600 hover:bg-transparent"
-                      onClick={() => {
-                        handleLogout();
-                        setSheetOpen(false);
-                      }}
-                    >
-                      Log out
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <a 
-                      href="#features" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Features
-                    </a>
-                    <a 
-                      href="#benefits" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Benefits
-                    </a>
-                    <a 
-                      href="#testimonials" 
-                      className="text-lg py-2 hover:text-paintergrowth-600"
-                      onClick={() => setSheetOpen(false)}
-                    >
-                      Testimonials
-                    </a>
-                    <Button 
-                      className="mt-4 w-full bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white"
-                      asChild
-                    >
-                      <Link to="/auth" onClick={() => setSheetOpen(false)}>
-                        Sign In
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
+          <MobileMenu
+            isAuthenticated={!!user}
+            isAdmin={isAdmin}
+            avatarUrl={avatarUrl}
+            getInitials={getInitials}
+            sheetOpen={sheetOpen}
+            setSheetOpen={setSheetOpen}
+            handleLogout={handleLogout}
+          />
         </div>
       </div>
     </nav>
