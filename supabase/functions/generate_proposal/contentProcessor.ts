@@ -1,6 +1,8 @@
-import { createSupabaseClient, fetchAISettings, updateProposalStatus, logGeneration } from "./utils.ts";
-import { callOpenRouterAPI } from "./api.ts";
-import { renderPrompt } from "./utils.ts";
+
+import { createSupabaseClient, fetchAISettings, updateProposalStatus, logGeneration, renderPrompt } from "./utils.ts";
+import { processApiCall } from "./apiProcessor.ts";
+import { processStylePreferences } from "./stylePreferences.ts";
+import { createLogEntry } from "./loggerUtils.ts";
 import { mergeWithBoilerplate } from "./boilerplateHandler.ts";
 
 export async function processProposalGeneration(
@@ -46,47 +48,29 @@ export async function processProposalGeneration(
       { role: "user",   content: bodyMsg }
     ];
 
-    // Get API key from environment
-    const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
-    if (!openRouterApiKey) {
-      console.error('OpenRouter API key not found');
-      await updateProposalStatus(supabase, proposalId, 'failed');
-      
-      // Log the failed generation attempt
-      await logGeneration(supabase, createLogEntry(user, promptId, proposalId, aiSettings, systemMsg, bodyMsg, values, 'failed'));
-      return { error: 'API key not configured' };
-    }
+    // Process API call and get response
+    const apiResult = await processApiCall(
+      supabase,
+      proposalId,
+      user,
+      promptId,
+      messages,
+      aiSettings,
+      systemMsg,
+      bodyMsg,
+      values
+    );
 
-    // Call OpenRouter API
-    let response;
-    try {
-      response = await callOpenRouterAPI(messages, openRouterApiKey, aiSettings);
-    } catch (apiError) {
-      console.error('OpenRouter API error:', apiError);
-      await updateProposalStatus(supabase, proposalId, 'failed');
-      
-      // Log the failed generation attempt
-      await logGeneration(supabase, createLogEntry(user, promptId, proposalId, aiSettings, systemMsg, bodyMsg, values, 'failed'));
-      return { error: 'Failed to generate proposal: API error' };
-    }
-
-    // Extract and save the generated text
-    const generatedText = response?.choices?.[0]?.message?.content;
-    if (!generatedText) {
-      console.error('No content in API response');
-      await updateProposalStatus(supabase, proposalId, 'failed');
-      
-      // Log the failed generation attempt
-      await logGeneration(supabase, createLogEntry(user, promptId, proposalId, aiSettings, systemMsg, bodyMsg, values, 'failed'));
-      return { error: 'Failed to generate proposal: Empty response' };
+    if ('error' in apiResult) {
+      return apiResult;
     }
 
     // Merge with boilerplate content if specified in values
-    let finalContent = generatedText;
+    let finalContent = apiResult.content;
     try {
       if (values.includeBoilerplate === true || values.includeBoilerplate === "true") {
         console.log("Merging with boilerplate content");
-        finalContent = await mergeWithBoilerplate(supabase, generatedText, values);
+        finalContent = await mergeWithBoilerplate(supabase, apiResult.content, values);
       }
     } catch (mergeError) {
       console.error("Error merging boilerplate:", mergeError);
@@ -108,7 +92,10 @@ export async function processProposalGeneration(
     }
 
     // Log the successful generation
-    await logGeneration(supabase, createLogEntry(user, promptId, proposalId, aiSettings, systemMsg, bodyMsg, values, 'success', finalContent));
+    await logGeneration(
+      supabase, 
+      createLogEntry(user, promptId, proposalId, aiSettings, systemMsg, bodyMsg, values, 'success', finalContent)
+    );
 
     return { success: true, content: finalContent };
   } catch (renderError) {
@@ -117,95 +104,4 @@ export async function processProposalGeneration(
     
     return { error: `Template rendering error: ${renderError.message}` };
   }
-}
-
-// Helper function to create log entry object
-function createLogEntry(
-  user: any,
-  promptId: string,
-  proposalId: string,
-  aiSettings: any,
-  systemPrompt: string,
-  finalPrompt: string,
-  userInput: any,
-  status: string,
-  aiResponse: string | null = null
-) {
-  return {
-    user_id: user.id,
-    user_email: user.email || 'unknown',
-    prompt_id: promptId,
-    proposal_id: proposalId,
-    model_used: aiSettings.model,
-    system_prompt: systemPrompt,
-    final_prompt: finalPrompt,
-    user_input: userInput,
-    status: status,
-    ai_response: aiResponse,
-    rag_context: null
-  };
-}
-
-// Moved from utils.ts to keep style preferences processing logic together
-export function processStylePreferences(stylePreferences: any) {
-  if (!stylePreferences) {
-    return {
-      lengthInstruction: "Use a standard length with balanced detail.",
-      toneInstruction: "Use a professional tone.",
-      additionalInstructions: ""
-    };
-  }
-
-  // Process length preference
-  let lengthInstruction = "";
-  switch(stylePreferences.length) {
-    case 0:
-      lengthInstruction = "Make the proposal very concise and focused only on essential points. Minimize paragraph length and eliminate all non-essential details.";
-      break;
-    case 25:
-      lengthInstruction = "Keep the proposal brief, including only key details and main points. Use short paragraphs and concise language.";
-      break;
-    case 50:
-      lengthInstruction = "Use a standard length with balanced detail. Include enough information to be thorough but avoid being overly verbose.";
-      break;
-    case 75:
-      lengthInstruction = "Create a detailed proposal with thorough explanations. Expand on important sections and provide more context where valuable.";
-      break;
-    case 100:
-      lengthInstruction = "Develop a comprehensive proposal with extensive detail and context. Elaborate thoroughly on all sections and provide detailed explanations throughout.";
-      break;
-    default:
-      lengthInstruction = "Use a standard length with balanced detail.";
-  }
-
-  // Process tone preference
-  let toneInstruction = "";
-  switch(stylePreferences.tone) {
-    case "friendly":
-      toneInstruction = "Use a friendly, approachable tone that builds rapport with the reader. Be conversational while maintaining professionalism.";
-      break;
-    case "professional":
-      toneInstruction = "Use a formal, business-oriented tone throughout the proposal. Maintain professional language and structure.";
-      break;
-    case "bold":
-      toneInstruction = "Use a confident, assertive tone that conveys expertise and certainty. Be direct and emphasize value propositions strongly.";
-      break;
-    case "chill":
-      toneInstruction = "Use a relaxed, casual approach while still being professional. Adopt a conversational style that feels approachable and low-pressure.";
-      break;
-    default:
-      toneInstruction = "Use a professional tone appropriate for business proposals.";
-  }
-
-  // Process additional options
-  let additionalInstructions = "";
-  if (stylePreferences.addUpsells) {
-    additionalInstructions += " Include suggestions for value-added services or premium options that could enhance the project.";
-  }
-
-  return {
-    lengthInstruction,
-    toneInstruction,
-    additionalInstructions
-  };
 }
