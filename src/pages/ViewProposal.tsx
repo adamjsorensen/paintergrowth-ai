@@ -154,6 +154,8 @@ const ViewProposal = () => {
           onOpenChange={setShowSaveDialog}
           proposalContent={proposal}
           clientName={metadata.clientName || ""}
+          clientPhone={metadata.clientPhone || ""}
+          clientEmail={metadata.clientEmail || ""}
           jobType={metadata.jobType || ""}
           existingId={id}
         />

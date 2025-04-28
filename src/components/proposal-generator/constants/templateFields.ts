@@ -15,6 +15,30 @@ export const ENHANCED_FIELDS: FieldConfig[] = [
     modalStep: 'main'
   },
   {
+    id: 'enhanced-client-email',
+    name: 'clientEmail',
+    label: 'Client Email',
+    type: 'text',
+    required: false,
+    order: 11,
+    placeholder: 'Enter client email',
+    complexity: 'basic',
+    sectionId: 'client',
+    modalStep: 'main'
+  },
+  {
+    id: 'enhanced-client-phone',
+    name: 'clientPhone',
+    label: 'Client Phone',
+    type: 'text',
+    required: false,
+    order: 12,
+    placeholder: 'Enter client phone number',
+    complexity: 'basic',
+    sectionId: 'client',
+    modalStep: 'main'
+  },
+  {
     id: 'enhanced-project-address',
     name: 'projectAddress',
     label: 'Project Address',

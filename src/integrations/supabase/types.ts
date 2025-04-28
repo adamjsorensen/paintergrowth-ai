@@ -377,7 +377,9 @@ export type Database = {
       }
       saved_proposals: {
         Row: {
+          client_email: string | null
           client_name: string | null
+          client_phone: string | null
           content: string
           created_at: string
           id: string
@@ -387,7 +389,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_email?: string | null
           client_name?: string | null
+          client_phone?: string | null
           content: string
           created_at?: string
           id?: string
@@ -397,7 +401,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_email?: string | null
           client_name?: string | null
+          client_phone?: string | null
           content?: string
           created_at?: string
           id?: string

@@ -7,6 +7,8 @@ interface ProposalData {
   content: string | null;
   metadata: {
     clientName?: string;
+    clientPhone?: string;
+    clientEmail?: string;
     jobType?: string;
     status?: string;
   };
@@ -17,6 +19,8 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
   const [loading, setLoading] = useState(true);
   const [metadata, setMetadata] = useState<{
     clientName?: string;
+    clientPhone?: string;
+    clientEmail?: string;
     jobType?: string;
     status?: string;
   }>({});
@@ -83,6 +87,8 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
             setProposal(data.content);
             setMetadata({
               clientName: data.client_name,
+              clientPhone: data.client_phone,
+              clientEmail: data.client_email,
               jobType: data.job_type,
               status: data.status
             });

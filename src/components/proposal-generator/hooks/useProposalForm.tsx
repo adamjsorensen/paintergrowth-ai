@@ -87,6 +87,8 @@ export const useProposalForm = (
             title: `${fieldValues['clientName'] || 'New'} Proposal (Draft)`,
             content: "",
             client_name: fieldValues['clientName'] as string || null,
+            client_phone: fieldValues['clientPhone'] as string || null,
+            client_email: fieldValues['clientEmail'] as string || null,
             job_type: fieldValues['jobType'] as string || null,
             status: "pending"
           });

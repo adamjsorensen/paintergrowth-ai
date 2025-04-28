@@ -21,6 +21,8 @@ type SaveProposalDialogProps = {
   onOpenChange: (open: boolean) => void;
   proposalContent: string;
   clientName: string;
+  clientPhone?: string;
+  clientEmail?: string;
   jobType: string;
   existingId?: string;
 };
@@ -30,6 +32,8 @@ const SaveProposalDialog = ({
   onOpenChange,
   proposalContent,
   clientName,
+  clientPhone,
+  clientEmail,
   jobType,
   existingId,
 }: SaveProposalDialogProps) => {
@@ -62,6 +66,8 @@ const SaveProposalDialog = ({
             title: proposalName,
             content: proposalContent,
             client_name: clientName,
+            client_phone: clientPhone,
+            client_email: clientEmail,
             job_type: jobType,
             status: "completed"
           })
@@ -75,6 +81,8 @@ const SaveProposalDialog = ({
             title: proposalName,
             content: proposalContent,
             client_name: clientName,
+            client_phone: clientPhone,
+            client_email: clientEmail,
             job_type: jobType,
             status: "completed"
           });

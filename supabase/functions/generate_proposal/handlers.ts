@@ -35,6 +35,23 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to update proposal status');
     }
 
+    // Additionally update client_phone and client_email if they exist in values
+    if (values.clientPhone || values.clientEmail) {
+      const updateData: Record<string, string> = {};
+      if (values.clientPhone) updateData.client_phone = values.clientPhone as string;
+      if (values.clientEmail) updateData.client_email = values.clientEmail as string;
+
+      const { error: clientDataError } = await supabase
+        .from('saved_proposals')
+        .update(updateData)
+        .eq('id', proposalId);
+
+      if (clientDataError) {
+        console.error('Failed to update client contact info:', clientDataError);
+        // Continue with generation as this is not critical
+      }
+    }
+
     // Fetch prompt template
     const { data: tpl, error: promptError } = await fetchPromptTemplate(supabase, promptId);
 

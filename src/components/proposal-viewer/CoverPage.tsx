@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface CoverPageProps {
@@ -89,9 +90,11 @@ const CoverPage: React.FC<CoverPageProps> = ({
       
       {/* Client Information */}
       <div className="mb-2">
-        <p className="mb-1"><strong>Client Name:</strong> {metadata.clientName || ""}<br></br>
+        <p className="mb-1">
+          <strong>Client Name:</strong> {metadata.clientName || ""}<br></br>
           <strong>Client Phone:</strong> {metadata.clientPhone || ""}<br></br>
-          <strong>Client Email:</strong> {metadata.clientEmail || ""}</p>
+          <strong>Client Email:</strong> {metadata.clientEmail || ""}
+        </p>
       </div>
     </div>
   );
