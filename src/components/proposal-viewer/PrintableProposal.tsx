@@ -1,9 +1,31 @@
-
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
 import { Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import CoverPage from './CoverPage';
+
+// --- Helper Functions ---
+const sanitizeFilename = (name: string): string => {
+  // Remove invalid characters (/\<>:"|?*) and replace multiple spaces/newlines with single space
+  const cleaned = name
+    .replace(/[<>:"/\\|?*]/g, '_') // Replace invalid chars with underscore
+    .replace(/\s+/g, ' ') // Collapse whitespace
+    .trim();
+  // Limit length to avoid issues (e.g., 200 chars)
+  return cleaned.substring(0, 200);
+};
+
+const generateFilename = (metadata: PrintableProposalProps['metadata']): string => {
+  const clientName = metadata.clientName || 'Client';
+  const clientAddress = metadata.clientAddress || 'Address';
+  // Format date as YYYY-MM-DD using 'en-CA' locale which is reliable for this format
+  const date = new Date().toLocaleDateString('en-CA');
+
+  const baseName = `${clientName} - ${clientAddress} - ${date}`;
+  // No need to add .pdf here, the browser's "Save as PDF" usually handles it.
+  return sanitizeFilename(baseName);
+};
+
 
 // Add print-specific styles
 const printStyles = `
@@ -11,28 +33,46 @@ const printStyles = `
     margin: 0.75in;
     size: 8.5in 11in;
   }
+  /* Ensure cover page takes a full page */
+  .print\\:page-break-after {
+    page-break-after: always;
+  }
+  /* Improve prose readability in print */
+  .print\\:prose-sm {
+    font-size: 10pt; /* Adjust as needed */
+    line-height: 1.5;
+  }
+  /* Hide print instructions */
+  .print\\:hidden {
+    display: none;
+  }
+  /* Ensure full width in print */
+  .print\\:max-w-none { max-width: none; }
+  .print\\:w-full { width: 100%; }
+  .print\\:mx-0 { margin-left: 0; margin-right: 0; }
+  .print\\:mt-4 { margin-top: 1rem; } /* Adjust top margin after cover page */
+  .print\\:mt-8 { margin-top: 2rem; } /* Adjust footer margin */
 `;
 
 interface PrintableProposalProps {
   proposal: string;
   metadata: {
     clientName?: string;
-    clientPhone?: string; // Added
-    clientEmail?: string; // Added
-    clientAddress?: string; // Added
-    preparedBy?: string; // Added
+    clientPhone?: string;
+    clientEmail?: string;
+    clientAddress?: string;
+    preparedBy?: string;
     jobType?: string;
     status?: string;
   };
   companyProfile?: {
-    business_name?: string; // Renamed from companyName
-    location?: string; // Renamed from companyAddress
-    services_offered?: string; // Renamed from companyServices
+    business_name?: string;
+    location?: string;
+    services_offered?: string;
     logo_url?: string;
     email?: string;
     phone?: string;
-    owner_name?: string; // Added (used by CoverPage)
-    // Removed warranty as it's not used in CoverPage
+    owner_name?: string;
   };
 }
 
@@ -43,30 +83,75 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
 }) => {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (window.opener) {
-      window.print();
-    }
-  }, []);
-
+  // Effect for fetching cover image
   useEffect(() => {
     const fetchCoverImage = async () => {
-      const { data } = await supabase
-        .from('proposal_pdf_settings')
-        .select('cover_image_url')
-        .single();
-      
-      setCoverImageUrl(data?.cover_image_url || null);
+      // Ensure Supabase client is initialized before using
+      if (!supabase) {
+        console.error("Supabase client not initialized.");
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('proposal_pdf_settings')
+          .select('cover_image_url')
+          .maybeSingle(); // Use maybeSingle to handle 0 or 1 row gracefully
+
+        if (error) {
+          console.error("Error fetching cover image:", error.message);
+        } else {
+          setCoverImageUrl(data?.cover_image_url || null);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching cover image:", err);
+      }
     };
 
     fetchCoverImage();
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  // Effect for printing and setting title
+  useEffect(() => {
+    const originalTitle = document.title; // Store original title
+
+    // Generate and set the new title for the print dialog filename
+    const filename = generateFilename(metadata);
+    document.title = filename;
+
+    // Function to restore title
+    const restoreTitle = () => {
+      document.title = originalTitle;
+    };
+
+    // Add listener for after printing (or cancelling)
+    window.addEventListener('afterprint', restoreTitle);
+
+    // Trigger print dialog only if opened via window.opener
+    // Use a small timeout to ensure title is set before print dialog opens
+    let printTimeoutId: NodeJS.Timeout | null = null;
+    if (window.opener) {
+       printTimeoutId = setTimeout(() => {
+         window.print();
+       }, 100); // 100ms delay
+    }
+
+    // Cleanup function: restore title and remove listener
+    return () => {
+      if (printTimeoutId) {
+        clearTimeout(printTimeoutId);
+      }
+      restoreTitle(); // Restore title if component unmounts before afterprint
+      window.removeEventListener('afterprint', restoreTitle);
+    };
+    // Depend on metadata object reference. If metadata content changes causing a re-render
+    // with a new object reference, this effect will re-run.
+  }, [metadata]);
 
   return (
     <div className="min-h-screen bg-white font-sans">
       {/* Inject print styles */}
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      
+
       <div className="p-4 mb-6 bg-blue-50 rounded-lg print:hidden">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Printer className="h-5 w-5" />
@@ -75,17 +160,17 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
         <p className="mt-2 text-sm text-gray-600">
           To save as PDF:
           <br />
-          • Desktop: Select "Save as PDF" in the print dialog
+          • Desktop: Select "Save as PDF" in the print dialog's destination. The filename will be pre-filled.
           <br />
-          • iOS: Tap the share icon and select "Print" or "Save as PDF"
-          <br />
-          • Android: Select "Save as PDF" in the print options
+          • Mobile: Use the Share menu, then select "Print". Choose "Save as PDF" if available, or print to a PDF printer app.
         </p>
       </div>
 
-      <div className="max-w-[750px] mx-auto px-8 print:max-w-none print:w-full print:mx-0">
-        
+      {/* Use print utility classes for layout */}
+      <div className="max-w-[750px] mx-auto px-4 sm:px-8 print:max-w-none print:w-full print:mx-0 print:px-0">
+
         {/* Cover Page */}
+        {/* Ensure CoverPage itself doesn't add excessive margins conflicting with @page */}
         <div className="print:page-break-after">
           <CoverPage 
             metadata={metadata}
@@ -94,10 +179,13 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
           />
         </div>
 
+        {/* Proposal Content */}
+        {/* Apply print-specific prose styles */}
         <div className="prose max-w-none print:prose-sm leading-relaxed mt-8 print:mt-4">
           {formatProposalText(proposal)}
         </div>
 
+        {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-600 print:mt-8">
           <p>Generated by {companyProfile?.business_name || "Company"}</p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
