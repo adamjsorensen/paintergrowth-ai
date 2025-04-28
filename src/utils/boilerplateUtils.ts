@@ -1,5 +1,42 @@
 
 import { BoilerplateText, MergedContent } from "@/types/boilerplate";
+import { CompanyProfile } from "@/types/supabase";
+
+/**
+ * Creates a mapping of placeholders to effective default values based on
+ * the company profile data and placeholder mapping
+ *
+ * @param companyProfileData The user's company profile data
+ * @param placeholderMapping Mapping from placeholders to company profile field keys
+ * @returns Record mapping placeholders to their resolved default values
+ */
+export const createEffectiveDefaults = (
+  companyProfileData: CompanyProfile | null,
+  placeholderMapping: Record<string, string>
+): Record<string, string> => {
+  const effectiveDefaults: Record<string, string> = {};
+  
+  if (!companyProfileData) return effectiveDefaults;
+  
+  // For each placeholder mapping, look up the corresponding value in the company profile
+  Object.entries(placeholderMapping).forEach(([placeholder, profileFieldKey]) => {
+    // Get the value from the company profile using the field key
+    // Using type assertion to access properties dynamically
+    const profileValue = companyProfileData[profileFieldKey as keyof CompanyProfile];
+    
+    // Only add non-null, non-undefined values
+    if (profileValue !== null && profileValue !== undefined) {
+      // Handle arrays (like brand_keywords) by joining them
+      if (Array.isArray(profileValue)) {
+        effectiveDefaults[placeholder] = profileValue.join(', ');
+      } else {
+        effectiveDefaults[placeholder] = String(profileValue);
+      }
+    }
+  });
+  
+  return effectiveDefaults;
+};
 
 /**
  * Replaces placeholders in a boilerplate text with provided values
@@ -65,9 +102,13 @@ export const mergeWithBoilerplate = (
   generatedContent: string,
   boilerplateTexts: BoilerplateText[],
   values: Record<string, any>,
-  defaultPlaceholders: Record<string, string> = {},
+  placeholderMapping: Record<string, string> = {},
+  companyProfileData: CompanyProfile | null = null,
   locale: string = 'en-US'
 ): string => {
+  // Create effective defaults from company profile data and placeholder mapping
+  const effectiveDefaults = createEffectiveDefaults(companyProfileData, placeholderMapping);
+  
   // Start with the LLM-generated content
   let fullContent = generatedContent;
   
@@ -82,7 +123,7 @@ export const mergeWithBoilerplate = (
       const { content: replacedContent } = replacePlaceholders(
         boilerplate.content,
         values,
-        defaultPlaceholders
+        effectiveDefaults
       );
       processedBoilerplate = replacedContent;
     } catch (e) {
@@ -124,8 +165,12 @@ export function mergeBoilerplateContent(
   generatedContent: string,
   boilerplateTexts: BoilerplateText[],
   values: Record<string, any>,
-  defaultPlaceholders: Record<string, string> = {}
+  placeholderMapping: Record<string, string> = {},
+  companyProfileData: CompanyProfile | null = null
 ): string {
+  // Create effective defaults from company profile data and placeholder mapping
+  const effectiveDefaults = createEffectiveDefaults(companyProfileData, placeholderMapping);
+  
   let fullContent = generatedContent;
   for (const boilerplate of boilerplateTexts) {
     let processedContent: string;
@@ -133,7 +178,7 @@ export function mergeBoilerplateContent(
       const { content: replacedContent } = replacePlaceholders(
         boilerplate.content,
         values,
-        defaultPlaceholders
+        effectiveDefaults
       );
       processedContent = replacedContent;
     } catch (e) {

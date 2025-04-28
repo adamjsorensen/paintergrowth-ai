@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBoilerplateTexts, usePlaceholderDefaults, useBoilerplateMutations } from '@/hooks/useBoilerplate';
 import { extractPlaceholders } from '@/utils/boilerplateUtils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,6 +13,18 @@ import { AlertCircle, PlusCircle, Save } from 'lucide-react';
 import { PlaceholderDefault } from '@/types/boilerplate';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// Define mappable fields from the CompanyProfile
+const MAPPABLE_PROFILE_FIELDS = [
+  { value: "business_name", label: "Business Name" },
+  { value: "location", label: "Location" },
+  { value: "services_offered", label: "Services Offered" },
+  { value: "team_size", label: "Team Size" },
+  { value: "pricing_notes", label: "Pricing Notes" },
+  { value: "owner_name", label: "Owner Name" },
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Phone" },
+];
 
 export function PlaceholderManager() {
   const { data: boilerplateTexts } = useBoilerplateTexts();
@@ -67,6 +80,11 @@ export function PlaceholderManager() {
       });
     }
   };
+  
+  const getFieldLabelByValue = (value: string): string => {
+    const field = MAPPABLE_PROFILE_FIELDS.find(f => f.value === value);
+    return field ? field.label : value;
+  };
 
   return (
     <div className="space-y-6">
@@ -109,25 +127,39 @@ export function PlaceholderManager() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="default_value">Default Value</Label>
-                <Input
+                <Label htmlFor="default_value">Map to Company Profile Field</Label>
+                <Select
+                  onValueChange={(value) => setDefaultValue(value)}
+                  defaultValue={defaultValue}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a company profile field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MAPPABLE_PROFILE_FIELDS.map((field) => (
+                      <SelectItem key={field.value} value={field.value}>
+                        {field.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <input
                   id="default_value"
                   {...register('default_value', { required: true })}
+                  type="hidden"
                   value={defaultValue}
-                  onChange={(e) => setDefaultValue(e.target.value)}
-                  placeholder="Default value when not provided"
                 />
                 {errors.default_value && (
                   <p className="text-sm text-red-500 flex items-center mt-1">
                     <AlertCircle className="h-4 w-4 mr-1" />
-                    Default value is required
+                    Company profile field is required
                   </p>
                 )}
               </div>
             </div>
             <Button type="submit" className="mt-4">
               <PlusCircle className="h-4 w-4 mr-2" />
-              Add Default Value
+              Add Placeholder Mapping
             </Button>
           </form>
         </CardContent>
@@ -136,38 +168,46 @@ export function PlaceholderManager() {
       {placeholderDefaults && Object.keys(placeholderDefaults).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Current Default Values</CardTitle>
+            <CardTitle>Current Placeholder Mappings</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Placeholder</TableHead>
-                  <TableHead>Default Value</TableHead>
+                  <TableHead>Maps to Company Profile Field</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Object.entries(placeholderDefaults).map(([placeholder, defaultValue]) => (
+                {Object.entries(placeholderDefaults).map(([placeholder, fieldKey]) => (
                   <TableRow key={placeholder}>
                     <TableCell className="font-medium">{`{{${placeholder}}}`}</TableCell>
                     <TableCell>
-                      <Input
-                        defaultValue={defaultValue}
-                        onChange={(e) => e.target.dataset.value = e.target.value}
-                        data-placeholder={placeholder}
-                      />
+                      <Select
+                        defaultValue={fieldKey}
+                        onValueChange={(value) => handleUpdatePlaceholder(placeholder, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select field">
+                            {getFieldLabelByValue(fieldKey)}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MAPPABLE_PROFILE_FIELDS.map((field) => (
+                            <SelectItem key={field.value} value={field.value}>
+                              {field.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={(e) => {
-                          const input = document.querySelector(`input[data-placeholder="${placeholder}"]`) as HTMLInputElement;
-                          if (input && input.dataset.value) {
-                            handleUpdatePlaceholder(placeholder, input.dataset.value);
-                          }
-                        }}
+                        onClick={() => {}}
+                        disabled
                       >
                         <Save className="h-4 w-4" />
                       </Button>

@@ -12,6 +12,11 @@ export interface BoilerplateText {
 
 export interface PlaceholderDefault {
   placeholder: string;
+  /**
+   * This field now stores a company profile field key rather than a literal default value.
+   * The actual default value will be resolved from the user's company profile at runtime.
+   * For example, "business_name" refers to the business_name field in the company profile.
+   */
   default_value: string;
 }
 

@@ -64,7 +64,13 @@ export const usePlaceholderDefaults = () => {
       
       if (error) throw error;
       
-      // Transform array to Record for easier lookup
+      /**
+       * Transform array to Record for easier lookup.
+       * The resulting object maps placeholder names to company profile field keys.
+       * For example: { "companyName": "business_name", "location": "location" }
+       * These are not literal default values but rather field keys to look up
+       * in the company profile.
+       */
       const defaultsMap: Record<string, string> = {};
       (data as PlaceholderDefault[]).forEach(item => {
         defaultsMap[item.placeholder] = item.default_value;
