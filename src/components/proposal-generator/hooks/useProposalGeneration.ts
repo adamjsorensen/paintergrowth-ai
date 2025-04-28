@@ -37,7 +37,7 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
       const mergedValues = {
         ...companyProfile, // Company defaults
         ...values, // Form values take precedence
-        _stylePreferences: preferences
+        _stylePreferences: preferences // Pass full style preferences object
       };
 
       console.log("Generating proposal with merged values:", mergedValues);
@@ -48,7 +48,6 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
           promptId: templateId || "00000000-0000-0000-0000-000000000000",
           values: mergedValues,
           proposalId: proposalId
-          // Removed hard-coded modelName to use the one from ai_settings table
         }
       });
 

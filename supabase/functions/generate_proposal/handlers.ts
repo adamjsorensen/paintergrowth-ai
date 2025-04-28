@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createErrorResponse, createSuccessResponse, callOpenRouterAPI } from "./api.ts";
-import { renderPrompt } from "./utils.ts";
-import { createSupabaseClient, updateProposalStatus, fetchPromptTemplate, fetchAISettings, logGeneration } from "./utils.ts";
+import { renderPrompt, createSupabaseClient, updateProposalStatus, fetchPromptTemplate, fetchAISettings, logGeneration, processStylePreferences } from "./utils.ts";
 
 export async function handleGenerateProposal(req: Request) {
   try {
@@ -49,8 +48,27 @@ export async function handleGenerateProposal(req: Request) {
     const systemMsg = tpl.system_prompt_override ?? default_system_prompt;
     
     try {
+      // Process style preferences if present
+      const stylePrefs = values._stylePreferences ? processStylePreferences(values._stylePreferences) : 
+        processStylePreferences({ length: 50, tone: "professional" });
+      
+      // Add style preferences to values for template rendering
+      const enhancedValues = {
+        ...values,
+        _styleLength: stylePrefs.lengthInstruction,
+        _styleTone: stylePrefs.toneInstruction,
+        _styleAdditional: stylePrefs.additionalInstructions
+      };
+      
+      console.log("Style preferences applied:", {
+        length: values._stylePreferences?.length,
+        tone: values._stylePreferences?.tone,
+        processedLength: stylePrefs.lengthInstruction,
+        processedTone: stylePrefs.toneInstruction
+      });
+      
       // Render the template prompt with values
-      const bodyMsg = renderPrompt(tpl.template_prompt, values);
+      const bodyMsg = renderPrompt(tpl.template_prompt, enhancedValues);
       
       // Prepare messages array for OpenRouter
       const messages = [
