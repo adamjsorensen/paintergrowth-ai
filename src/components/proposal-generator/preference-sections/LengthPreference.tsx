@@ -11,10 +11,15 @@ interface LengthPreferenceProps {
 }
 
 const LengthPreference = ({ value, onChange }: LengthPreferenceProps) => {
-  const [currentLength, setCurrentLength] = useState<number>(value);
+  // Round initial value to nearest 25% increment
+  const roundToIncrement = (val: number) => {
+    return Math.round(val / 25) * 25;
+  };
+  
+  const [currentLength, setCurrentLength] = useState<number>(roundToIncrement(value));
   
   useEffect(() => {
-    setCurrentLength(value);
+    setCurrentLength(roundToIncrement(value));
   }, [value]);
 
   const handleLengthChange = (value: number[]) => {
@@ -24,10 +29,11 @@ const LengthPreference = ({ value, onChange }: LengthPreferenceProps) => {
 
   // Function to get description based on length value
   const getLengthDescription = (length: number) => {
-    if (length < 25) return "Very concise, focusing only on key points";
-    if (length < 50) return "Brief with essential details";
-    if (length < 75) return "Moderate detail with some background";
-    return "Comprehensive with thorough explanations";
+    if (length === 0) return "Very concise, focusing only on essential points";
+    if (length === 25) return "Brief with key details";
+    if (length === 50) return "Standard length with balanced detail";
+    if (length === 75) return "Detailed with thorough explanations";
+    return "Comprehensive with extensive detail and context";
   };
 
   return (
@@ -61,7 +67,7 @@ const LengthPreference = ({ value, onChange }: LengthPreferenceProps) => {
         <Slider 
           min={0} 
           max={100} 
-          step={5} 
+          step={25} 
           value={[currentLength]}
           onValueChange={handleLengthChange}
           className="mb-3"
@@ -74,8 +80,10 @@ const LengthPreference = ({ value, onChange }: LengthPreferenceProps) => {
           <div 
             className={cn(
               "h-full rounded-full transition-all duration-300",
-              currentLength < 33 ? "bg-blue-400" : 
-              currentLength < 66 ? "bg-blue-500" : "bg-blue-600" 
+              currentLength === 0 ? "bg-blue-300" :
+              currentLength === 25 ? "bg-blue-400" :
+              currentLength === 50 ? "bg-blue-500" :
+              currentLength === 75 ? "bg-blue-600" : "bg-blue-700" 
             )}
             style={{ width: `${currentLength}%` }}
           />
