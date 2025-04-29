@@ -240,6 +240,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_admin: boolean | null
+          job_title: string | null
           location: string | null
           updated_at: string
         }
@@ -251,6 +252,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_admin?: boolean | null
+          job_title?: string | null
           location?: string | null
           updated_at?: string
         }
@@ -262,6 +264,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
+          job_title?: string | null
           location?: string | null
           updated_at?: string
         }

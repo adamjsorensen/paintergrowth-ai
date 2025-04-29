@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ProfileCompanyLink from "@/components/ProfileCompanyLink";
 import AvatarUpload from "@/components/AvatarUpload";
+import { useCompanyProfileData } from "@/hooks/profile/useCompanyProfileData";
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -18,8 +21,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [location, setLocation] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  
+  const { data: companyProfile } = useCompanyProfileData(user?.id);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -40,8 +44,7 @@ const Profile = () => {
         if (data) {
           setFullName(data.full_name || "");
           setAvatarUrl(data.avatar_url || "");
-          setBusinessName(data.business_name || "");
-          setLocation(data.location || "");
+          setJobTitle(data.job_title || "");
         }
       } catch (error) {
         console.error("Error loading profile data:", error);
@@ -71,8 +74,7 @@ const Profile = () => {
       const updates = {
         id: user.id,
         full_name: fullName,
-        business_name: businessName,
-        location: location,
+        job_title: jobTitle,
         updated_at: new Date().toISOString(),
       };
 
@@ -127,7 +129,21 @@ const Profile = () => {
               <div className="flex-1 space-y-2">
                 <div className="text-xl font-semibold">{fullName || user?.email}</div>
                 <div className="text-muted-foreground">{user?.email}</div>
-                <div className="text-sm">{businessName && `${businessName}${location ? `, ${location}` : ""}`}</div>
+                <div className="text-sm">
+                  {companyProfile?.business_name && (
+                    <div className="flex items-center gap-1">
+                      <span>{companyProfile.business_name}</span>
+                      <Link 
+                        to="/profile/company" 
+                        className="text-primary inline-flex items-center hover:underline text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                        <span className="sr-only">Edit company profile</span>
+                      </Link>
+                    </div>
+                  )}
+                  {jobTitle && <div className="mt-1">{jobTitle}</div>}
+                </div>
               </div>
             </div>
 
@@ -148,27 +164,14 @@ const Profile = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="businessName">Business Name</Label>
+                  <Label htmlFor="jobTitle">Job Title</Label>
                   <Input
-                    id="businessName"
-                    value={businessName || ""}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="Enter your business name"
+                    id="jobTitle"
+                    value={jobTitle || ""}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    placeholder="Enter your job title"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={location || ""}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City, State"
-                  />
-                </div>
-                <div />
               </div>
 
               <Button type="submit" disabled={loading}>
