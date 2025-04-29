@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useOnboarding } from '@/context/onboarding/OnboardingContext';
 import StepNavigation from '../StepNavigation';
 
 const WelcomeStep: React.FC = () => {
