@@ -62,6 +62,7 @@ interface PrintableProposalProps {
     clientEmail?: string;
     clientAddress?: string;
     preparedBy?: string;
+    preparedByTitle?: string;
     jobType?: string;
     status?: string;
   };

@@ -9,6 +9,7 @@ interface CoverPageProps {
     clientAddress?: string;
     preparedBy?: string;
     preparedByTitle?: string;
+    jobType?: string;
   };
   companyProfile?: {
     business_name?: string;

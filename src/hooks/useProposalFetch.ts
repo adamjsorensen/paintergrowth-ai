@@ -9,8 +9,11 @@ interface ProposalData {
     clientName?: string;
     clientPhone?: string;
     clientEmail?: string;
+    clientAddress?: string;
     jobType?: string;
     status?: string;
+    preparedBy?: string;
+    preparedByTitle?: string;
   };
 }
 
@@ -21,8 +24,11 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
     clientName?: string;
     clientPhone?: string;
     clientEmail?: string;
+    clientAddress?: string;
     jobType?: string;
     status?: string;
+    preparedBy?: string;
+    preparedByTitle?: string;
   }>({});
   const { toast } = useToast();
   const pollCountRef = useRef(0);
