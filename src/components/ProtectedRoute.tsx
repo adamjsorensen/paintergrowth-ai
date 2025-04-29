@@ -7,9 +7,9 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, onboardingCompleted, checkingOnboarding } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || checkingOnboarding) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -19,6 +19,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!user) {
     return <Navigate to="/auth" />;
+  }
+  
+  // Redirect to onboarding if not completed
+  if (onboardingCompleted === false) {
+    return <Navigate to="/onboarding" />;
   }
 
   return <>{children}</>;

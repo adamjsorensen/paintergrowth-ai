@@ -1,9 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,14 +21,18 @@ const Auth = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, onboardingCompleted, checkingOnboarding } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      if (onboardingCompleted === false) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, onboardingCompleted]);
 
   const validateForm = () => {
     let isValid = true;
@@ -91,8 +94,6 @@ const Auth = () => {
           title: "Signed in successfully!",
           description: "Welcome back to Paintergrowth.ai!",
         });
-        
-        navigate("/");
       }
     } catch (error: any) {
       toast({

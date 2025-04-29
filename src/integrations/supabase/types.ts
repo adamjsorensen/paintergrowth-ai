@@ -242,6 +242,8 @@ export type Database = {
           is_admin: boolean | null
           job_title: string | null
           location: string | null
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
           updated_at: string
         }
         Insert: {
@@ -254,6 +256,8 @@ export type Database = {
           is_admin?: boolean | null
           job_title?: string | null
           location?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
           updated_at?: string
         }
         Update: {
@@ -266,6 +270,8 @@ export type Database = {
           is_admin?: boolean | null
           job_title?: string | null
           location?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
           updated_at?: string
         }
         Relationships: []

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +28,7 @@ import CompanyProfile from "./pages/profile/CompanyProfile";
 import PrintProposal from "./pages/PrintProposal";
 import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
 import BoilerplateManager from "./pages/admin/BoilerplateManager";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
