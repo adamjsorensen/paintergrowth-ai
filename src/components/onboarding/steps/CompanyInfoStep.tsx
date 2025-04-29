@@ -1,159 +1,182 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { useOnboarding } from '@/context/OnboardingContext';
 import StepNavigation from '../StepNavigation';
-
-const formSchema = z.object({
-  businessName: z.string().min(2, 'Business name must be at least 2 characters'),
-  location: z.string().min(2, 'Location must be at least 2 characters'),
-  services: z.string().min(5, 'Please provide a brief description of your services'),
-  teamSize: z.string(),
-});
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Building, Upload } from 'lucide-react';
 
 const CompanyInfoStep: React.FC = () => {
-  const { formData, setFormValue, nextStep, prevStep, saveAndContinue, isSubmitting } = useOnboarding();
+  const { 
+    formData, 
+    setFormValue, 
+    saveAndContinue, 
+    isSubmitting,
+    setLogoFile,
+    logoPreview
+  } = useOnboarding();
   
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      businessName: formData.businessName,
-      location: formData.location,
-      services: formData.services,
-      teamSize: formData.teamSize,
-    },
+  const [errors, setErrors] = React.useState({
+    businessName: '',
+    location: '',
+    services: '',
   });
   
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    setFormValue('businessName', values.businessName);
-    setFormValue('location', values.location);
-    setFormValue('services', values.services);
-    setFormValue('teamSize', values.teamSize);
-    await saveAndContinue();
+  const validateFields = (): boolean => {
+    const newErrors = {
+      businessName: '',
+      location: '',
+      services: '',
+    };
+    
+    if (!formData.businessName.trim()) {
+      newErrors.businessName = 'Business name is required';
+    }
+    
+    if (!formData.location.trim()) {
+      newErrors.location = 'Location is required';
+    }
+    
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error);
   };
   
+  const handleContinue = async () => {
+    if (validateFields()) {
+      await saveAndContinue();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        alert('Please upload JPG or PNG files only');
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Please upload an image smaller than 2MB');
+        return;
+      }
+      
+      setLogoFile(file);
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="mb-6">
-        <h2 className="text-lg text-gray-700 mb-4">Company Information</h2>
-        <p className="text-gray-600 text-sm">
-          This information will be used to customize your proposals with your business details.
+    <div className="space-y-6">
+      <div className="flex flex-col items-center mb-6">
+        <div className="mb-4 h-32 w-48 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center overflow-hidden">
+          {logoPreview ? (
+            <img 
+              src={logoPreview} 
+              alt="Company Logo" 
+              className="max-h-28 max-w-40 object-contain" 
+            />
+          ) : (
+            <Building className="h-12 w-12 text-gray-300" />
+          )}
+        </div>
+        
+        <div className="flex items-center">
+          <input
+            id="logo-upload"
+            type="file"
+            accept="image/png, image/jpeg, image/jpg"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => document.getElementById('logo-upload')?.click()}
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            {logoPreview ? 'Change Company Logo' : 'Upload Company Logo'}
+          </Button>
+        </div>
+        
+        <p className="text-xs text-muted-foreground mt-2">
+          Optional: Upload your company logo (JPG or PNG, max 2MB)
         </p>
       </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="businessName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="ABC Painting" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="businessName">Business Name <span className="text-red-500">*</span></Label>
+          <Input
+            id="businessName"
+            value={formData.businessName}
+            onChange={(e) => setFormValue('businessName', e.target.value)}
+            placeholder="Acme Painting Co."
+            className={errors.businessName ? "border-red-500" : ""}
           />
-          
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <FormControl>
-                  <Input placeholder="City, State" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          {errors.businessName && <p className="text-sm text-red-500">{errors.businessName}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location <span className="text-red-500">*</span></Label>
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => setFormValue('location', e.target.value)}
+            placeholder="City, State"
+            className={errors.location ? "border-red-500" : ""}
           />
-          
-          <FormField
-            control={form.control}
-            name="services"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Services Offered</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Interior and exterior residential painting, cabinet refinishing, etc." 
-                    {...field} 
-                    rows={3}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="services">Services Offered</Label>
+          <Textarea
+            id="services"
+            value={formData.services}
+            onChange={(e) => setFormValue('services', e.target.value)}
+            placeholder="Interior painting, Exterior painting, Deck staining, etc."
+            rows={3}
+            className={errors.services ? "border-red-500" : ""}
           />
-          
-          <FormField
-            control={form.control}
-            name="teamSize"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Team Size</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select team size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="1">Just me</SelectItem>
-                    <SelectItem value="2-5">2-5 employees</SelectItem>
-                    <SelectItem value="6-10">6-10 employees</SelectItem>
-                    <SelectItem value="11-20">11-20 employees</SelectItem>
-                    <SelectItem value="21-50">21-50 employees</SelectItem>
-                    <SelectItem value="51+">51+ employees</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <StepNavigation
-            onNext={form.handleSubmit(handleSubmit)}
-            onPrev={prevStep}
-            canGoNext={form.formState.isValid}
-            canGoPrev={true}
-            isLastStep={false}
-            isSubmitting={isSubmitting}
-          />
-        </form>
-      </Form>
-    </motion.div>
+          {errors.services && <p className="text-sm text-red-500">{errors.services}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="teamSize">Team Size</Label>
+          <Select 
+            value={formData.teamSize} 
+            onValueChange={(value) => setFormValue('teamSize', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select team size" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Just me</SelectItem>
+              <SelectItem value="2-5">2-5 people</SelectItem>
+              <SelectItem value="6-10">6-10 people</SelectItem>
+              <SelectItem value="11-20">11-20 people</SelectItem>
+              <SelectItem value="21-50">21-50 people</SelectItem>
+              <SelectItem value="51+">51+ people</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <StepNavigation
+        onNext={handleContinue}
+        onPrev={() => {}}
+        canGoNext={true}
+        canGoPrev={true}
+        isLastStep={false}
+        isSubmitting={isSubmitting}
+      />
+    </div>
   );
 };
 

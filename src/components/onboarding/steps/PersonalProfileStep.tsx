@@ -1,98 +1,139 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { useOnboarding } from '@/context/OnboardingContext';
 import StepNavigation from '../StepNavigation';
-
-const formSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  jobTitle: z.string().min(2, 'Job title must be at least 2 characters'),
-});
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Upload, User } from 'lucide-react';
 
 const PersonalProfileStep: React.FC = () => {
-  const { formData, setFormValue, nextStep, prevStep, saveAndContinue, isSubmitting } = useOnboarding();
+  const { 
+    formData, 
+    setFormValue, 
+    saveAndContinue, 
+    isSubmitting, 
+    setAvatarFile, 
+    avatarPreview 
+  } = useOnboarding();
   
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: formData.fullName,
-      jobTitle: formData.jobTitle,
-    },
+  const [errors, setErrors] = React.useState({
+    fullName: '',
+    jobTitle: '',
   });
   
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    setFormValue('fullName', values.fullName);
-    setFormValue('jobTitle', values.jobTitle);
-    await saveAndContinue();
+  const validateFields = (): boolean => {
+    const newErrors = {
+      fullName: '',
+      jobTitle: '',
+    };
+    
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    }
+    
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error);
   };
   
+  const handleContinue = async () => {
+    if (validateFields()) {
+      await saveAndContinue();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        alert('Please upload JPG or PNG files only');
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Please upload an image smaller than 2MB');
+        return;
+      }
+      
+      setAvatarFile(file);
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="mb-6">
-        <h2 className="text-lg text-gray-700 mb-4">Tell us about yourself</h2>
-        <p className="text-gray-600 text-sm">
-          This information helps personalize your proposals and creates a more professional appearance.
+    <div className="space-y-6">
+      <div className="flex flex-col items-center mb-6">
+        <div className="mb-4">
+          <Avatar className="h-24 w-24 border-2 border-paintergrowth-100">
+            <AvatarImage src={avatarPreview || ''} />
+            <AvatarFallback className="bg-paintergrowth-100 text-paintergrowth-600">
+              <User className="h-12 w-12" />
+            </AvatarFallback>
+          </Avatar>
+        </div>
+        
+        <div className="flex items-center">
+          <input
+            id="avatar-upload"
+            type="file"
+            accept="image/png, image/jpeg, image/jpg"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => document.getElementById('avatar-upload')?.click()}
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            {avatarPreview ? 'Change Profile Picture' : 'Upload Profile Picture'}
+          </Button>
+        </div>
+        
+        <p className="text-xs text-muted-foreground mt-2">
+          Optional: Upload a profile picture (JPG or PNG, max 2MB)
         </p>
       </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Your Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Smith" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+          <Input
+            id="fullName"
+            value={formData.fullName}
+            onChange={(e) => setFormValue('fullName', e.target.value)}
+            placeholder="John Doe"
+            className={errors.fullName ? "border-red-500" : ""}
           />
-          
-          <FormField
-            control={form.control}
-            name="jobTitle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Your Position</FormLabel>
-                <FormControl>
-                  <Input placeholder="Owner / Estimator / Manager" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="jobTitle">Job Title <span className="text-red-500">*</span></Label>
+          <Input
+            id="jobTitle"
+            value={formData.jobTitle}
+            onChange={(e) => setFormValue('jobTitle', e.target.value)}
+            placeholder="Painting Contractor"
+            className={errors.jobTitle ? "border-red-500" : ""}
           />
-          
-          <StepNavigation
-            onNext={form.handleSubmit(handleSubmit)}
-            onPrev={prevStep}
-            canGoNext={form.formState.isValid}
-            canGoPrev={true}
-            isLastStep={false}
-            isSubmitting={isSubmitting}
-          />
-        </form>
-      </Form>
-    </motion.div>
+          {errors.jobTitle && <p className="text-sm text-red-500">{errors.jobTitle}</p>}
+        </div>
+      </div>
+
+      <StepNavigation
+        onNext={handleContinue}
+        onPrev={() => {}}
+        canGoNext={true}
+        canGoPrev={false}
+        isLastStep={false}
+        isSubmitting={isSubmitting}
+      />
+    </div>
   );
 };
 

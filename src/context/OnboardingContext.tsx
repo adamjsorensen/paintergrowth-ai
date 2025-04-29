@@ -16,6 +16,8 @@ interface OnboardingContextProps {
     teamSize: string;
     preferredTone: string;
     keywords: string[];
+    avatarFile: File | null;
+    logoFile: File | null;
   };
   setFormValue: (field: string, value: any) => void;
   nextStep: () => void;
@@ -24,6 +26,10 @@ interface OnboardingContextProps {
   saveAndContinue: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
   setKeywords: (keywords: string[]) => void;
+  setAvatarFile: (file: File | null) => void;
+  setLogoFile: (file: File | null) => void;
+  avatarPreview: string | null;
+  logoPreview: string | null;
 }
 
 const TOTAL_STEPS = 4;
@@ -37,6 +43,8 @@ const defaultFormData = {
   teamSize: '1',
   preferredTone: 'professional',
   keywords: [],
+  avatarFile: null,
+  logoFile: null,
 };
 
 const OnboardingContext = createContext<OnboardingContextProps | undefined>(undefined);
@@ -45,6 +53,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(defaultFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -78,7 +88,14 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             teamSize: '1',
             preferredTone: 'professional',
             keywords: [],
+            avatarFile: null,
+            logoFile: null,
           });
+          
+          // Set avatar preview if available
+          if (profileData.avatar_url) {
+            setAvatarPreview(profileData.avatar_url);
+          }
           
           // Get company profile data if it exists
           const { data: companyData } = await supabase
@@ -97,6 +114,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               preferredTone: companyData.preferred_tone || 'professional',
               keywords: companyData.brand_keywords || [],
             }));
+            
+            // Set logo preview if available
+            if (companyData.logo_url) {
+              setLogoPreview(companyData.logo_url);
+            }
           }
         }
       } catch (error) {
@@ -121,6 +143,30 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   };
   
+  const setAvatarFile = (file: File | null) => {
+    setFormData(prev => ({
+      ...prev,
+      avatarFile: file,
+    }));
+    
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      setAvatarPreview(objectUrl);
+    }
+  };
+  
+  const setLogoFile = (file: File | null) => {
+    setFormData(prev => ({
+      ...prev,
+      logoFile: file,
+    }));
+    
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      setLogoPreview(objectUrl);
+    }
+  };
+  
   const nextStep = () => {
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
@@ -133,11 +179,51 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
   
+  const uploadFile = async (file: File, bucket: string, folder: string): Promise<string | null> => {
+    if (!user?.id || !file) return null;
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${folder}/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
+        
+      return publicUrl;
+    } catch (error) {
+      console.error(`Error uploading ${bucket} file:`, error);
+      return null;
+    }
+  };
+  
   const saveAndContinue = async () => {
     if (!user?.id) return;
     setIsSubmitting(true);
     
     try {
+      // Upload avatar if provided
+      let avatarUrl = null;
+      if (formData.avatarFile) {
+        avatarUrl = await uploadFile(formData.avatarFile, 'avatars', user.id);
+      }
+      
+      // Upload logo if provided
+      let logoUrl = null;
+      if (formData.logoFile) {
+        logoUrl = await uploadFile(formData.logoFile, 'company-logos', user.id);
+      }
+      
       // Update user profile
       const { error: profileError } = await supabase
         .from('profiles')
@@ -147,6 +233,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           business_name: formData.businessName,
           location: formData.location,
           onboarding_step: currentStep + 1,
+          ...(avatarUrl && { avatar_url: avatarUrl })
         })
         .eq('id', user.id);
         
@@ -170,6 +257,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             team_size: formData.teamSize,
             preferred_tone: formData.preferredTone,
             brand_keywords: formData.keywords,
+            ...(logoUrl && { logo_url: logoUrl })
           })
           .eq('user_id', user.id);
           
@@ -186,6 +274,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             team_size: formData.teamSize,
             preferred_tone: formData.preferredTone,
             brand_keywords: formData.keywords,
+            ...(logoUrl && { logo_url: logoUrl })
           });
           
         if (createError) throw createError;
@@ -224,7 +313,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         description: "Your onboarding is complete. You're all set to start creating proposals!",
       });
       
-      navigate('/dashboard');
+      // Force page refresh to prevent white screen issue
+      window.location.href = '/dashboard';
       
     } catch (error: any) {
       toast({
@@ -249,6 +339,10 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         saveAndContinue,
         completeOnboarding,
         setKeywords,
+        setAvatarFile,
+        setLogoFile,
+        avatarPreview,
+        logoPreview,
       }}
     >
       {children}
