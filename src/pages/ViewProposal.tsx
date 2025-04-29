@@ -13,6 +13,7 @@ import EditableProposalContent from "@/components/proposal-viewer/EditablePropos
 import { useProposalFetch } from "@/hooks/useProposalFetch";
 import { supabase } from "@/integrations/supabase/client";
 import { shareProposalViaEmail } from "@/utils/emailUtils";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ const ViewProposal = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   
   const { proposal, loading, metadata, setProposal } = useProposalFetch(id, user?.id);
+  const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
 
   const handleCopy = () => {
     if (proposal) {
@@ -96,7 +98,14 @@ const ViewProposal = () => {
     await shareProposalViaEmail(id, handlePrint);
   };
 
-  if (loading) {
+  // Combine user profile data with metadata
+  const enhancedMetadata = {
+    ...metadata,
+    preparedBy: userProfile?.full_name || metadata.preparedBy,
+    preparedByTitle: userProfile?.job_title || metadata.preparedByTitle,
+  };
+
+  if (loading || isLoadingUserProfile) {
     return (
       <PageLayout title="Generating Proposal">
         <LoadingAnimation />
@@ -153,10 +162,10 @@ const ViewProposal = () => {
           open={showSaveDialog}
           onOpenChange={setShowSaveDialog}
           proposalContent={proposal}
-          clientName={metadata.clientName || ""}
-          clientPhone={metadata.clientPhone || ""}
-          clientEmail={metadata.clientEmail || ""}
-          jobType={metadata.jobType || ""}
+          clientName={enhancedMetadata.clientName || ""}
+          clientPhone={enhancedMetadata.clientPhone || ""}
+          clientEmail={enhancedMetadata.clientEmail || ""}
+          jobType={enhancedMetadata.jobType || ""}
           existingId={id}
         />
       )}

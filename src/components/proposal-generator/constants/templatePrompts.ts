@@ -10,6 +10,10 @@ Project Details:
 - Timeline: {{timeline}}
 - Special Notes: {{specialNotes}}
 
+Estimator Information:
+- Prepared By: {{preparedBy}}
+{{#if preparedByTitle}}- Job Title: {{preparedByTitle}}{{/if}}
+
 Writing Style Instructions:
 - Length: {{_styleLength}}
 - Tone: {{_styleTone}}
@@ -24,5 +28,6 @@ Include a professional introduction and background on your company. Then, descri
 
 The proposal should be formatted professionally with clear sections for Introduction, Scope of Work, Price/Quote, Timeline, and {{#if includeTerms}}Terms & Conditions{{/if}}.
 
-Make the proposal persuasive and highlight the quality of materials and workmanship that will be provided.`;
+Make the proposal persuasive and highlight the quality of materials and workmanship that will be provided.
 
+Include a signature line for {{preparedBy}}{{#if preparedByTitle}}, {{preparedByTitle}}{{/if}} at the end of the proposal.`;

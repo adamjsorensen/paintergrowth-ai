@@ -8,6 +8,7 @@ interface CoverPageProps {
     clientEmail?: string;
     clientAddress?: string;
     preparedBy?: string;
+    preparedByTitle?: string;
   };
   companyProfile?: {
     business_name?: string;
@@ -35,6 +36,10 @@ const CoverPage: React.FC<CoverPageProps> = ({
   const docNumber = `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
   const defaultLogo = "/placeholder.svg";
   const logoUrl = companyProfile?.logo_url || defaultLogo;
+  
+  // Use prepared by from metadata, with fallback to company owner name
+  const estimatorName = metadata.preparedBy || companyProfile?.owner_name || "";
+  const estimatorTitle = metadata.preparedByTitle || "";
 
   return (
     <div className="cover-page min-h-screen bg-white p-8 print:break-after-page">
@@ -77,9 +82,12 @@ const CoverPage: React.FC<CoverPageProps> = ({
       <div className="flex justify-between mb-2">
         {/* Left Column - Estimator Info */}
         <div className="max-w-xs">
-          <p className="mb-1"><strong>Estimator Name:</strong> {metadata.preparedBy || companyProfile?.owner_name || ""}<br></br>
+          <p className="mb-1">
+            <strong>Estimator Name:</strong> {estimatorName}<br></br>
+            {estimatorTitle && <><strong>Title:</strong> {estimatorTitle}<br></br></>}
             <strong>Estimator Email:</strong> {companyProfile?.email || ""}<br></br>
-            <strong>Estimator Phone:</strong> {companyProfile?.phone || ""}<br></br></p>
+            <strong>Estimator Phone:</strong> {companyProfile?.phone || ""}<br></br>
+          </p>
         </div>
         
         {/* Right Column - Proposal # */}

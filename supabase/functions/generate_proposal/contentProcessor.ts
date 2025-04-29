@@ -25,14 +25,19 @@ export async function processProposalGeneration(
       ...values,
       _styleLength: stylePrefs.lengthInstruction,
       _styleTone: stylePrefs.toneInstruction,
-      _styleAdditional: stylePrefs.additionalInstructions
+      _styleAdditional: stylePrefs.additionalInstructions,
+      // Ensure user profile data is available
+      preparedBy: values.preparedBy || user.email || "Estimator",
+      preparedByTitle: values.preparedByTitle || ""
     };
     
     console.log("Style preferences applied:", {
       length: values._stylePreferences?.length,
       tone: values._stylePreferences?.tone,
       processedLength: stylePrefs.lengthInstruction,
-      processedTone: stylePrefs.toneInstruction
+      processedTone: stylePrefs.toneInstruction,
+      preparedBy: enhancedValues.preparedBy,
+      preparedByTitle: enhancedValues.preparedByTitle
     });
     
     // Prepare system message with optional override

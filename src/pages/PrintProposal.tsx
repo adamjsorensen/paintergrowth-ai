@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useProposalFetch } from "@/hooks/useProposalFetch";
 import { useAuth } from "@/components/AuthProvider";
 import { useCompanyProfile } from "@/hooks/useCompanyProfile";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import PrintableProposal from "@/components/proposal-viewer/PrintableProposal";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
 
@@ -11,8 +12,16 @@ const PrintProposal = () => {
   const { user } = useAuth();
   const { proposal, loading, metadata } = useProposalFetch(id, user?.id);
   const { data: companyProfile, isLoading: isLoadingProfile } = useCompanyProfile(user?.id);
+  const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
 
-  if (loading || isLoadingProfile) {
+  // Combine user profile data with metadata
+  const enhancedMetadata = {
+    ...metadata,
+    preparedBy: userProfile?.full_name || metadata.preparedBy,
+    preparedByTitle: userProfile?.job_title || metadata.preparedByTitle,
+  };
+
+  if (loading || isLoadingProfile || isLoadingUserProfile) {
     return <LoadingAnimation />;
   }
 
@@ -28,7 +37,7 @@ const PrintProposal = () => {
   return (
     <PrintableProposal
       proposal={proposal}
-      metadata={metadata}
+      metadata={enhancedMetadata}
       companyProfile={companyProfile}
     />
   );

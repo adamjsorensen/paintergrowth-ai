@@ -33,7 +33,7 @@ const ProposalGenerator = () => {
   } = usePromptTemplate(ENHANCED_FIELDS);
   
   const { user } = useAuth();
-  const { isGenerating, generateProposal } = useProposalGeneration({
+  const { isGenerating, isLoading: isLoadingProfiles, generateProposal } = useProposalGeneration({
     user,
     templateId: promptTemplate?.id
   });
@@ -63,7 +63,7 @@ const ProposalGenerator = () => {
     initializeTemplates();
   }, []);
 
-  const isLoading = isLoadingTemplate || isCreating || isLoadingFields;
+  const isLoading = isLoadingTemplate || isCreating || isLoadingFields || isLoadingProfiles;
 
   if (isLoading) {
     return (

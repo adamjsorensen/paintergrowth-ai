@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
 import { useCompanyProfile } from "@/hooks/useCompanyProfile";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { validatePlaceholders } from "@/utils/placeholderValidation";
 
 type FieldValue = string | number | boolean | string[];
@@ -18,6 +19,7 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
   const { toast } = useToast();
   const { preferences } = useStylePreferences();
   const { data: companyProfile, isLoading: isLoadingProfile } = useCompanyProfile(user?.id);
+  const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
 
   const generateProposal = async (values: Record<string, FieldValue>, proposalId: string) => {
     try {
@@ -33,9 +35,11 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
           .eq('id', proposalId);
       }
 
-      // Merge company profile with form values
+      // Merge company profile, user profile with form values
       const mergedValues = {
         ...companyProfile, // Company defaults
+        preparedBy: userProfile?.full_name || companyProfile?.owner_name || "", // User name with fallback to company owner
+        preparedByTitle: userProfile?.job_title || "", // User job title
         ...values, // Form values take precedence
         _stylePreferences: preferences // Pass full style preferences object
       };
@@ -91,7 +95,7 @@ export const useProposalGeneration = ({ user, templateId }: ProposalGenerationPr
 
   return {
     isGenerating,
-    isLoadingProfile,
+    isLoading: isLoadingProfile || isLoadingUserProfile,
     generateProposal
   };
 };
