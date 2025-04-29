@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { defaultFormData, OnboardingFormData } from './types';
 import { User } from '@supabase/supabase-js';
+import { File } from '@/types/file';
 
 export const useOnboardingData = (user: User | null) => {
   const [currentStep, setCurrentStep] = useState(1);

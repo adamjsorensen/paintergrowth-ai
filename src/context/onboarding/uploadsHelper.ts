@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { File } from "@/types/file";
 
 export const uploadFile = async (
   file: File, 

@@ -1,5 +1,5 @@
 
-import { File } from "buffer";
+import { File } from "@/types/file";
 
 export interface OnboardingFormData {
   fullName: string;

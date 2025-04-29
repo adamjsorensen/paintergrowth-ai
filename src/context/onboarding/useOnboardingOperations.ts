@@ -16,12 +16,12 @@ export const useOnboardingOperations = (
   const { toast } = useToast();
   
   const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
+    setCurrentStep(currentStep + 1);
   };
   
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+      setCurrentStep(currentStep - 1);
     }
   };
   

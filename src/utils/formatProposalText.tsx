@@ -2,14 +2,87 @@
 import React from 'react';
 import { isValidTable, parseTableRows } from './tableUtils';
 
+// Regex to match inline bold formatting
+const boldRegex = /(\*\*.*?\*\*)/g;
+
+// More flexible header regex to match headers anywhere in the text
+const headerRegex = /(^|\n)(#{1,3})\s+(.+)($|\n)/g;
+
 function formatInline(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+  const parts = text.split(boldRegex);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
     }
     return <React.Fragment key={i}>{part}</React.Fragment>;
   });
+}
+
+// Function to extract and handle headers within content
+function processContentWithHeaders(content: string): React.ReactNode[] {
+  const result: React.ReactNode[] = [];
+  
+  // Process all headers, including those in the middle of paragraphs
+  let lastIndex = 0;
+  const matches: { index: number; level: number; content: string; length: number }[] = [];
+  
+  // Find all headers
+  let match;
+  while ((match = headerRegex.exec(content)) !== null) {
+    const fullMatch = match[0];
+    const isNewline = match[1] === '\n';
+    const level = match[2].length;
+    const headerContent = match[3];
+    
+    matches.push({
+      index: match.index + (isNewline ? 1 : 0), // Adjust index if header starts with newline
+      level: level,
+      content: headerContent,
+      length: fullMatch.length - (isNewline ? 1 : 0) // Adjust length if needed
+    });
+  }
+  
+  // Process content with headers
+  matches.forEach((headerMatch, idx) => {
+    // Add text before this header
+    if (headerMatch.index > lastIndex) {
+      const textBeforeHeader = content.substring(lastIndex, headerMatch.index);
+      if (textBeforeHeader.trim()) {
+        result.push(
+          <p key={`text-${idx}`} className="mb-4">
+            {formatInline(textBeforeHeader.trim())}
+          </p>
+        );
+      }
+    }
+    
+    // Add the header
+    const HeaderTag = `h${headerMatch.level}` as keyof JSX.IntrinsicElements;
+    result.push(
+      <HeaderTag 
+        key={`header-${idx}`} 
+        className={`mt-${4 + (3 - headerMatch.level)} mb-2 font-bold text-${headerMatch.level === 1 ? '2xl' : headerMatch.level === 2 ? 'xl' : 'lg'}`}
+      >
+        {formatInline(headerMatch.content)}
+      </HeaderTag>
+    );
+    
+    lastIndex = headerMatch.index + headerMatch.length;
+  });
+  
+  // Add remaining text after the last header
+  if (lastIndex < content.length) {
+    const remainingText = content.substring(lastIndex);
+    if (remainingText.trim()) {
+      result.push(
+        <p key="remaining" className="mb-4">
+          {formatInline(remainingText.trim())}
+        </p>
+      );
+    }
+  }
+  
+  return result;
 }
 
 function TableRenderer({ raw }: { raw: string }) {
@@ -35,7 +108,7 @@ function TableRenderer({ raw }: { raw: string }) {
         {data.map((row, i) => (
           <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
             {row.map((cell, j) => (
-              <td key={j} className="p-2 border-b border-gray-200">{cell}</td>
+              <td key={j} className="p-2 border-b border-gray-200">{formatInline(cell)}</td>
             ))}
           </tr>
         ))}
@@ -45,33 +118,34 @@ function TableRenderer({ raw }: { raw: string }) {
 }
 
 export function formatProposalText(text: string | null): React.ReactNode {
-  if (!text) return null
+  if (!text) return null;
 
-  const paragraphs = text.split(/\n{2,}/)
-
+  // Split content into blocks (paragraphs, tables, etc.)
+  const blocks = text.split(/\n{2,}/);
+  
   return (
     <>
-      {paragraphs.map((paragraph, index) => {
+      {blocks.map((block, index) => {
+        const trimmedBlock = block.trim();
+        
         // Handle markdown-style tables
-        if (paragraph.trim().startsWith('|')) {
-          return <TableRenderer key={index} raw={paragraph} />;
+        if (trimmedBlock.startsWith('|')) {
+          return <TableRenderer key={index} raw={trimmedBlock} />;
         }
-
-        // Headers
-        const headerMatch = paragraph.match(/^(#{1,3})\s+(.+)$/)
-        if (headerMatch) {
-          const level = headerMatch[1].length
-          const content = formatInline(headerMatch[2])
-          const HeaderTag = `h${level}` as keyof JSX.IntrinsicElements
+        
+        // Check if this block contains headers
+        if (headerRegex.test(block)) {
+          // Reset the regex lastIndex to ensure we can reuse it
+          headerRegex.lastIndex = 0;
           return (
-            <HeaderTag key={index} className={`mt-${4 + (3 - level)} mb-2 font-bold text-${level === 1 ? '2xl' : level === 2 ? 'xl' : 'lg'}`}>
-              {content}
-            </HeaderTag>
-          )
+            <React.Fragment key={index}>
+              {processContentWithHeaders(block)}
+            </React.Fragment>
+          );
         }
 
-        // Paragraph with single line breaks handled
-        const lines = paragraph.split('\n')
+        // Handle regular paragraphs with line breaks
+        const lines = block.split('\n');
         return (
           <p key={index} className="mb-4">
             {lines.map((line, i) => (
@@ -81,8 +155,8 @@ export function formatProposalText(text: string | null): React.ReactNode {
               </React.Fragment>
             ))}
           </p>
-        )
+        );
       })}
     </>
-  )
+  );
 }
