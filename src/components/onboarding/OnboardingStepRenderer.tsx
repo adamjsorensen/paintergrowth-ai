@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useOnboarding } from '@/context/onboarding/OnboardingContext';
 import WelcomeStep from './steps/WelcomeStep';
 import PersonalProfileStep from './steps/PersonalProfileStep';
 import CompanyInfoStep from './steps/CompanyInfoStep';

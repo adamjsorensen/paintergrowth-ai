@@ -24,7 +24,7 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useOnboarding } from '@/context/onboarding/OnboardingContext';
 import StepNavigation from '../StepNavigation';
 
 const formSchema = z.object({

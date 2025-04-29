@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useOnboarding } from '@/context/onboarding/OnboardingContext';
 import StepNavigation from '../StepNavigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

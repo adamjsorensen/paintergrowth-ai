@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import OnboardingLayout from '@/components/onboarding/OnboardingLayout';
 import OnboardingStepRenderer from '@/components/onboarding/OnboardingStepRenderer';
-import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
+import { OnboardingProvider, useOnboarding } from '@/context/onboarding/OnboardingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
