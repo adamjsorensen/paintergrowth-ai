@@ -97,6 +97,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
             {estimatorTitle && <><strong>Title:</strong> {estimatorTitle}<br></br></>}
             <strong>Estimator Email:</strong> {companyProfile?.email || ""}<br></br>
             <strong>Estimator Phone:</strong> {companyProfile?.phone || ""}<br></br>
+            
           </p>
         </div>
         
@@ -110,6 +111,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
       <div className="mb-2">
         <p className="mb-1">
           <strong>Client Name:</strong> {metadata.clientName || ""}<br></br>
+          <strong>Project Address:</strong> {metadata.clientAddress || "1"}<br></br>
           <strong>Client Phone:</strong> {metadata.clientPhone || ""}<br></br>
           <strong>Client Email:</strong> {metadata.clientEmail || ""}
         </p>
