@@ -79,11 +79,18 @@ const ViewProposal = () => {
     try {
       setProposal(newContent);
 
+      // Update with all metadata fields to preserve them
       const { error } = await supabase
         .from('saved_proposals')
         .update({
           content: newContent,
           updated_at: new Date().toISOString(),
+          // Preserve all existing metadata
+          client_name: metadata.clientName,
+          client_phone: metadata.clientPhone,
+          client_email: metadata.clientEmail,
+          client_address: metadata.clientAddress,
+          job_type: metadata.jobType
         })
         .eq('id', id);
 
