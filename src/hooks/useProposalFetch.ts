@@ -71,7 +71,8 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
             id: data.id, 
             status: data.status,
             contentLength: data.content ? data.content.length : 0,
-            clientAddress: data.client_address
+            clientAddress: data.client_address,
+            rawData: data // Add the full data object to inspect all fields
           });
           
           if (data.status === "pending" || data.status === "generating") {
@@ -92,16 +93,23 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
 
           if (data.status === "completed" && data.content) {
             setProposal(data.content);
-            setMetadata({
+            
+            // Explicit mapping to ensure consistency
+            const metadataObject = {
               clientName: data.client_name,
               clientPhone: data.client_phone,
               clientEmail: data.client_email,
               clientAddress: data.client_address,
               jobType: data.job_type,
               status: data.status
-            });
+            };
             
-            console.log("Setting metadata with address:", data.client_address);
+            setMetadata(metadataObject);
+            
+            console.log("Setting metadata with address:", {
+              clientAddress: data.client_address,
+              fullMetadata: metadataObject
+            });
             
             clearInterval(pollInterval);
             setLoading(false);

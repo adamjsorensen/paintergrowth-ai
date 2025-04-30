@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface CoverPageProps {
   metadata: {
@@ -42,15 +42,16 @@ const CoverPage: React.FC<CoverPageProps> = ({
   const estimatorName = metadata.preparedBy || companyProfile?.owner_name || "";
   const estimatorTitle = metadata.preparedByTitle || "";
   
-  // Add logging for debugging the client address issue
-  console.log("Cover Page Metadata:", {
-    clientAddress: metadata.clientAddress,
-    allMetadata: metadata
-  });
+  // Enhanced debugging for client address issue
+  useEffect(() => {
+    console.log("Cover Page Metadata (Full Object):", metadata);
+    console.log("Client Address Value:", metadata.clientAddress);
+    console.log("Metadata Keys:", Object.keys(metadata));
+  }, [metadata]);
   
-  // Extract address from content if not available in metadata (fallback mechanism)
-  //const clientAddress = metadata.clientAddress || "123 Anywhere St, Richmond VT";
-
+  // Determine the client address with clear fallback logic
+  const clientAddress = metadata.clientAddress || "";
+  
   return (
     <div className="cover-page min-h-screen bg-white p-8 print:break-after-page">
       {/* Logo section */}
@@ -79,7 +80,8 @@ const CoverPage: React.FC<CoverPageProps> = ({
       {/* Project Estimate Title */}
       <div className="mb-1">
         <h1 className="text-4xl font-bold uppercase tracking-wide">
-          <strong>PROJECT ESTIMATE</strong><br></br> {metadata.clientAddress || ""}
+          <strong>PROJECT ESTIMATE</strong>
+          {clientAddress && <><br />{clientAddress}</>}
         </h1>
       </div>
       
@@ -93,10 +95,10 @@ const CoverPage: React.FC<CoverPageProps> = ({
         {/* Left Column - Estimator Info */}
         <div className="max-w-xs">
           <p className="mb-1">
-            <strong>Estimator Name:</strong> {estimatorName}<br></br>
-            {estimatorTitle && <><strong>Title:</strong> {estimatorTitle}<br></br></>}
-            <strong>Estimator Email:</strong> {companyProfile?.email || ""}<br></br>
-            <strong>Estimator Phone:</strong> {companyProfile?.phone || ""}<br></br>
+            <strong>Estimator Name:</strong> {estimatorName}<br />
+            {estimatorTitle && <><strong>Title:</strong> {estimatorTitle}<br /></>}
+            <strong>Estimator Email:</strong> {companyProfile?.email || ""}<br />
+            <strong>Estimator Phone:</strong> {companyProfile?.phone || ""}<br />
             
           </p>
         </div>
@@ -110,9 +112,9 @@ const CoverPage: React.FC<CoverPageProps> = ({
       {/* Client Information */}
       <div className="mb-2">
         <p className="mb-1">
-          <strong>Client Name:</strong> {metadata.clientName || ""}<br></br>
-          <strong>Project Address:</strong> {metadata.clientAddress || "1"}<br></br>
-          <strong>Client Phone:</strong> {metadata.clientPhone || ""}<br></br>
+          <strong>Client Name:</strong> {metadata.clientName || ""}<br />
+          <strong>Project Address:</strong> {clientAddress}<br />
+          <strong>Client Phone:</strong> {metadata.clientPhone || ""}<br />
           <strong>Client Email:</strong> {metadata.clientEmail || ""}
         </p>
       </div>
