@@ -100,6 +100,9 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
               jobType: data.job_type,
               status: data.status
             });
+            
+            console.log("Setting metadata with address:", data.client_address);
+            
             clearInterval(pollInterval);
             setLoading(false);
           } else if (data.status === "failed") {

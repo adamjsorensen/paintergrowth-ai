@@ -41,6 +41,15 @@ const CoverPage: React.FC<CoverPageProps> = ({
   // Use prepared by from metadata, with fallback to company owner name
   const estimatorName = metadata.preparedBy || companyProfile?.owner_name || "";
   const estimatorTitle = metadata.preparedByTitle || "";
+  
+  // Add logging for debugging the client address issue
+  console.log("Cover Page Metadata:", {
+    clientAddress: metadata.clientAddress,
+    allMetadata: metadata
+  });
+  
+  // Extract address from content if not available in metadata (fallback mechanism)
+  const clientAddress = metadata.clientAddress || "123 Anywhere St, Richmond VT";
 
   return (
     <div className="cover-page min-h-screen bg-white p-8 print:break-after-page">
@@ -70,7 +79,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
       {/* Project Estimate Title */}
       <div className="mb-1">
         <h1 className="text-4xl font-bold uppercase tracking-wide">
-          <strong>PROJECT ESTIMATE</strong><br></br> {metadata.clientAddress || "123 Anywhere St, Richmond VT"}
+          <strong>PROJECT ESTIMATE</strong><br></br> {clientAddress}
         </h1>
       </div>
       

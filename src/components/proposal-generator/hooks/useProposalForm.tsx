@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -89,6 +88,7 @@ export const useProposalForm = (
             client_name: fieldValues['clientName'] as string || null,
             client_phone: fieldValues['clientPhone'] as string || null,
             client_email: fieldValues['clientEmail'] as string || null,
+            client_address: fieldValues['projectAddress'] as string || null,
             job_type: fieldValues['jobType'] as string || null,
             status: "pending"
           });
