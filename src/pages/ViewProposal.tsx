@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, Mail } from "lucide-react";
+import { ArrowLeft, FileText, Mail, Link as LinkIcon } from "lucide-react";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
 import SaveProposalDialog from "@/components/SaveProposalDialog";
 import ProposalNotFound from "@/components/proposal-viewer/ProposalNotFound";
@@ -14,6 +14,7 @@ import { useProposalFetch } from "@/hooks/useProposalFetch";
 import { supabase } from "@/integrations/supabase/client";
 import { shareProposalViaEmail } from "@/utils/emailUtils";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { getOrCreateProposalSnapshot, getPublicProposalUrl } from "@/utils/snapshotUtils";
 
 const ViewProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ const ViewProposal = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   
   const { proposal, loading, metadata, setProposal } = useProposalFetch(id, user?.id);
   const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
@@ -98,6 +100,51 @@ const ViewProposal = () => {
     await shareProposalViaEmail(id, handlePrint);
   };
 
+  const handleCreateSnapshot = async () => {
+    if (!id || !proposal) return;
+
+    setIsCreatingSnapshot(true);
+    
+    try {
+      const snapshot = await getOrCreateProposalSnapshot(
+        id, 
+        proposal, 
+        {
+          ...metadata,
+          preparedBy: userProfile?.full_name || metadata.preparedBy,
+          preparedByTitle: userProfile?.job_title || metadata.preparedByTitle,
+        }
+      );
+      
+      if (snapshot) {
+        toast({
+          title: "Snapshot created",
+          description: "Your proposal can now be shared publicly",
+        });
+        
+        // Copy the public URL to clipboard
+        const publicUrl = getPublicProposalUrl(id);
+        navigator.clipboard.writeText(publicUrl);
+        
+        toast({
+          title: "Link copied to clipboard",
+          description: "You can now share this link with anyone",
+        });
+      } else {
+        throw new Error("Failed to create proposal snapshot");
+      }
+    } catch (error) {
+      console.error("Error creating snapshot:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create proposal snapshot",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingSnapshot(false);
+    }
+  };
+
   // Combine user profile data with metadata
   const enhancedMetadata = {
     ...metadata,
@@ -105,7 +152,7 @@ const ViewProposal = () => {
     preparedByTitle: userProfile?.job_title || metadata.preparedByTitle,
   };
 
-  if (loading || isLoadingUserProfile) {
+  if (loading || isLoadingUserProfile || isCreatingSnapshot) {
     return (
       <PageLayout title="Generating Proposal">
         <LoadingAnimation />
@@ -127,6 +174,13 @@ const ViewProposal = () => {
 
           {proposal && (
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCreateSnapshot}
+              >
+                <LinkIcon className="mr-2 h-4 w-4" />
+                Create Shareable Link
+              </Button>
               <Button
                 variant="secondary"
                 onClick={handleEmailShare}
