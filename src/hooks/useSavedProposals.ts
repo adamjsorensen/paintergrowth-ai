@@ -76,11 +76,24 @@ export const useSavedProposals = () => {
 
   const updateProposal = async (id: string, newContent: string) => {
     try {
+      // Find the existing proposal data to preserve it
+      const existingProposal = proposals.find(p => p.id === id);
+      
+      if (!existingProposal) {
+        throw new Error("Proposal not found");
+      }
+      
       const { error } = await supabase
         .from('saved_proposals')
         .update({
           content: newContent,
           updated_at: new Date().toISOString(), // Convert Date to string
+          // Preserve existing data
+          client_name: existingProposal.client_name,
+          client_phone: existingProposal.client_phone, 
+          client_email: existingProposal.client_email,
+          client_address: existingProposal.client_address,
+          job_type: existingProposal.job_type
         })
         .eq('id', id);
 

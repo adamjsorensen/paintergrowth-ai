@@ -83,7 +83,7 @@ const ViewProposal = () => {
         .from('saved_proposals')
         .update({
           content: newContent,
-          updated_at: new Date().toISOString(), // Convert Date to string
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id);
 
@@ -176,6 +176,7 @@ const ViewProposal = () => {
           clientName={enhancedMetadata.clientName || ""}
           clientPhone={enhancedMetadata.clientPhone || ""}
           clientEmail={enhancedMetadata.clientEmail || ""}
+          clientAddress={enhancedMetadata.clientAddress || ""}
           jobType={enhancedMetadata.jobType || ""}
           existingId={id}
         />

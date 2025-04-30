@@ -23,6 +23,7 @@ type SaveProposalDialogProps = {
   clientName: string;
   clientPhone?: string;
   clientEmail?: string;
+  clientAddress?: string;
   jobType: string;
   existingId?: string;
 };
@@ -34,6 +35,7 @@ const SaveProposalDialog = ({
   clientName,
   clientPhone,
   clientEmail,
+  clientAddress,
   jobType,
   existingId,
 }: SaveProposalDialogProps) => {
@@ -68,6 +70,7 @@ const SaveProposalDialog = ({
             client_name: clientName,
             client_phone: clientPhone,
             client_email: clientEmail,
+            client_address: clientAddress,
             job_type: jobType,
             status: "completed"
           })
@@ -83,6 +86,7 @@ const SaveProposalDialog = ({
             client_name: clientName,
             client_phone: clientPhone,
             client_email: clientEmail,
+            client_address: clientAddress,
             job_type: jobType,
             status: "completed"
           });

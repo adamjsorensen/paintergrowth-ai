@@ -133,6 +133,9 @@ const SavedProposals = () => {
             onOpenChange={setShowSaveDialog}
             proposalContent={viewProposal.content}
             clientName={viewProposal.client_name || ""}
+            clientPhone={viewProposal.client_phone || ""}
+            clientEmail={viewProposal.client_email || ""}
+            clientAddress={viewProposal.client_address || ""}
             jobType={viewProposal.job_type || ""}
             existingId={viewProposal.id}
           />
