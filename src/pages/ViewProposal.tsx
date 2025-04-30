@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -74,7 +73,7 @@ const ViewProposal = () => {
         .from('saved_proposals')
         .update({
           content: newContent,
-          updated_at: new Date(),
+          updated_at: new Date().toISOString(), // Convert Date to string
         })
         .eq('id', id);
 

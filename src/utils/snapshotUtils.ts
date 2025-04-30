@@ -1,8 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { renderToStaticMarkup } from "react-dom/server";
-import { CompanyProfile, Profile } from "@/types/supabase";
-import PrintableProposal from "@/components/proposal-viewer/PrintableProposal";
+import { CompanyProfile } from "@/types/supabase";
+
+// Define a more complete type for the proposal data
+type SavedProposal = {
+  id: string;
+  content: string;
+  client_name?: string | null;
+  client_phone?: string | null; 
+  client_email?: string | null;
+  job_type?: string | null;
+  status?: string;
+  snapshot_html?: string | null;
+  snapshot_created_at?: string | null;
+};
 
 /**
  * Checks if a proposal has a snapshot, and creates one if it doesn't
@@ -22,7 +33,7 @@ export const getOrCreateProposalSnapshot = async (
     // First check if the proposal already has a snapshot
     const { data: proposal, error: fetchError } = await supabase
       .from("saved_proposals")
-      .select("snapshot_html, snapshot_created_at, content")
+      .select("snapshot_html, snapshot_created_at, content, client_name, client_phone, client_email, job_type, status")
       .eq("id", proposalId)
       .single();
       
@@ -31,13 +42,16 @@ export const getOrCreateProposalSnapshot = async (
       return null;
     }
     
+    // Cast the proposal to our defined type to ensure proper type checking
+    const typedProposal = proposal as SavedProposal;
+    
     // If the proposal already has a snapshot, return it
-    if (proposal.snapshot_html) {
-      return proposal.snapshot_html;
+    if (typedProposal.snapshot_html) {
+      return typedProposal.snapshot_html;
     }
     
     // If no content was provided, use the one from the proposal
-    const content = proposalContent || proposal.content;
+    const content = proposalContent || typedProposal.content;
     if (!content) {
       console.error("No proposal content available for snapshot creation");
       return null;
@@ -60,11 +74,11 @@ export const getOrCreateProposalSnapshot = async (
       // Build metadata from proposal data if not provided
       if (!fullMetadata) {
         fullMetadata = {
-          clientName: proposal.client_name,
-          clientPhone: proposal.client_phone,
-          clientEmail: proposal.client_email,
-          jobType: proposal.job_type,
-          status: proposal.status
+          clientName: typedProposal.client_name,
+          clientPhone: typedProposal.client_phone,
+          clientEmail: typedProposal.client_email,
+          jobType: typedProposal.job_type,
+          status: typedProposal.status
         };
       }
     }
@@ -112,7 +126,7 @@ export const getOrCreateProposalSnapshot = async (
       .from("saved_proposals")
       .update({
         snapshot_html: snapshotHtml,
-        snapshot_created_at: new Date().toISOString()
+        snapshot_created_at: new Date().toISOString() // Convert Date to string
       })
       .eq("id", proposalId);
 
