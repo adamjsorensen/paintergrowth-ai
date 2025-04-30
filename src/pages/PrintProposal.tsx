@@ -6,8 +6,6 @@ import { useCompanyProfile } from "@/hooks/useCompanyProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import PrintableProposal from "@/components/proposal-viewer/PrintableProposal";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
-import { getOrCreateProposalSnapshot } from "@/utils/snapshotUtils";
-import { useEffect, useState } from "react";
 
 const PrintProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +13,6 @@ const PrintProposal = () => {
   const { proposal, loading, metadata } = useProposalFetch(id, user?.id);
   const { data: companyProfile, isLoading: isLoadingProfile } = useCompanyProfile(user?.id);
   const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
-  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
 
   // Combine user profile data with metadata
   const enhancedMetadata = {
@@ -24,26 +21,7 @@ const PrintProposal = () => {
     preparedByTitle: userProfile?.job_title || metadata.preparedByTitle,
   };
 
-  // Create snapshot when proposal is loaded
-  useEffect(() => {
-    if (id && proposal && !loading && !isLoadingProfile) {
-      setIsCreatingSnapshot(true);
-      
-      const createSnapshot = async () => {
-        await getOrCreateProposalSnapshot(
-          id, 
-          proposal, 
-          enhancedMetadata, 
-          companyProfile
-        );
-        setIsCreatingSnapshot(false);
-      };
-      
-      createSnapshot();
-    }
-  }, [id, proposal, loading, isLoadingProfile, companyProfile, enhancedMetadata]);
-
-  if (loading || isLoadingProfile || isLoadingUserProfile || isCreatingSnapshot) {
+  if (loading || isLoadingProfile || isLoadingUserProfile) {
     return <LoadingAnimation />;
   }
 

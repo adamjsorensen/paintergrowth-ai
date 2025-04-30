@@ -29,7 +29,6 @@ import PrintProposal from "./pages/PrintProposal";
 import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
 import BoilerplateManager from "./pages/admin/BoilerplateManager";
 import Onboarding from "./pages/Onboarding";
-import PublicProposalPage from "./pages/PublicProposal";
 
 const queryClient = new QueryClient();
 
@@ -81,15 +80,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Protected print route (also generates snapshots) */}
               <Route path="/proposal/print/:id" element={
                 <ProtectedRoute>
                   <PrintProposal />
                 </ProtectedRoute>
               } />
-              
-              {/* Public snapshot route */}
-              <Route path="/p/:id" element={<PublicProposalPage />} />
               
               <Route path="/admin" element={
                 <AdminRoute>

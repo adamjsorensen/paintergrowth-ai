@@ -77,7 +77,7 @@ export const useSavedProposals = () => {
         .from('saved_proposals')
         .update({
           content: newContent,
-          updated_at: new Date().toISOString(), // Convert Date to string
+          updated_at: new Date(),
         })
         .eq('id', id);
 

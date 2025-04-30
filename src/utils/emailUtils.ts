@@ -7,7 +7,7 @@
  */
 export const constructMailtoLink = (proposalId: string, baseUrl?: string) => {
   const origin = baseUrl || window.location.origin;
-  const proposalUrl = `${origin}/p/${proposalId}`;
+  const proposalUrl = `${origin}/proposal/print/${proposalId}`;
   
   const subject = encodeURIComponent("Your Painting Proposal from Paintergrowth.ai");
   const body = encodeURIComponent(
