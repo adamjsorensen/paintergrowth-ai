@@ -35,11 +35,14 @@ export async function handleGenerateProposal(req: Request) {
       return createErrorResponse('Failed to update proposal status');
     }
 
-    // Additionally update client_phone and client_email if they exist in values
-    if (values.clientPhone || values.clientEmail) {
+    // Additionally update client_phone, client_email, and client_address if they exist in values
+    if (values.clientPhone || values.clientEmail || values.projectAddress) {
       const updateData: Record<string, string> = {};
       if (values.clientPhone) updateData.client_phone = values.clientPhone as string;
       if (values.clientEmail) updateData.client_email = values.clientEmail as string;
+      if (values.projectAddress) updateData.client_address = values.projectAddress as string;
+
+      console.log("Updating client contact info:", updateData);
 
       const { error: clientDataError } = await supabase
         .from('saved_proposals')
@@ -49,6 +52,8 @@ export async function handleGenerateProposal(req: Request) {
       if (clientDataError) {
         console.error('Failed to update client contact info:', clientDataError);
         // Continue with generation as this is not critical
+      } else {
+        console.log('Successfully updated client contact info');
       }
     }
 

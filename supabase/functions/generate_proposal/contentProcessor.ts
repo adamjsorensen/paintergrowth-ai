@@ -91,6 +91,7 @@ export async function processProposalGeneration(
     // Store the projectAddress as client_address if present
     if (values.projectAddress) {
       updateData.client_address = values.projectAddress;
+      console.log("Setting client address:", values.projectAddress);
     }
     
     const { error: contentError } = await supabase
