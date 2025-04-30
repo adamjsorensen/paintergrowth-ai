@@ -49,7 +49,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
   });
   
   // Extract address from content if not available in metadata (fallback mechanism)
-  const clientAddress = metadata.clientAddress || "123 Anywhere St, Richmond VT";
+  //const clientAddress = metadata.clientAddress || "123 Anywhere St, Richmond VT";
 
   return (
     <div className="cover-page min-h-screen bg-white p-8 print:break-after-page">
@@ -79,7 +79,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
       {/* Project Estimate Title */}
       <div className="mb-1">
         <h1 className="text-4xl font-bold uppercase tracking-wide">
-          <strong>PROJECT ESTIMATE</strong><br></br> {clientAddress}
+          <strong>PROJECT ESTIMATE</strong><br></br> {metadata.clientAddress || ""}
         </h1>
       </div>
       
