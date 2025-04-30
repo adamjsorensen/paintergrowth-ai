@@ -9,6 +9,9 @@ export type Proposal = {
   title: string;
   content: string;
   client_name: string | null;
+  client_phone: string | null;
+  client_email: string | null;
+  client_address: string | null;
   job_type: string | null;
   created_at: string;
 };
@@ -77,7 +80,7 @@ export const useSavedProposals = () => {
         .from('saved_proposals')
         .update({
           content: newContent,
-          updated_at: new Date(),
+          updated_at: new Date().toISOString(), // Convert Date to string
         })
         .eq('id', id);
 

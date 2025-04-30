@@ -70,7 +70,8 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
           console.log("Proposal data received:", { 
             id: data.id, 
             status: data.status,
-            contentLength: data.content ? data.content.length : 0 
+            contentLength: data.content ? data.content.length : 0,
+            clientAddress: data.client_address
           });
           
           if (data.status === "pending" || data.status === "generating") {
@@ -95,6 +96,7 @@ export const useProposalFetch = (id: string | undefined, userId: string | undefi
               clientName: data.client_name,
               clientPhone: data.client_phone,
               clientEmail: data.client_email,
+              clientAddress: data.client_address, // Include the client_address field here
               jobType: data.job_type,
               status: data.status
             });

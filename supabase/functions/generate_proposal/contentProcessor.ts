@@ -82,13 +82,21 @@ export async function processProposalGeneration(
       // Continue with the original content if merging fails
     }
 
-    // Update proposal with generated content
-    const { error: contentError } = await updateProposalStatus(
-      supabase, 
-      proposalId, 
-      'completed', 
-      finalContent
-    );
+    // Update proposal with generated content and additional field values
+    const updateData: Record<string, any> = {
+      status: 'completed',
+      content: finalContent
+    };
+    
+    // Store the projectAddress as client_address if present
+    if (values.projectAddress) {
+      updateData.client_address = values.projectAddress;
+    }
+    
+    const { error: contentError } = await supabase
+      .from('saved_proposals')
+      .update(updateData)
+      .eq('id', proposalId);
 
     if (contentError) {
       console.error('Failed to update proposal content:', contentError);

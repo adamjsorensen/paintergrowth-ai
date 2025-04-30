@@ -386,6 +386,7 @@ export type Database = {
       }
       saved_proposals: {
         Row: {
+          client_address: string | null
           client_email: string | null
           client_name: string | null
           client_phone: string | null
@@ -393,11 +394,15 @@ export type Database = {
           created_at: string
           id: string
           job_type: string | null
+          snapshot_created_at: string | null
+          snapshot_html: string | null
           status: string
           title: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
+          client_address?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -405,11 +410,15 @@ export type Database = {
           created_at?: string
           id?: string
           job_type?: string | null
+          snapshot_created_at?: string | null
+          snapshot_html?: string | null
           status?: string
           title: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
+          client_address?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -417,8 +426,11 @@ export type Database = {
           created_at?: string
           id?: string
           job_type?: string | null
+          snapshot_created_at?: string | null
+          snapshot_html?: string | null
           status?: string
           title?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
