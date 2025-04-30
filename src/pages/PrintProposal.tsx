@@ -6,6 +6,7 @@ import { useCompanyProfile } from "@/hooks/useCompanyProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import PrintableProposal from "@/components/proposal-viewer/PrintableProposal";
 import LoadingAnimation from "@/components/proposal-generator/LoadingAnimation";
+import { useEffect } from "react";
 
 const PrintProposal = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,17 @@ const PrintProposal = () => {
   const { proposal, loading, metadata } = useProposalFetch(id, user?.id);
   const { data: companyProfile, isLoading: isLoadingProfile } = useCompanyProfile(user?.id);
   const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
+
+  // Debug to verify client address is present
+  useEffect(() => {
+    if (metadata) {
+      console.log("PrintProposal - Metadata received:", {
+        clientAddress: metadata.clientAddress,
+        clientName: metadata.clientName,
+        metadataKeys: Object.keys(metadata)
+      });
+    }
+  }, [metadata]);
 
   // Combine user profile data with metadata
   const enhancedMetadata = {

@@ -24,6 +24,17 @@ const ViewProposal = () => {
   const { proposal, loading, metadata, setProposal } = useProposalFetch(id, user?.id);
   const { data: userProfile, isLoading: isLoadingUserProfile } = useUserProfile(user?.id);
 
+  // Debug metadata to verify client address is present
+  useEffect(() => {
+    if (metadata) {
+      console.log("ViewProposal - Metadata received:", {
+        clientAddress: metadata.clientAddress,
+        clientName: metadata.clientName,
+        metadataKeys: Object.keys(metadata)
+      });
+    }
+  }, [metadata]);
+
   const handleCopy = () => {
     if (proposal) {
       navigator.clipboard.writeText(proposal);

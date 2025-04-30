@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -78,6 +79,12 @@ export const useProposalForm = (
 
     if (user) {
       try {
+        // Log the project address to verify it's captured correctly
+        console.log("Form submission - Project Address:", {
+          projectAddress: fieldValues['projectAddress'],
+          allFields: fieldValues
+        });
+
         await supabase
           .from('saved_proposals')
           .insert({
