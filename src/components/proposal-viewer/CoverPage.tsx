@@ -81,7 +81,6 @@ const CoverPage: React.FC<CoverPageProps> = ({
       <div className="mb-1">
         <h1 className="text-4xl font-bold uppercase tracking-wide">
           <strong>PROJECT ESTIMATE</strong>
-          {clientAddress && <><br />{clientAddress}</>}
         </h1>
       </div>
       
