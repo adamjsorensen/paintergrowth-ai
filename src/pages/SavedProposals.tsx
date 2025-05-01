@@ -52,6 +52,7 @@ const SavedProposals = () => {
 
   const handlePrint = async (id: string): Promise<void> => {
     return new Promise<void>((resolve) => {
+      // Use the correct route pattern
       const printWindow = window.open(`/proposal/print/${id}`, '_blank');
       // We need to wait a bit to ensure the window is fully opened
       setTimeout(() => {

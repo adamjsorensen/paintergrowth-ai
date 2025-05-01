@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -80,10 +80,23 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Original print proposal route */}
               <Route path="/proposal/print/:id" element={
                 <ProtectedRoute>
                   <PrintProposal />
                 </ProtectedRoute>
+              } />
+              
+              {/* Adding alternative route for /print/proposal/:id format */}
+              <Route path="/print/proposal/:id" element={
+                <ProtectedRoute>
+                  <PrintProposal />
+                </ProtectedRoute>
+              } />
+              
+              {/* Redirect old format to new format if needed */}
+              <Route path="/print/:id" element={
+                <Navigate to={(location) => `/proposal/print/${location.pathname.split('/').pop()}`} replace />
               } />
               
               <Route path="/admin" element={
