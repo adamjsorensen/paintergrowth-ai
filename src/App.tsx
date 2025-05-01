@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -29,6 +29,13 @@ import PrintProposal from "./pages/PrintProposal";
 import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
 import BoilerplateManager from "./pages/admin/BoilerplateManager";
 import Onboarding from "./pages/Onboarding";
+
+// Wrapper component to handle redirect with params
+const RedirectToPrint = () => {
+  const location = useLocation();
+  const id = location.pathname.split('/').pop() || '';
+  return <Navigate to={`/proposal/print/${id}`} replace />;
+};
 
 const queryClient = new QueryClient();
 
@@ -96,7 +103,9 @@ const App = () => (
               
               {/* Redirect old format to new format if needed */}
               <Route path="/print/:id" element={
-                <Navigate to={(location) => `/proposal/print/${location.pathname.split('/').pop()}`} replace />
+                <ProtectedRoute>
+                  <RedirectToPrint />
+                </ProtectedRoute>
               } />
               
               <Route path="/admin" element={
