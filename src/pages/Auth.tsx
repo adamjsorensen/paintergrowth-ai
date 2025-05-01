@@ -83,7 +83,7 @@ const Auth = () => {
         
         toast({
           title: "Sign up successful!",
-          description: "Please check your email to confirm your account.",
+          description: "Welcome to Paintergrowth.ai!",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
