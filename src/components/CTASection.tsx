@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CTASection = () => {
   const benefits = [
@@ -35,8 +36,11 @@ const CTASection = () => {
           </div>
 
           <div className="pt-6">
-            <Button className="bg-white text-paintergrowth-700 hover:bg-paintergrowth-50 px-8 py-6 text-lg font-medium">
-              Start Your Free Trial
+            <Button 
+              className="bg-white text-paintergrowth-700 hover:bg-paintergrowth-50 px-8 py-6 text-lg font-medium"
+              asChild
+            >
+              <Link to="/auth">Start Your Free Trial</Link>
             </Button>
             <p className="mt-4 text-sm text-paintergrowth-200">
               No credit card required. Cancel anytime.

@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
@@ -17,8 +18,11 @@ const HeroSection = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-slow">
-            <Button className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white px-8 py-6 text-lg">
-              Get Started Free
+            <Button 
+              className="bg-paintergrowth-600 hover:bg-paintergrowth-700 text-white px-8 py-6 text-lg"
+              asChild
+            >
+              <Link to="/auth">Get Started Free</Link>
             </Button>
             <Button variant="outline" className="border-paintergrowth-300 text-paintergrowth-700 hover:bg-paintergrowth-50 px-8 py-6 text-lg">
               See Demo
