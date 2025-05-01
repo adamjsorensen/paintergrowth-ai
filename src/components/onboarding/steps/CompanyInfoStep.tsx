@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Building, Upload } from 'lucide-react';
+import { Building, Upload, Phone, Mail } from 'lucide-react';
 
 const CompanyInfoStep: React.FC = () => {
   const { 
@@ -23,6 +23,8 @@ const CompanyInfoStep: React.FC = () => {
     businessName: '',
     location: '',
     services: '',
+    email: '',
+    phone: ''
   });
   
   const validateFields = (): boolean => {
@@ -30,6 +32,8 @@ const CompanyInfoStep: React.FC = () => {
       businessName: '',
       location: '',
       services: '',
+      email: '',
+      phone: ''
     };
     
     if (!formData.businessName.trim()) {
@@ -38,6 +42,16 @@ const CompanyInfoStep: React.FC = () => {
     
     if (!formData.location.trim()) {
       newErrors.location = 'Location is required';
+    }
+
+    // Email validation
+    if (formData.email.trim() && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    // Phone validation - basic check for non-empty if provided
+    if (formData.phone.trim() && !/^[0-9+\-() ]{7,}$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
     }
     
     setErrors(newErrors);
@@ -132,6 +146,38 @@ const CompanyInfoStep: React.FC = () => {
             className={errors.location ? "border-red-500" : ""}
           />
           {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Business Email</Label>
+          <div className="relative">
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormValue('email', e.target.value)}
+              placeholder="contact@yourcompany.com"
+              className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
+            />
+            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
+          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Business Phone</Label>
+          <div className="relative">
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormValue('phone', e.target.value)}
+              placeholder="(123) 456-7890"
+              className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
+            />
+            <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
+          {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
         </div>
 
         <div className="space-y-2">

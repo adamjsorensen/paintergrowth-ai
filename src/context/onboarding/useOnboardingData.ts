@@ -42,6 +42,8 @@ export const useOnboardingData = (user: User | null) => {
             keywords: [],
             avatarFile: null,
             logoFile: null,
+            email: '',
+            phone: '',
           });
           
           // Set avatar preview if available
@@ -65,6 +67,8 @@ export const useOnboardingData = (user: User | null) => {
               teamSize: companyData.team_size || '1',
               preferredTone: companyData.preferred_tone || 'professional',
               keywords: companyData.brand_keywords || [],
+              email: companyData.email || '',
+              phone: companyData.phone || '',
             }));
             
             // Set logo preview if available

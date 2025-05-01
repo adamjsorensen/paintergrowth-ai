@@ -1,4 +1,5 @@
 
+
 import { File } from "@/types/file";
 
 export interface OnboardingFormData {
@@ -12,6 +13,8 @@ export interface OnboardingFormData {
   keywords: string[];
   avatarFile: File | null;
   logoFile: File | null;
+  email: string;
+  phone: string;
 }
 
 export interface OnboardingContextProps {
@@ -41,6 +44,9 @@ export const defaultFormData: OnboardingFormData = {
   keywords: [],
   avatarFile: null,
   logoFile: null,
+  email: '',
+  phone: ''
 };
 
 export const TOTAL_STEPS = 4;
+

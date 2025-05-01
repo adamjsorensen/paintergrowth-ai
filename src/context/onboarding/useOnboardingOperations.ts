@@ -75,6 +75,8 @@ export const useOnboardingOperations = (
             team_size: formData.teamSize,
             preferred_tone: formData.preferredTone,
             brand_keywords: formData.keywords,
+            email: formData.email,
+            phone: formData.phone,
             ...(logoUrl && { logo_url: logoUrl })
           })
           .eq('user_id', user.id);
@@ -92,6 +94,8 @@ export const useOnboardingOperations = (
             team_size: formData.teamSize,
             preferred_tone: formData.preferredTone,
             brand_keywords: formData.keywords,
+            email: formData.email,
+            phone: formData.phone,
             ...(logoUrl && { logo_url: logoUrl })
           });
           
