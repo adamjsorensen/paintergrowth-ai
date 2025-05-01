@@ -62,7 +62,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
           className="h-24 mx-auto"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = "/placeholder.svg";
+            target.src = "https://www.pcapainted.org/wp-content/uploads/2023/04/Painter-Growth-IP-300x200.png";
           }}
         />
       </div>
