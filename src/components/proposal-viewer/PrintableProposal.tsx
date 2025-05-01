@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { formatProposalText } from '@/utils/formatProposalText';
-import { Printer } from 'lucide-react';
+import { Printer, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import CoverPage from './CoverPage';
 
@@ -83,6 +84,7 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
   companyProfile,
 }) => {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [printCountdown, setPrintCountdown] = useState<number | null>(null);
 
   // Effect for fetching cover image
   useEffect(() => {
@@ -128,12 +130,27 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
     window.addEventListener('afterprint', restoreTitle);
 
     // Trigger print dialog only if opened via window.opener
-    // Use a small timeout to ensure title is set before print dialog opens
+    // Use a 5 second timeout to ensure title is set before print dialog opens
     let printTimeoutId: NodeJS.Timeout | null = null;
     if (window.opener) {
-       printTimeoutId = setTimeout(() => {
-         window.print();
-       }, 100); // 100ms delay
+      // Start countdown
+      setPrintCountdown(5);
+      
+      // Update countdown every second
+      const countdownInterval = setInterval(() => {
+        setPrintCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            clearInterval(countdownInterval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      // Trigger print after 5 seconds
+      printTimeoutId = setTimeout(() => {
+        window.print();
+      }, 5000); // 5 second delay
     }
 
     // Cleanup function: restore title and remove listener
@@ -152,6 +169,14 @@ const PrintableProposal: React.FC<PrintableProposalProps> = ({
     <div className="min-h-screen bg-white font-sans">
       {/* Inject print styles */}
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
+
+      {/* Print countdown notification */}
+      {printCountdown !== null && (
+        <div className="fixed top-4 right-4 bg-blue-600 text-white py-2 px-4 rounded-md shadow-lg flex items-center gap-2 z-50 print:hidden">
+          <Clock className="h-5 w-5" />
+          <span>Print dialog will open in {printCountdown} seconds...</span>
+        </div>
+      )}
 
       <div className="p-4 mb-6 bg-blue-50 rounded-lg print:hidden">
         <h2 className="text-lg font-semibold flex items-center gap-2">
