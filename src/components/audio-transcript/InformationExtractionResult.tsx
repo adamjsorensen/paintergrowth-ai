@@ -1,8 +1,9 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ExtractedField {
   name: string;
@@ -67,15 +68,45 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
     }
   };
 
+  // Count total fields extracted
+  const totalFields = Object.values(groupedFields).reduce(
+    (sum, group) => sum + group.length, 
+    0
+  );
+
+  // Calculate average confidence
+  const allConfidences = Object.values(groupedFields)
+    .flatMap(group => group.map(field => field.confidence));
+  
+  const averageConfidence = allConfidences.length > 0
+    ? allConfidences.reduce((sum, conf) => sum + conf, 0) / allConfidences.length
+    : 0;
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Extracted Information</CardTitle>
-        <CardDescription>
-          Review the information extracted from your audio or transcript
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Extracted Information</CardTitle>
+            <CardDescription>
+              Review the information extracted from your audio or transcript
+            </CardDescription>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant={getConfidenceBadge(averageConfidence)} className="ml-2">
+                  {Math.round(averageConfidence * 100)}% avg. confidence
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Average confidence across all extracted fields</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 max-h-[60vh] overflow-y-auto">
         {/* Client Information */}
         {groupedFields.client.length > 0 && (
           <div>
@@ -87,9 +118,18 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
                     <p className="font-medium">{field.name}</p>
                     <p className="text-sm text-muted-foreground">{formatValue(field.value)}</p>
                   </div>
-                  <Badge variant={getConfidenceBadge(field.confidence)}>
-                    {Math.round(field.confidence * 100)}% confident
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant={getConfidenceBadge(field.confidence)}>
+                          {Math.round(field.confidence * 100)}%
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>AI confidence in this extraction</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               ))}
             </div>
@@ -107,9 +147,18 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
                     <p className="font-medium">{field.name}</p>
                     <p className="text-sm text-muted-foreground">{formatValue(field.value)}</p>
                   </div>
-                  <Badge variant={getConfidenceBadge(field.confidence)}>
-                    {Math.round(field.confidence * 100)}% confident
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant={getConfidenceBadge(field.confidence)}>
+                          {Math.round(field.confidence * 100)}%
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>AI confidence in this extraction</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               ))}
             </div>
@@ -127,9 +176,18 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
                     <p className="font-medium">{field.name}</p>
                     <p className="text-sm text-muted-foreground">{formatValue(field.value)}</p>
                   </div>
-                  <Badge variant={getConfidenceBadge(field.confidence)}>
-                    {Math.round(field.confidence * 100)}% confident
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant={getConfidenceBadge(field.confidence)}>
+                          {Math.round(field.confidence * 100)}%
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>AI confidence in this extraction</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               ))}
             </div>
@@ -147,9 +205,18 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
                     <p className="font-medium">{field.name}</p>
                     <p className="text-sm text-muted-foreground">{formatValue(field.value)}</p>
                   </div>
-                  <Badge variant={getConfidenceBadge(field.confidence)}>
-                    {Math.round(field.confidence * 100)}% confident
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant={getConfidenceBadge(field.confidence)}>
+                          {Math.round(field.confidence * 100)}%
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>AI confidence in this extraction</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               ))}
             </div>
@@ -169,9 +236,10 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={onEdit}>
+          <Edit className="mr-2 h-4 w-4" />
           Edit Manually
         </Button>
-        <Button onClick={onAccept}>
+        <Button onClick={onAccept} disabled={totalFields === 0}>
           <Check className="mr-2 h-4 w-4" />
           Use This Information
         </Button>

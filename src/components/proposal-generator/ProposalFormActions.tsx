@@ -20,9 +20,11 @@ interface ProposalFormActionsProps {
 
 const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
   hasModalFields,
+  isModalOpen,
   openModal,
   submitForm,
   isGenerating,
+  currentTab,
   onNext,
   onPrevious,
   isLastTab,
