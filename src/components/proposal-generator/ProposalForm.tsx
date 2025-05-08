@@ -206,6 +206,6 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
       )}
     </Card>
   );
-}
+};
 
 export default ProposalForm;

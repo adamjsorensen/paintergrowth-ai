@@ -31,22 +31,40 @@ serve(async (req) => {
       );
     }
 
-    // Create the prompt for information extraction
+    // Create the prompt for information extraction with specific field mapping
     const prompt = `
 You are an AI assistant for painting contractors. Your task is to extract relevant information from a transcript of a contractor walking through a property or discussing a project with a client.
 
-Extract the following information:
-1. Client information (name, email, phone, address)
-2. Project details (type of project, timeline, budget)
-3. Scope of work (rooms to be painted, surfaces, special requirements)
-4. Any other relevant information
+Extract the following information with specific field mappings:
+
+## Client Information
+- Client Name (formField: clientName)
+- Client Email (formField: clientEmail)
+- Client Phone (formField: clientPhone)
+- Project Address (formField: projectAddress)
+
+## Project Details
+- Job Type (formField: jobType) - Choose from: interior, exterior, cabinets, deck, commercial
+- Square Footage (formField: squareFootage) - Numeric value only
+- Timeline or Start Date (formField: timeline) - Date or timeframe
+- Special Notes (formField: specialNotes) - Any special requirements or concerns
+
+## Scope of Work
+- Surfaces to Paint (formField: surfacesToPaint) - Array of surfaces like walls, ceilings, trim, doors, cabinets
+- Preparation Needs (formField: prepNeeds) - Array of prep work like scraping, sanding, patching
+- Color Preferences (formField: colorPalette) - Any color preferences mentioned
 
 For each piece of information, provide:
-- The extracted value
-- A confidence score (0.0 to 1.0)
-- The corresponding form field name (if applicable)
+- The extracted value (formatted appropriately)
+- A confidence score (0.0 to 1.0) indicating how certain you are about this extraction
+- The corresponding form field name as specified above
 
-Respond with a JSON object with the following structure:
+EXAMPLES:
+
+Example 1:
+Transcript: "I'm John Smith and I need my living room and kitchen painted. The walls are in pretty good shape but will need some patching. I'm thinking of a light blue color. My number is 555-123-4567 and my address is 123 Main Street."
+
+Response:
 {
   "fields": [
     {
@@ -56,19 +74,93 @@ Respond with a JSON object with the following structure:
       "formField": "clientName"
     },
     {
+      "name": "Client Phone",
+      "value": "555-123-4567",
+      "confidence": 0.9,
+      "formField": "clientPhone"
+    },
+    {
       "name": "Project Address",
-      "value": "123 Main St, Anytown, USA",
+      "value": "123 Main Street",
       "confidence": 0.85,
       "formField": "projectAddress"
+    },
+    {
+      "name": "Job Type",
+      "value": "interior",
+      "confidence": 0.8,
+      "formField": "jobType"
+    },
+    {
+      "name": "Surfaces to Paint",
+      "value": ["walls"],
+      "confidence": 0.7,
+      "formField": "surfacesToPaint"
+    },
+    {
+      "name": "Preparation Needs",
+      "value": ["patching"],
+      "confidence": 0.8,
+      "formField": "prepNeeds"
+    },
+    {
+      "name": "Color Preferences",
+      "value": "light blue",
+      "confidence": 0.85,
+      "formField": "colorPalette"
     }
   ]
 }
 
-Here is the transcript:
+Example 2:
+Transcript: "We're looking at a 2-story house, about 2500 square feet. The homeowner wants all the bedrooms and bathrooms painted, plus the trim throughout. They want to start in about 3 weeks. The house is at 456 Oak Avenue."
+
+Response:
+{
+  "fields": [
+    {
+      "name": "Project Address",
+      "value": "456 Oak Avenue",
+      "confidence": 0.9,
+      "formField": "projectAddress"
+    },
+    {
+      "name": "Job Type",
+      "value": "interior",
+      "confidence": 0.85,
+      "formField": "jobType"
+    },
+    {
+      "name": "Square Footage",
+      "value": 2500,
+      "confidence": 0.9,
+      "formField": "squareFootage"
+    },
+    {
+      "name": "Timeline",
+      "value": "3 weeks",
+      "confidence": 0.8,
+      "formField": "timeline"
+    },
+    {
+      "name": "Surfaces to Paint",
+      "value": ["walls", "trim"],
+      "confidence": 0.85,
+      "formField": "surfacesToPaint"
+    }
+  ]
+}
+
+Now, analyze the following transcript and extract all relevant information:
+
 ${transcript}
+
+Respond ONLY with a valid JSON object containing the extracted fields. Do not include any explanatory text outside the JSON structure.
 `;
 
-    // Call OpenRouter API (using GPT-4o Mini)
+    console.log("Sending request to OpenRouter API");
+
+    // Call OpenRouter API (using GPT-4o)
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -78,7 +170,7 @@ ${transcript}
         'X-Title': 'Paintergrowth.ai'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           { role: 'user', content: prompt }
         ],
@@ -106,6 +198,8 @@ ${transcript}
       );
     }
 
+    console.log("Received response from OpenRouter API");
+
     // Parse the JSON response from the AI
     try {
       // Find JSON in the response (in case there's any wrapper text)
@@ -113,12 +207,16 @@ ${transcript}
       const jsonString = jsonMatch ? jsonMatch[0] : content;
       const extractedData = JSON.parse(jsonString);
       
+      console.log("Successfully parsed extracted data");
+      
       return new Response(
         JSON.stringify(extractedData),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError, content);
+      console.error('Error parsing AI response:', parseError);
+      console.error('Raw content:', content);
+      
       return new Response(
         JSON.stringify({ 
           error: 'Failed to parse AI response', 
