@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import ProposalBoilerplateToggles from "@/components/proposal-generator/ProposalBoilerplateToggles";
 import ProposalFormActions from "@/components/proposal-generator/ProposalFormActions";
 import { sections } from "@/components/proposal-generator/constants/formSections";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProposalFormProps {
   fields: FieldConfig[];
@@ -34,6 +35,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const groupedFields = useGroupedPromptFields(fields);
+  const { toast } = useToast();
 
   const {
     fieldValues,
@@ -121,6 +123,30 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
 
   const isFirstTab = currentTabIndex === 0;
 
+  // Handle extracted information from transcript
+  const handleInformationExtracted = (extractedData: Record<string, any>) => {
+    if (!extractedData || !extractedData.fields) {
+      toast({
+        title: "No data extracted",
+        description: "We couldn't extract any information from your transcript",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Map extracted fields to form fields
+    extractedData.fields.forEach((field: any) => {
+      if (field.formField && field.value) {
+        handleFieldChange(field.formField, field.value);
+      }
+    });
+    
+    toast({
+      title: "Form pre-filled",
+      description: "Information from your transcript has been added to the form",
+    });
+  };
+
   return (
     <Card className="border border-gray-200 shadow-md rounded-xl overflow-hidden">
       <ProposalFormHeader 
@@ -162,6 +188,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           onPrevious={handlePrevious}
           isLastTab={isLastTab}
           isFirstTab={isFirstTab}
+          onInformationExtracted={handleInformationExtracted}
         />
       </div>
       

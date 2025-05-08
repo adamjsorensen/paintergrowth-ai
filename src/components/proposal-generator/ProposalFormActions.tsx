@@ -1,8 +1,8 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sparkles, ChevronRight, ChevronLeft, Settings2 } from "lucide-react";
+import TranscriptButton from "./TranscriptButton";
 
 interface ProposalFormActionsProps {
   hasModalFields: boolean;
@@ -15,6 +15,7 @@ interface ProposalFormActionsProps {
   onPrevious: () => void;
   isLastTab: boolean;
   isFirstTab: boolean;
+  onInformationExtracted: (extractedData: Record<string, any>) => void;
 }
 
 const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
@@ -26,6 +27,7 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
   onPrevious,
   isLastTab,
   isFirstTab,
+  onInformationExtracted
 }) => {
   const handleMainButtonClick = () => {
     if (isLastTab) {
@@ -37,16 +39,21 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
 
   return (
     <div className="mt-8 border-t pt-6 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
-      {isFirstTab && hasModalFields ? (
-        <Button 
-          onClick={openModal}
-          className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
-          variant="outline"
-          size="lg"
-        >
-          <Settings2 className="h-4 w-4" />
-          <span>Style & Scope Options</span>
-        </Button>
+      {isFirstTab ? (
+        <div className="flex gap-2 sm:mr-auto w-full sm:w-auto">
+          {hasModalFields && (
+            <Button 
+              variant="outline" 
+              onClick={openModal}
+              className="sm:mr-auto flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <Settings2 className="h-4 w-4" />
+              <span>Style & Scope Options</span>
+            </Button>
+          )}
+          
+          <TranscriptButton onInformationExtracted={onInformationExtracted} />
+        </div>
       ) : !isFirstTab ? (
         <Button
           onClick={onPrevious}
