@@ -24,6 +24,7 @@ interface ProposalFormProps {
   onGenerate: (fieldValues: Record<string, any>, proposalId: string) => Promise<void>;
   templateName?: string;
   projectType?: "interior" | "exterior";
+  extractedData?: Record<string, any>;
 }
 
 const ProposalForm: React.FC<ProposalFormProps> = ({
@@ -31,7 +32,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   isGenerating,
   onGenerate,
   templateName = "Proposal Generator",
-  projectType = "interior"
+  projectType = "interior",
+  extractedData = {}
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const groupedFields = useGroupedPromptFields(fields);
@@ -71,11 +73,16 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
 
   const { hasSetPreferences } = useStylePreferences();
 
+  // Apply extracted data to form fields
   useEffect(() => {
-    if (hasSetPreferences) {
-      setIsModalOpen(true);
+    if (extractedData && extractedData.fields && Array.isArray(extractedData.fields)) {
+      extractedData.fields.forEach((field: any) => {
+        if (field.formField && field.value) {
+          handleFieldChange(field.formField, field.value);
+        }
+      });
     }
-  }, [hasSetPreferences]);
+  }, [extractedData]);
 
   const [includeBoilerplate, setIncludeBoilerplate] = useState(false);
   const [includeTerms, setIncludeTerms] = useState(true);

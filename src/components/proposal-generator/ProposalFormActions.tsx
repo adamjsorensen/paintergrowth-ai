@@ -2,7 +2,6 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sparkles, ChevronRight, ChevronLeft, Settings2 } from "lucide-react";
-import TranscriptButton from "./TranscriptButton";
 
 interface ProposalFormActionsProps {
   hasModalFields: boolean;
@@ -29,7 +28,6 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
   onPrevious,
   isLastTab,
   isFirstTab,
-  onInformationExtracted
 }) => {
   const handleMainButtonClick = () => {
     if (isLastTab) {
@@ -53,8 +51,6 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
               <span>Style & Scope Options</span>
             </Button>
           )}
-          
-          <TranscriptButton onInformationExtracted={onInformationExtracted} />
         </div>
       ) : !isFirstTab ? (
         <Button

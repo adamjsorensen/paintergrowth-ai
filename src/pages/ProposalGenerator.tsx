@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { usePromptTemplate } from "@/hooks/usePromptTemplate";
 import { useAuth } from "@/components/AuthProvider";
@@ -10,10 +9,13 @@ import { useProposalGeneration } from "@/components/proposal-generator/hooks/use
 import { ENHANCED_FIELDS } from "@/components/proposal-generator/constants/templateFields";
 import { ENHANCED_SYSTEM_PROMPT } from "@/components/proposal-generator/constants/templatePrompts";
 import { useStylePreferences } from "@/context/StylePreferencesContext";
+import TranscriptInitiator from "@/components/TranscriptInitiator";
 
 const ProposalGenerator = () => {
   const { preferences } = useStylePreferences();
   const projectType = preferences.jobType || 'interior';
+  const [isTranscriptDone, setIsTranscriptDone] = useState(false);
+  const [extractedData, setExtractedData] = useState<Record<string, any>>({});
   
   // Get prompt fields from the database
   const { 
@@ -65,6 +67,10 @@ const ProposalGenerator = () => {
 
   const isLoading = isLoadingTemplate || isCreating || isLoadingFields || isLoadingProfiles;
 
+  const handleInformationExtracted = (data: Record<string, any>) => {
+    setExtractedData(data);
+  };
+
   if (isLoading) {
     return (
       <PageLayout title="Generate Proposal">
@@ -78,13 +84,24 @@ const ProposalGenerator = () => {
   return (
     <PageLayout title="Generate Proposal">
       <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <ProposalForm 
-          fields={formFields}
-          isGenerating={isGenerating}
-          onGenerate={generateProposal}
-          templateName={promptTemplate?.name || "Painting Proposal"}
-          projectType={projectType}
-        />
+        {!isTranscriptDone && (
+          <TranscriptInitiator 
+            onInformationExtracted={handleInformationExtracted}
+            onComplete={() => setIsTranscriptDone(true)}
+            onSkip={() => setIsTranscriptDone(true)}
+          />
+        )}
+        
+        {isTranscriptDone && (
+          <ProposalForm 
+            fields={formFields}
+            isGenerating={isGenerating}
+            onGenerate={generateProposal}
+            templateName={promptTemplate?.name || "Painting Proposal"}
+            projectType={projectType}
+            extractedData={extractedData}
+          />
+        )}
       </div>
     </PageLayout>
   );
