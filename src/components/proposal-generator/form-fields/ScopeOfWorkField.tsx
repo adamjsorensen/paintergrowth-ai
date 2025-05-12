@@ -69,7 +69,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
       service: "", 
       description: "",
       price: 0,
-      selected: false // New items are unselected by default
+      selected: false // Default to unselected
     };
     setItems([...items, newItem]);
   };

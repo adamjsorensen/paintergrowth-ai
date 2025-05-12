@@ -269,7 +269,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   }, [matrixConfig.quantityColumnId]);
 
   const handleGroupSelection = useCallback((groupId: string, selected: boolean) => {
-    const group = matrixConfig.groups?.find(g => g.id === groupId);
+    if (!matrixConfig.groups) return;
+    const group = matrixConfig.groups.find(g => g.id === groupId);
     if (!group) return;
 
     setInternalMatrixValue(prev => 
