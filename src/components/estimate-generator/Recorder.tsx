@@ -203,6 +203,17 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
               <p className="text-gray-500 mb-4">
                 Click the microphone button to start recording your project description
               </p>
+              
+              {/* Additional standalone button for better clickability */}
+              <Button 
+                size="lg" 
+                onClick={startRecording}
+                disabled={permissionDenied}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg font-medium"
+              >
+                <Mic className="mr-2 h-5 w-5" />
+                Start Recording
+              </Button>
             </div>
           )}
           
