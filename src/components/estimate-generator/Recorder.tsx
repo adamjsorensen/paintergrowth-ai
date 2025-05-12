@@ -194,6 +194,14 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
                   {formatTime(recordingTime)} / {formatTime(MAX_RECORDING_TIME)}
                 </p>
               </div>
+              
+              <Button 
+                variant="destructive" 
+                className="mt-4"
+                onClick={stopRecording}
+              >
+                Stop Recording
+              </Button>
             </div>
           )}
           
