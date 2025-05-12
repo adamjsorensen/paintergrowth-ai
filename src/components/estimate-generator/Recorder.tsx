@@ -126,7 +126,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
       onComplete(audioBlob);
     }
   };
-  
+
   return (
     <div className="space-y-6">
       {permissionDenied && (
