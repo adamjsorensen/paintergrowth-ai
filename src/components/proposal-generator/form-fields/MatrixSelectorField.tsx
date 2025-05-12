@@ -90,14 +90,76 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
 
     console.log('MatrixSelectorField - Initializing with value:', value);
 
+    // Process incoming value to ensure it's properly formatted
+    let processedValue = value;
+    if (Array.isArray(value) && value.length > 0) {
+      // Check if the value is an array of strings (from transcript)
+      if (typeof value[0] === 'string') {
+        console.log('MatrixSelectorField - Converting string array to matrix items:', value);
+        // Convert string array to matrix items
+        processedValue = (value as unknown as string[]).map(roomName => {
+          // Find matching row in config or create a new one
+          const matchingRow = matrixConfig.rows.find(r => 
+            r.label?.toLowerCase() === roomName.toLowerCase() || 
+            r.id.toLowerCase() === roomName.toLowerCase()
+          );
+          
+          if (matchingRow) {
+            console.log(`MatrixSelectorField - Found matching row for ${roomName}:`, matchingRow);
+            const item: MatrixItem = {
+              id: matchingRow.id,
+              label: matchingRow.label,
+              selected: true
+            };
+            
+            // Add default values for columns
+            matrixConfig.columns.forEach(col => {
+              if (col.type === "number" || col.id === matrixConfig.quantityColumnId) {
+                item[col.id] = 1;
+              } else if (col.type === "checkbox") {
+                item[col.id] = true;
+              }
+            });
+            
+            return item;
+          } else {
+            console.log(`MatrixSelectorField - Creating new row for ${roomName}`);
+            // Create a new item with a sanitized ID
+            const id = roomName.toLowerCase().replace(/\s+/g, '_');
+            const item: MatrixItem = {
+              id,
+              label: roomName,
+              selected: true
+            };
+            
+            // Add default values for columns
+            matrixConfig.columns.forEach(col => {
+              if (col.type === "number" || col.id === matrixConfig.quantityColumnId) {
+                item[col.id] = 1;
+              } else if (col.type === "checkbox") {
+                item[col.id] = true;
+              }
+            });
+            
+            return item;
+          }
+        });
+        
+        console.log('MatrixSelectorField - Converted value:', processedValue);
+      }
+    }
+
     const initialValue = matrixConfig.rows.map(row => {
-      const existingRow = value?.find(item => item.id === row.id);
+      const existingRow = Array.isArray(processedValue) ? 
+        processedValue.find(item => item.id === row.id) : undefined;
+      
       const defaultItem: MatrixItem = {
         id: row.id,
         label: row.label,
         selected: false, // Default to unselected
       };
 
+      // Initialize all columns with default values
       matrixConfig.columns.forEach(col => {
         if (col.type === "number" || col.id === matrixConfig.quantityColumnId) {
           defaultItem[col.id] = 1; // Default quantity/number

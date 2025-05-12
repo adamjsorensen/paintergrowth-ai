@@ -49,11 +49,11 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     case "textarea":
       return <TextareaField field={field} value={value} onChange={onChange} />;
     
-    case "number":
-      return <NumberField field={field} value={value} onChange={onChange} />;
-    
     case "select":
       return <SelectField field={field} value={value} onChange={onChange} isAdvanced={isAdvanced} />;
+    
+    case "number":
+      return <NumberField field={field} value={value} onChange={onChange} />;
     
     case "toggle":
       return <ToggleField field={field} value={value} onChange={onChange} />;
@@ -117,12 +117,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
 
     case "scope-of-work":
-      return <ScopeOfWorkField
-        field={field}
-        value={value || []}
-        onChange={onChange}
-        isAdvanced={isAdvanced}
-      />;
+      return (
+        <ScopeOfWorkField
+          field={field}
+          value={value || []}
+          onChange={onChange}
+          isAdvanced={isAdvanced}
+        />
+      );
     
     default:
       console.warn(`Unknown field type: ${type}`);

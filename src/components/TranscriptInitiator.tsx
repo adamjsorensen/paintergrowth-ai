@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Mic, X } from "lucide-react";
 import TranscriptInput from "@/components/audio-transcript/TranscriptInput";
+import { processExtractedData } from "./audio-transcript/extract-information-utils";
 
 interface TranscriptInitiatorProps {
   onInformationExtracted: (extractedData: Record<string, any>) => void;
@@ -29,7 +30,12 @@ const TranscriptInitiator: React.FC<TranscriptInitiatorProps> = ({
       })));
     }
     
-    onInformationExtracted(data);
+    // Process the extracted data to ensure it's in the correct format
+    const processedData = processExtractedData(data);
+    
+    console.log("TranscriptInitiator - Processed data:", processedData);
+    
+    onInformationExtracted(processedData);
     setIsDialogOpen(false);
     onComplete();
   };

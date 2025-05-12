@@ -41,6 +41,7 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
 
   const [subtotal, setSubtotal] = useState<number>(0);
 
+  // Sync with parent when items change
   useEffect(() => {
     // Calculate subtotal whenever items change
     const total = items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
@@ -49,6 +50,18 @@ const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWo
     // Notify parent component of changes
     onChange(items);
   }, [items, onChange]);
+
+  // Sync with parent when value prop changes
+  useEffect(() => {
+    // Only update local state when the external value changes significantly
+    if (value && value.length > 0 && JSON.stringify(value) !== JSON.stringify(items)) {
+      console.log("ScopeOfWorkField - External value changed:", value);
+      setItems(value.map(item => ({ 
+        ...item, 
+        selected: item.selected !== undefined ? item.selected : false 
+      })));
+    }
+  }, [value]);
 
   const handleAddRow = () => {
     const newItem: ScopeOfWorkItem = { 

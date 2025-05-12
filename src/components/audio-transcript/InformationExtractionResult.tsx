@@ -40,7 +40,7 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
         groupedFields.client.push(field);
       } else if (field.formField?.startsWith('project')) {
         groupedFields.project.push(field);
-      } else if (field.formField?.startsWith('scope')) {
+      } else if (field.formField?.startsWith('scope') || field.formField === 'surfacesToPaint' || field.formField === 'prepNeeds' || field.formField === 'roomsToPaint') {
         groupedFields.scope.push(field);
       } else {
         groupedFields.other.push(field);
