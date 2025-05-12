@@ -27,6 +27,17 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
   };
 
   const handleInformationExtracted = (data: Record<string, any>) => {
+    console.log("TranscriptInput - Information extracted:", data);
+    
+    // Log the fields array if it exists
+    if (data && data.fields && Array.isArray(data.fields)) {
+      console.log("TranscriptInput - Extracted fields:", data.fields.map(f => ({
+        name: f.name,
+        formField: f.formField,
+        value: f.value
+      })));
+    }
+    
     setExtractedData(data);
     
     // Check if we have valid data with fields
@@ -83,6 +94,6 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
       )}
     </div>
   );
-};
+}
 
 export default TranscriptInput;

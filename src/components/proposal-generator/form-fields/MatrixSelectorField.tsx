@@ -17,8 +17,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpText } from "./components/HelpText";
-import { MinusCircle, PlusCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MinusCircle, PlusCircle, Info } from "lucide-react";
 
 // Define the structure of a matrix row for the form data
 export interface MatrixItem {
@@ -73,6 +73,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   
   const matrixConfig = useMemo(() => getMatrixConfig(), [getMatrixConfig]);
   
+  // Track internal matrix values (including unselected rows)
   const [internalMatrixValue, setInternalMatrixValue] = useState<MatrixItem[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const isInitialized = useRef<boolean>(false);
@@ -94,7 +95,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       const defaultItem: MatrixItem = {
         id: row.id,
         label: row.label,
-        selected: false,
+        selected: false, // Default to unselected
       };
 
       matrixConfig.columns.forEach(col => {

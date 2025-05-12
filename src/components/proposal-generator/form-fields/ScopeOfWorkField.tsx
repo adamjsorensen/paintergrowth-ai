@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Label } from "@/components/ui/label";
@@ -22,6 +21,8 @@ interface ScopeOfWorkFieldProps {
 const ScopeOfWorkField = ({ field, value = [], onChange, isAdvanced }: ScopeOfWorkFieldProps) => {
   // Initialize with at least one row if empty
   const [items, setItems] = useState<ScopeOfWorkItem[]>(() => {
+    console.log("ScopeOfWorkField - Initializing with value:", value);
+    
     if (value && value.length > 0) {
       // Handle existing data that might not have the selected property
       return value.map(item => ({ 
