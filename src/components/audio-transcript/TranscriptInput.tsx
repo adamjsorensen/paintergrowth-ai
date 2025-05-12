@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Mic, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mic, X, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import AudioTranscriptionInput from "./AudioTranscriptionInput";
@@ -32,6 +32,7 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
 
   const handleInformationExtracted = (data: Record<string, any>) => {
     console.log("TranscriptInput - Information extracted:", data);
+    console.log("TranscriptInput - Raw extracted data:", JSON.stringify(data, null, 2));
     
     // Log the fields array if it exists
     if (data && data.fields && Array.isArray(data.fields)) {

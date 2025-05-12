@@ -303,6 +303,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       });
     }
 
+    // Find any rows not in a group
     const ungroupedRowIds = matrixConfig.rows
       .map(row => row.id)
       .filter(id => !allRowIdsInGroups.has(id));

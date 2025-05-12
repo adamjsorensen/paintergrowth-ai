@@ -30,6 +30,7 @@ export const useProposalForm = (
 
   const handleFieldChange = (fieldName: string, value: FieldValue) => {
     console.log(`useProposalForm - Field changed: ${fieldName} =`, value);
+    console.log(`useProposalForm - Type of value: ${typeof value}`);
     
     // Special handling for roomsToPaint field (convert to matrix items)
     if (fieldName === 'roomsToPaint' && Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {

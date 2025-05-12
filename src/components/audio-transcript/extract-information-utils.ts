@@ -15,9 +15,14 @@ export function processExtractedData(extractedData: Record<string, any>): Record
 
   const processedData = { ...extractedData };
   
-  // Process each field
+  // Log initial extracted data
+  console.log("processExtractedData - Initial extracted data:", JSON.stringify(extractedData, null, 2));
+  
   processedData.fields = extractedData.fields.map((field: any) => {
     const processedField = { ...field };
+    
+    // Log each field being processed
+    console.log(`processExtractedData - Processing field: ${field.formField}`);
     
     // Special handling for surfacesToPaint field - ensure it's an array
     if (field.formField === 'surfacesToPaint' && field.value) {
@@ -28,7 +33,7 @@ export function processExtractedData(extractedData: Record<string, any>): Record
         // Convert non-array to single-item array
         processedField.value = [String(field.value)];
       }
-      console.log(`Processed surfacesToPaint field: ${JSON.stringify(processedField.value)}`);
+      console.log(`processExtractedData - Processed surfacesToPaint field: ${JSON.stringify(processedField.value)}`);
     }
     
     // Special handling for prepNeeds field - ensure it's an array
@@ -40,7 +45,7 @@ export function processExtractedData(extractedData: Record<string, any>): Record
         // Convert non-array to single-item array
         processedField.value = [String(field.value)];
       }
-      console.log(`Processed prepNeeds field: ${JSON.stringify(processedField.value)}`);
+      console.log(`processExtractedData - Processed prepNeeds field: ${JSON.stringify(processedField.value)}`);
     }
     
     // Special handling for jobType field - ensure it's a valid value
@@ -53,7 +58,7 @@ export function processExtractedData(extractedData: Record<string, any>): Record
         // Ensure lowercase for consistency
         processedField.value = field.value.toLowerCase();
       }
-      console.log(`Processed jobType field: ${processedField.value}`);
+      console.log(`processExtractedData - Processed jobType field: ${processedField.value}`);
     }
     
     // Special handling for squareFootage field - ensure it's a number
@@ -71,7 +76,7 @@ export function processExtractedData(extractedData: Record<string, any>): Record
           processedField.value = numValue;
         }
       }
-      console.log(`Processed squareFootage field: ${processedField.value}`);
+      console.log(`processExtractedData - Processed squareFootage field: ${processedField.value}`);
     }
     
     return processedField;
@@ -92,12 +97,15 @@ export function processExtractedData(extractedData: Record<string, any>): Record
         confidence: surfacesField.confidence || 0.7
       };
       
-      console.log(`Created matrix field for rooms: ${JSON.stringify(matrixField.value)}`);
+      console.log(`processExtractedData - Created matrix field for rooms: ${JSON.stringify(matrixField.value)}`);
       
       // Add the matrix field to the fields array
       processedData.fields.push(matrixField);
     }
   }
+  
+  // Log the final processed data
+  console.log("processExtractedData - Final processed data:", JSON.stringify(processedData, null, 2));
   
   return processedData;
 }
