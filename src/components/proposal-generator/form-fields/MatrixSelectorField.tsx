@@ -54,12 +54,13 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       type: 'matrix-config',
       rows: [{ id: "kitchen", label: "Kitchen" }],
       columns: [
-        { id: "walls", label: "Walls", type: "checkbox" },
-        { id: "ceiling", label: "Ceiling", type: "checkbox" },
+        { id: "quantity", label: "Qty", type: "number" },
+        { id: "walls", label: "Walls", type: "checkbox" }
       ],
       quantityColumnId: "quantity" // Example default
     };
     
+    // Check if options exist and are in the right format
     if (field.options && typeof field.options === "object" && !Array.isArray(field.options) &&
         'rows' in field.options && 'columns' in field.options) {
       console.log('MatrixSelectorField - Using field options matrix config:', field.options);
