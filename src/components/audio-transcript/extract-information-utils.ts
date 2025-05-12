@@ -43,6 +43,37 @@ export function processExtractedData(extractedData: Record<string, any>): Record
       console.log(`Processed prepNeeds field: ${JSON.stringify(processedField.value)}`);
     }
     
+    // Special handling for jobType field - ensure it's a valid value
+    if (field.formField === 'jobType' && field.value) {
+      const validJobTypes = ['interior', 'exterior', 'cabinets', 'deck', 'commercial'];
+      if (typeof field.value === 'string' && !validJobTypes.includes(field.value.toLowerCase())) {
+        // Default to interior if not a valid job type
+        processedField.value = 'interior';
+      } else if (typeof field.value === 'string') {
+        // Ensure lowercase for consistency
+        processedField.value = field.value.toLowerCase();
+      }
+      console.log(`Processed jobType field: ${processedField.value}`);
+    }
+    
+    // Special handling for squareFootage field - ensure it's a number
+    if (field.formField === 'squareFootage' && field.value) {
+      if (typeof field.value === 'string') {
+        // Extract numbers from string (e.g., "2500 sq ft" -> 2500)
+        const numericValue = field.value.replace(/[^0-9]/g, '');
+        if (numericValue) {
+          processedField.value = parseInt(numericValue, 10);
+        }
+      } else if (typeof field.value !== 'number') {
+        // Try to convert to number
+        const numValue = Number(field.value);
+        if (!isNaN(numValue)) {
+          processedField.value = numValue;
+        }
+      }
+      console.log(`Processed squareFootage field: ${processedField.value}`);
+    }
+    
     return processedField;
   });
   

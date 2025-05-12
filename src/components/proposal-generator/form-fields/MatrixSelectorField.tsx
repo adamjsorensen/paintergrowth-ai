@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 // Define the structure of a matrix row for the form data
 export interface MatrixItem {
   id: string;
-  label?: string; // Ensure label is present
+  label?: string; // Ensure label is part of the type
   selected?: boolean; // Added to track row selection
   [key: string]: string | number | boolean | undefined;
 }
@@ -221,8 +221,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     };
   }, [internalMatrixValue, onChange]);
 
-  // --- Event Handlers ---
-
   const handleRowSelection = useCallback((rowId: string, selected: boolean) => {
     console.log(`MatrixSelectorField - Row selection changed: ${rowId} = ${selected}`);
     setInternalMatrixValue(prev => 
@@ -293,8 +291,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     );
   }, [matrixConfig.groups, matrixConfig.columns]);
 
-  // --- Memos ---
-
+  // Organize rows by groups
   const groupedRows = useMemo(() => {
     const result: Record<string, string[]> = {};
     const allRowIdsInGroups = new Set<string>();
@@ -317,6 +314,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     return result;
   }, [matrixConfig.groups, matrixConfig.rows]);
 
+  // Get row mapping
   const rowMapping = useMemo(() => {
     const mapping: Record<string, MatrixItem> = {};
     internalMatrixValue.forEach(item => {
@@ -325,8 +323,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     return mapping;
   }, [internalMatrixValue]);
 
-  // --- Rendering Functions ---
-
+  // Render sub-item control (checkbox, number input, etc.)
   const renderSubItemControl = (row: MatrixItem, column: MatrixColumn) => {
     const commonProps = {
       id: `${field.id}-${row.id}-${column.id}`,
@@ -396,6 +393,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     );
   };
 
+  // Render a row item
   const renderRowItem = (rowId: string) => {
     const row = rowMapping[rowId];
     if (!row) return null;
@@ -467,8 +465,6 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       </div>
     );
   };
-
-  // --- Main Render ---
 
   return (
     <TooltipProvider>
