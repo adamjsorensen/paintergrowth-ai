@@ -18,6 +18,17 @@ const TranscriptInitiator: React.FC<TranscriptInitiatorProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(true);
 
   const handleInformationExtracted = (data: Record<string, any>) => {
+    console.log("TranscriptInitiator - Information extracted:", data);
+    
+    // Log the fields array if it exists
+    if (data.fields && Array.isArray(data.fields)) {
+      console.log("TranscriptInitiator - Extracted fields:", data.fields.map(f => ({
+        name: f.name,
+        formField: f.formField,
+        value: f.value
+      })));
+    }
+    
     onInformationExtracted(data);
     setIsDialogOpen(false);
     onComplete();

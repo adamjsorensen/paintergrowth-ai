@@ -33,6 +33,8 @@ const InformationExtractionResult: React.FC<InformationExtractionResultProps> = 
   
   // Process and group the extracted fields
   if (extractedData.fields && Array.isArray(extractedData.fields)) {
+    console.log("InformationExtractionResult - Processing fields:", extractedData.fields);
+    
     extractedData.fields.forEach((field: ExtractedField) => {
       if (field.formField?.startsWith('client')) {
         groupedFields.client.push(field);

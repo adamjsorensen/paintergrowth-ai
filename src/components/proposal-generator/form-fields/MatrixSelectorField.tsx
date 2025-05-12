@@ -45,7 +45,10 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
 }) => {
   // Get matrix configuration from field options or use provided external config
   const getMatrixConfig = useCallback((): MatrixConfig => {
-    if (externalMatrixConfig) return externalMatrixConfig;
+    if (externalMatrixConfig) {
+      console.log('MatrixSelectorField - Using external matrix config:', externalMatrixConfig);
+      return externalMatrixConfig;
+    }
     
     const defaultConfig: MatrixConfig = {
       type: 'matrix-config',
@@ -59,9 +62,11 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
     
     if (field.options && typeof field.options === "object" && !Array.isArray(field.options) &&
         'rows' in field.options && 'columns' in field.options) {
+      console.log('MatrixSelectorField - Using field options matrix config:', field.options);
       return { type: 'matrix-config', ...field.options } as MatrixConfig;
     }
     
+    console.log('MatrixSelectorField - Using default matrix config');
     return defaultConfig;
   }, [field.options, externalMatrixConfig]);
   
@@ -71,9 +76,17 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const isInitialized = useRef<boolean>(false);
 
+  // Debug logging for incoming value
+  useEffect(() => {
+    console.log('MatrixSelectorField - Initial value:', value);
+    console.log('MatrixSelectorField - Matrix config:', matrixConfig);
+  }, [value, matrixConfig]);
+
   // Initialize internal state based on config and incoming value
   useEffect(() => {
     if (isInitialized.current) return;
+
+    console.log('MatrixSelectorField - Initializing with value:', value);
 
     const initialValue = matrixConfig.rows.map(row => {
       const existingRow = value?.find(item => item.id === row.id);
@@ -98,17 +111,21 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         const mergedItem = { ...defaultItem, ...existingRow };
         // Ensure 'selected' is explicitly boolean, default to true if exists but undefined
         mergedItem.selected = existingRow.selected !== undefined ? existingRow.selected : true;
+        console.log(`MatrixSelectorField - Merged row ${row.id}:`, mergedItem);
         return mergedItem;
       } else {
+        console.log(`MatrixSelectorField - Created default row ${row.id}:`, defaultItem);
         return defaultItem;
       }
     });
 
     setInternalMatrixValue(initialValue);
+    
     // Default expand all groups that have at least one selected item initially
     const initiallySelectedGroupIds = matrixConfig.groups
       ?.filter(group => group.rowIds.some(rowId => initialValue.find(item => item.id === rowId)?.selected))
       .map(group => group.id) ?? [];
+      
     // If no groups have selected items, expand the first group by default
     const defaultExpanded = initiallySelectedGroupIds.length > 0
       ? initiallySelectedGroupIds
@@ -116,6 +133,8 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       
     setExpandedGroups(defaultExpanded);
     isInitialized.current = true;
+
+    console.log('MatrixSelectorField - Initialization complete with values:', initialValue);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixConfig, value]); // Rerun if config or external value changes
@@ -129,6 +148,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
 
     debouncedOnChange.current = setTimeout(() => {
       const selectedRows = internalMatrixValue.filter(row => row.selected);
+      console.log('MatrixSelectorField - Updating parent with selected rows:', selectedRows);
       onChange(selectedRows);
     }, 100); // Increased debounce slightly
 
@@ -140,6 +160,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   // --- Event Handlers ---
 
   const handleRowSelection = useCallback((rowId: string, selected: boolean) => {
+    console.log(`MatrixSelectorField - Row selection changed: ${rowId} = ${selected}`);
     setInternalMatrixValue(prev => 
       prev.map(row => {
         if (row.id === rowId) {
@@ -163,6 +184,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
   }, [matrixConfig.columns, matrixConfig.quantityColumnId]);
 
   const handleValueChange = useCallback((rowId: string, columnId: string, newValue: any) => {
+    console.log(`MatrixSelectorField - Value changed: ${rowId}.${columnId} = ${newValue}`);
     setInternalMatrixValue(prev =>
       prev.map(row => 
         row.id === rowId ? { ...row, [columnId]: newValue } : row

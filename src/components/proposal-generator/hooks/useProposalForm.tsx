@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -30,6 +29,7 @@ export const useProposalForm = (
   };
 
   const handleFieldChange = (fieldName: string, value: FieldValue) => {
+    console.log(`useProposalForm - Field changed: ${fieldName} =`, value);
     setFieldValues(prev => ({
       ...prev,
       [fieldName]: value
@@ -45,12 +45,22 @@ export const useProposalForm = (
       .filter(field => field.modalStep === modalStep && field.required)
       .map(field => field.name);
       
+    console.log(`Checking required fields for modal step ${modalStep}:`, requiredModalFields);
+    
     const allCompleted = requiredModalFields.every(
-      fieldName => fieldValues[fieldName] !== undefined && 
-                  fieldValues[fieldName] !== null && 
-                  fieldValues[fieldName] !== "" &&
-                  !(Array.isArray(fieldValues[fieldName]) && fieldValues[fieldName].length === 0)
+      fieldName => {
+        const value = fieldValues[fieldName];
+        const isCompleted = value !== undefined && 
+                  value !== null && 
+                  value !== "" &&
+                  !(Array.isArray(value) && value.length === 0);
+                  
+        console.log(`Field ${fieldName} is ${isCompleted ? 'completed' : 'incomplete'} with value:`, value);
+        return isCompleted;
+      }
     );
+    
+    console.log(`Modal step ${modalStep} completion status:`, allCompleted);
     
     setModalStepCompleted(prev => ({
       ...prev,
@@ -62,8 +72,14 @@ export const useProposalForm = (
 
   const handleSubmit = async () => {
     const missingRequiredFields = getRequiredFields()
-      .filter(field => !fieldValues[field.name] && fieldValues[field.name] !== false && 
-        !(Array.isArray(fieldValues[field.name]) && (fieldValues[field.name] as any[]).length > 0))
+      .filter(field => {
+        const value = fieldValues[field.name];
+        const isMissing = !value && value !== false && 
+          !(Array.isArray(value) && (value as any[]).length > 0);
+          
+        console.log(`Required field ${field.name} is ${isMissing ? 'missing' : 'present'} with value:`, value);
+        return isMissing;
+      })
       .map(field => field.label);
 
     if (missingRequiredFields.length > 0) {

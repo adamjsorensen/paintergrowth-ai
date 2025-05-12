@@ -1,6 +1,5 @@
-
 import React from "react";
-import { FieldConfig, MatrixConfig } from "@/types/prompt-templates";
+import { FieldConfig, MatrixConfig, isMatrixConfig, createDefaultMatrixConfig } from "@/types/prompt-templates";
 import TextField from "./form-fields/TextField";
 import TextareaField from "./form-fields/TextareaField";
 import SelectField from "./form-fields/SelectField";
@@ -15,7 +14,6 @@ import UpsellTableField from "./form-fields/UpsellTableField";
 import TaxCalculatorField from "./form-fields/TaxCalculatorField";
 import MatrixSelectorField from "./form-fields/MatrixSelectorField";
 import ScopeOfWorkField from "./form-fields/ScopeOfWorkField";
-import { isMatrixConfig } from "@/types/prompt-templates";
 
 export interface FormFieldRendererProps {
   field: FieldConfig;
@@ -35,6 +33,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   subtotal
 }) => {
   const { type, id } = field;
+
+  // Debug logging for matrix fields
+  if (type === 'matrix-selector') {
+    console.log('FormFieldRenderer - Matrix field:', field);
+    console.log('FormFieldRenderer - Matrix value:', value);
+    console.log('FormFieldRenderer - Matrix options:', field.options);
+    console.log('FormFieldRenderer - isMatrixConfig:', isMatrixConfig(field.options));
+  }
 
   switch (type) {
     case "text":
@@ -74,29 +80,41 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       return <TaxCalculatorField field={field} value={value} onChange={onChange} subtotal={subtotal} />;
     
     case "matrix-selector":
-      console.log('MatrixSelectorField field:', field);
-      console.log('MatrixSelectorField field.options:', field.options);
-      console.log('MatrixSelectorField isMatrixConfig(field.options):', isMatrixConfig(field.options));
-      return <MatrixSelectorField 
-        field={field} 
-        value={value || []} 
-        onChange={onChange}
-        isAdvanced={isAdvanced}
-        matrixConfig={isMatrixConfig(field.options) 
-          ? field.options 
-          : (typeof field.options === 'string' 
-             ? (() => {
-                 try {
-                   const parsedConfig = JSON.parse(field.options as string);
-                   console.log('Successfully parsed matrix config:', parsedConfig);
-                   return isMatrixConfig(parsedConfig) ? parsedConfig : undefined;
-                 } catch (error) {
-                   console.error('Failed to parse matrix config:', error);
-                   return undefined;
-                 }
-               })()
-             : undefined)}
-      />;
+      // Log the matrix config parsing attempt
+      console.log('FormFieldRenderer - Attempting to parse matrix config');
+      let matrixConfig: MatrixConfig | undefined;
+      
+      if (isMatrixConfig(field.options)) {
+        console.log('FormFieldRenderer - Using field.options directly as MatrixConfig');
+        matrixConfig = field.options;
+      } else if (typeof field.options === 'string') {
+        try {
+          const parsedConfig = JSON.parse(field.options);
+          console.log('FormFieldRenderer - Parsed string options:', parsedConfig);
+          if (isMatrixConfig(parsedConfig)) {
+            matrixConfig = parsedConfig;
+          } else {
+            console.warn('FormFieldRenderer - Parsed options are not a valid MatrixConfig');
+          }
+        } catch (error) {
+          console.error('FormFieldRenderer - Failed to parse matrix config string:', error);
+        }
+      }
+      
+      if (!matrixConfig) {
+        console.log('FormFieldRenderer - Using default matrix config');
+        matrixConfig = createDefaultMatrixConfig();
+      }
+      
+      return (
+        <MatrixSelectorField 
+          field={field} 
+          value={value || []} 
+          onChange={onChange}
+          isAdvanced={isAdvanced}
+          matrixConfig={matrixConfig}
+        />
+      );
 
     case "scope-of-work":
       return <ScopeOfWorkField

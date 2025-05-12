@@ -68,6 +68,17 @@ const ProposalGenerator = () => {
   const isLoading = isLoadingTemplate || isCreating || isLoadingFields || isLoadingProfiles;
 
   const handleInformationExtracted = (data: Record<string, any>) => {
+    console.log("ProposalGenerator - Information extracted:", data);
+    
+    // Log the fields array if it exists
+    if (data.fields && Array.isArray(data.fields)) {
+      console.log("Extracted fields:", data.fields.map(f => ({
+        name: f.name,
+        formField: f.formField,
+        value: f.value
+      })));
+    }
+    
     setExtractedData(data);
   };
 

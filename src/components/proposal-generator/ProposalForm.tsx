@@ -76,11 +76,17 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   // Apply extracted data to form fields
   useEffect(() => {
     if (extractedData && extractedData.fields && Array.isArray(extractedData.fields)) {
+      console.log("ProposalForm - Applying extracted data to form fields:", extractedData.fields);
+      
       extractedData.fields.forEach((field: any) => {
-        if (field.formField && field.value) {
+        if (field.formField && field.value !== undefined) {
+          console.log(`Setting field ${field.formField} to:`, field.value);
           handleFieldChange(field.formField, field.value);
         }
       });
+      
+      // Log the current field values after applying extracted data
+      console.log("Field values after applying extracted data:", fieldValues);
     }
   }, [extractedData]);
 
