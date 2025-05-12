@@ -30,6 +30,79 @@ export const useProposalForm = (
 
   const handleFieldChange = (fieldName: string, value: FieldValue) => {
     console.log(`useProposalForm - Field changed: ${fieldName} =`, value);
+    
+    // Special handling for roomsToPaint field (convert to matrix items)
+    if (fieldName === 'roomsToPaint' && Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
+      console.log('useProposalForm - Converting roomsToPaint string array to matrix items');
+      
+      // Find the matrix field
+      const matrixField = fields.find(f => f.type === 'matrix-selector');
+      if (matrixField && matrixField.options && typeof matrixField.options === 'object' && !Array.isArray(matrixField.options)) {
+        const matrixConfig = matrixField.options;
+        
+        // Convert string array to matrix items
+        const matrixItems = (value as string[]).map(roomName => {
+          // Find matching row in config or create a new one
+          const matchingRow = matrixConfig.rows?.find((r: any) => 
+            r.label?.toLowerCase() === roomName.toLowerCase() || 
+            r.id.toLowerCase() === roomName.toLowerCase()
+          );
+          
+          if (matchingRow) {
+            console.log(`useProposalForm - Found matching row for ${roomName}:`, matchingRow);
+            const item: any = {
+              id: matchingRow.id,
+              label: matchingRow.label,
+              selected: true
+            };
+            
+            // Add default values for columns
+            matrixConfig.columns?.forEach((col: any) => {
+              if (col.type === "number" || col.id === matrixConfig.quantityColumnId) {
+                item[col.id] = 1;
+              } else if (col.type === "checkbox") {
+                item[col.id] = true;
+              }
+            });
+            
+            return item;
+          } else {
+            console.log(`useProposalForm - Creating new row for ${roomName}`);
+            // Create a new item with a sanitized ID
+            const id = roomName.toLowerCase().replace(/\s+/g, '_');
+            const item: any = {
+              id,
+              label: roomName,
+              selected: true
+            };
+            
+            // Add default values for columns
+            matrixConfig.columns?.forEach((col: any) => {
+              if (col.type === "number" || col.id === matrixConfig.quantityColumnId) {
+                item[col.id] = 1;
+              } else if (col.type === "checkbox") {
+                item[col.id] = true;
+              }
+            });
+            
+            return item;
+          }
+        });
+        
+        console.log('useProposalForm - Setting matrix items:', matrixItems);
+        
+        // Update the field values with both the original string array and the matrix items
+        setFieldValues(prev => ({
+          ...prev,
+          [fieldName]: value,
+          'surfacesToPaint': value, // Also update surfacesToPaint for compatibility
+          'matrixItems': matrixItems // Store the matrix items for the matrix selector
+        }));
+        return;
+      }
+    }
+    
+    // Normal field update
     setFieldValues(prev => ({
       ...prev,
       [fieldName]: value
@@ -127,7 +200,17 @@ export const useProposalForm = (
     }
 
     try {
-      onGenerate(fieldValues, proposalId);
+      // Special handling for matrix items if they exist
+      let finalFieldValues = { ...fieldValues };
+      if (fieldValues['matrixItems']) {
+        // Find the matrix field name
+        const matrixField = fields.find(f => f.type === 'matrix-selector');
+        if (matrixField) {
+          finalFieldValues[matrixField.name] = fieldValues['matrixItems'];
+        }
+      }
+      
+      onGenerate(finalFieldValues, proposalId);
       navigate(`/generate/proposal/${proposalId}`);
     } catch (error) {
       console.error("Error during generation redirect:", error);

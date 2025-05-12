@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Mic, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import AudioTranscriptionInput from "@/components/audio-transcript/AudioTranscriptionInput";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, AlertTriangle } from "lucide-react";
+import AudioTranscriptionInput from "./AudioTranscriptionInput";
+import InformationExtractionResult from "./InformationExtractionResult";
 import { processExtractedData } from "./extract-information-utils";
 
 interface TranscriptInputProps {
@@ -19,6 +20,8 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
   const [extractedData, setExtractedData] = useState<Record<string, any> | null>(null);
   const [activeStep, setActiveStep] = useState<"input" | "review">("input");
   const [error, setError] = useState<string | null>(null);
+  const [pendingData, setPendingData] = useState<Record<string, any> | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   const handleTranscriptionComplete = (text: string) => {
     console.log("TranscriptInput - Transcription complete:", text);
@@ -42,15 +45,23 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
     const processedData = processExtractedData(data);
     
     console.log("TranscriptInput - Processed data:", processedData);
-    setExtractedData(processedData);
     
-    // Check if we have valid data with fields
-    if (processedData && processedData.fields && Array.isArray(processedData.fields) && processedData.fields.length > 0) {
-      setActiveStep("review");
-      setError(null);
-    } else {
-      setError("No useful information could be extracted from the transcript. Please try again with a more detailed transcript or fill in the form manually.");
+    // Store the data and show confirmation dialog
+    setPendingData(processedData);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmUseData = () => {
+    if (pendingData) {
+      onInformationExtracted(pendingData);
+      setIsConfirmDialogOpen(false);
+      onClose();
     }
+  };
+
+  const handleCancelUseData = () => {
+    setIsConfirmDialogOpen(false);
+    // Keep the dialog open so they can try again
   };
 
   const handleAcceptExtractedData = () => {
@@ -72,17 +83,16 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {error && (
-        <AlertDialog open={!!error} onOpenChange={(open) => !open && setError(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Error</AlertDialogTitle>
-              <AlertDialogDescription>{error}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction onClick={handleRetry}>Try Again</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+          <div className="mt-4 flex justify-end">
+            <Button variant="outline" size="sm" onClick={handleRetry}>
+              Try Again
+            </Button>
+          </div>
+        </Alert>
       )}
       
       {activeStep === "input" ? (
@@ -91,23 +101,29 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
           onInformationExtracted={handleInformationExtracted}
         />
       ) : (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Extracted Information</h3>
-          <div className="border rounded-md p-4 bg-muted/20">
-            <pre className="text-sm whitespace-pre-wrap">
-              {JSON.stringify(extractedData, null, 2)}
-            </pre>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={handleEditManually}>
-              Edit Manually
-            </Button>
-            <Button onClick={handleAcceptExtractedData}>
-              Use This Information
-            </Button>
-          </div>
-        </div>
+        <InformationExtractionResult
+          extractedData={extractedData || {}}
+          onAccept={handleAcceptExtractedData}
+          onEdit={handleEditManually}
+        />
       )}
+      
+      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pre-fill form with extracted data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace any existing information in the form with the data extracted from your transcript.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelUseData}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUseData}>
+              Yes, Pre-fill Form
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

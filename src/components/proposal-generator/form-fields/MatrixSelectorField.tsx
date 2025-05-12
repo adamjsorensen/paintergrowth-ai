@@ -17,8 +17,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpText } from "./components/HelpText";
-import { cn } from "@/lib/utils";
 import { MinusCircle, PlusCircle, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Define the structure of a matrix row for the form data
 export interface MatrixItem {
@@ -162,9 +162,9 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       // Initialize all columns with default values
       matrixConfig.columns.forEach(col => {
         if (col.type === "number" || col.id === matrixConfig.quantityColumnId) {
-          defaultItem[col.id] = 1; // Default quantity/number
+          defaultItem[col.id] = 1; // Default number value
         } else if (col.type === "checkbox") {
-          defaultItem[col.id] = false; // Default checkbox
+          defaultItem[col.id] = false; // Default checkbox value
         } else {
           defaultItem[col.id] = ""; // Default text
         }
