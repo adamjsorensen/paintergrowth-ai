@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +28,7 @@ import PrintProposal from "./pages/PrintProposal";
 import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
 import BoilerplateManager from "./pages/admin/BoilerplateManager";
 import Onboarding from "./pages/Onboarding";
+import EstimateGenerator from "./pages/EstimateGenerator";
 
 // Wrapper component to handle redirect with params
 const RedirectToPrint = () => {
@@ -64,6 +64,11 @@ const App = () => (
               <Route path="/generate/proposal" element={
                 <ProtectedRoute>
                   <ProposalGenerator />
+                </ProtectedRoute>
+              } />
+              <Route path="/generate/estimate" element={
+                <ProtectedRoute>
+                  <EstimateGenerator />
                 </ProtectedRoute>
               } />
               <Route path="/generate/proposal/:id" element={

@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "@/components/PageLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Mic } from "lucide-react";
 import StylePreferencesDialog from "@/components/proposal-generator/StylePreferencesDialog";
 
 const GenerateIndex = () => {
@@ -19,7 +18,13 @@ const GenerateIndex = () => {
       icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
       onClick: () => setDialogOpen(true),
     },
-    // Additional content types will be added here in the future
+    {
+      id: "estimate",
+      title: "Voice Estimate",
+      description: "Create estimates quickly using voice recording",
+      icon: <Mic className="h-10 w-10 text-paintergrowth-600" />,
+      onClick: () => navigate("/generate/estimate"),
+    }
   ];
 
   return (

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
@@ -68,6 +67,16 @@ const Navbar = () => {
                   <NavigationMenuItem>
                     <Link to="/generate" className={navigationMenuTriggerStyle()}>
                       Generate
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link to="/generate/proposal" className={navigationMenuTriggerStyle()}>
+                      Proposal
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link to="/generate/estimate" className={navigationMenuTriggerStyle()}>
+                      Estimate (Voice)
                     </Link>
                   </NavigationMenuItem>
                   <NavigationMenuItem>

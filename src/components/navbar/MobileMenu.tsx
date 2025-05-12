@@ -1,4 +1,4 @@
-
+import React from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,20 @@ export const MobileMenu = ({
                 onClick={() => setSheetOpen(false)}
               >
                 Generate
+              </Link>
+              <Link 
+                to="/generate/proposal" 
+                className="text-lg py-2 hover:text-paintergrowth-600 pl-4 text-base"
+                onClick={() => setSheetOpen(false)}
+              >
+                Proposal
+              </Link>
+              <Link 
+                to="/generate/estimate" 
+                className="text-lg py-2 hover:text-paintergrowth-600 pl-4 text-base"
+                onClick={() => setSheetOpen(false)}
+              >
+                Estimate (Voice)
               </Link>
               <Link 
                 to="/saved" 
