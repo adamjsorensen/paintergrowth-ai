@@ -91,14 +91,17 @@ export const useProposalForm = (
         
         console.log('useProposalForm - Setting matrix items:', matrixItems);
         
-        // Update the field values with both the original string array and the matrix items
-        setFieldValues(prev => ({
-          ...prev,
-          [fieldName]: value,
-          'surfacesToPaint': value, // Also update surfacesToPaint for compatibility
-          'matrixItems': matrixItems // Store the matrix items for the matrix selector
-        }));
-        return;
+        // Find the matrix field name
+        if (matrixField.name) {
+          // Update the field values with both the original string array and the matrix items
+          setFieldValues(prev => ({
+            ...prev,
+            [fieldName]: value,
+            'surfacesToPaint': value, // Also update surfacesToPaint for compatibility
+            [matrixField.name]: matrixItems // Use the actual field name for the matrix selector
+          }));
+          return;
+        }
       }
     }
     

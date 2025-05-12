@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import AudioTranscriptionInput from "./AudioTranscriptionInput";
 import InformationExtractionResult from "./InformationExtractionResult";
 import { processExtractedData } from "./extract-information-utils";
@@ -48,7 +50,14 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
     
     // Store the data and show confirmation dialog
     setPendingData(processedData);
-    setIsConfirmDialogOpen(true);
+    setExtractedData(processedData);
+    
+    // Check if we have valid data with fields
+    if (processedData && processedData.fields && Array.isArray(processedData.fields) && processedData.fields.length > 0) {
+      setIsConfirmDialogOpen(true);
+    } else {
+      setError("No useful information could be extracted from the transcript. Please try again with a more detailed transcript or fill in the form manually.");
+    }
   };
 
   const handleConfirmUseData = () => {

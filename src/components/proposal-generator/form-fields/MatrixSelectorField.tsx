@@ -171,7 +171,7 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
       });
 
       if (existingRow) {
-        // Merge existing data, ensuring all config columns are present
+        // Merge existing row data with default values
         const mergedItem = { ...defaultItem, ...existingRow };
         // Ensure 'selected' is explicitly boolean, default to true if exists but undefined
         mergedItem.selected = existingRow.selected !== undefined ? existingRow.selected : true;
@@ -230,22 +230,20 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         if (row.id === rowId) {
           const updatedRow = { ...row, selected };
           // If selecting, set default checkbox values to true
-          // If deselecting, set all checkbox values to false
-          matrixConfig.columns.forEach(col => {
-            if (col.type === "checkbox") {
-              updatedRow[col.id] = selected;
-            }
-            // Optionally reset quantity/number fields on deselect? Decided against for now.
-            // if (!selected && (col.type === "number" || col.id === matrixConfig.quantityColumnId)) {
-            //   updatedRow[col.id] = 1;
-            // }
-          });
+          // If deselecting, leave checkbox values as is
+          if (selected) {
+            matrixConfig.columns.forEach(col => {
+              if (col.type === "checkbox") {
+                updatedRow[col.id] = true;
+              }
+            });
+          }
           return updatedRow;
         }
         return row;
       })
     );
-  }, [matrixConfig.columns, matrixConfig.quantityColumnId]);
+  }, [matrixConfig.columns]);
 
   const handleValueChange = useCallback((rowId: string, columnId: string, newValue: any) => {
     console.log(`MatrixSelectorField - Value changed: ${rowId}.${columnId} = ${newValue}`);
@@ -281,11 +279,13 @@ const MatrixSelectorField: React.FC<MatrixSelectorFieldProps> = ({
         if (group.rowIds.includes(row.id)) {
           const updatedRow = { ...row, selected };
           // Apply same logic as individual row selection for sub-items
-          matrixConfig.columns.forEach(col => {
-            if (col.type === "checkbox") {
-              updatedRow[col.id] = selected;
-            }
-          });
+          if (selected) {
+            matrixConfig.columns.forEach(col => {
+              if (col.type === "checkbox") {
+                updatedRow[col.id] = true;
+              }
+            });
+          }
           return updatedRow;
         }
         return row;
