@@ -36,8 +36,6 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
     
     console.log("TranscriptInput - Processed data:", processedData);
     
-    setExtractedData(processedData);
-    
     // Store the data and show confirmation dialog
     setPendingData(processedData);
     setIsConfirmDialogOpen(true);
@@ -55,6 +53,13 @@ const TranscriptInput: React.FC<TranscriptInputProps> = ({
   const handleCancelUseData = () => {
     setIsConfirmDialogOpen(false);
     // Keep the dialog open so they can try again
+  };
+
+  // Add handleTranscriptionComplete function
+  const handleTranscriptionComplete = (transcript: string) => {
+    console.log("Transcription complete:", transcript);
+    // The transcript will be handled by the AudioTranscriptionInput component
+    // which will then call handleInformationExtracted with the extracted data
   };
 
   return (
