@@ -206,11 +206,6 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       if (!data || !data.text) {
         throw new Error("No transcription returned");
       }
-
-      // Check if the transcription is empty or only whitespace
-      if (!data.text.trim()) {
-        throw new Error("No speech detected in the audio. Please try again with a clearer recording.");
-      }
       
       setTranscriptionProgress(100);
       setTranscript(data.text);
@@ -231,10 +226,6 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
         description: error instanceof Error ? error.message : "An error occurred during transcription",
         variant: "destructive",
       });
-
-      // Reset states on error
-      setTranscriptionProgress(0);
-      setTranscript("");
     } finally {
       setIsTranscribing(false);
       setIsUploading(false);
