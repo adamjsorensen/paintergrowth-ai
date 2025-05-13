@@ -8,24 +8,82 @@ interface ExtractedField {
   formField: string;
 }
 
+interface ExtractedRoom {
+  room_id: string;
+  label: string;
+  surfaces: {
+    walls: boolean;
+    ceiling: boolean;
+    trim: boolean;
+    doors: number | null;
+    windows: number | null;
+    cabinets: boolean;
+  };
+  confidence: number;
+}
+
 // Process room data from extracted fields
-export const extractRoomsFromFields = (fields: ExtractedField[]) => {
+export const extractRoomsFromFields = (extractedData: Record<string, any>) => {
   // Initialize rooms object
   const extractedRooms: Record<string, any> = {};
   const extractedRoomsList: string[] = [];
   
-  // Find general rooms to paint field
-  const roomsToPaintField = fields.find(field => field.formField === 'roomsToPaint');
-  const roomsToPaint = roomsToPaintField?.value || [];
+  // Get fields and rooms arrays from extractedData
+  const fields = extractedData.fields || [];
+  const rooms = extractedData.rooms || [];
   
-  // Process each room name from the general field
-  if (Array.isArray(roomsToPaint)) {
-    roomsToPaint.forEach((roomName: string) => {
-      const roomId = identifyRoomFromText(roomName);
-      if (roomId) {
-        extractedRoomsList.push(roomId);
-        
-        // Initialize room with default values if not already present
+  // Process room data from the rooms array (new format)
+  rooms.forEach((room: ExtractedRoom) => {
+    if (room.room_id && room.confidence >= 0.25) {
+      extractedRoomsList.push(room.room_id);
+      
+      extractedRooms[room.room_id] = {
+        walls: Boolean(room.surfaces.walls),
+        ceiling: Boolean(room.surfaces.ceiling),
+        trim: Boolean(room.surfaces.trim),
+        doors: typeof room.surfaces.doors === 'number' ? room.surfaces.doors : 0,
+        windows: typeof room.surfaces.windows === 'number' ? room.surfaces.windows : 0,
+        cabinets: Boolean(room.surfaces.cabinets)
+      };
+    }
+  });
+  
+  // If no rooms were found in the rooms array, fall back to the old way of finding rooms
+  if (extractedRoomsList.length === 0) {
+    // Find general rooms to paint field
+    const roomsToPaintField = fields.find((field: ExtractedField) => field.formField === 'roomsToPaint');
+    const roomsToPaint = roomsToPaintField?.value || [];
+    
+    // Process each room name from the general field
+    if (Array.isArray(roomsToPaint)) {
+      roomsToPaint.forEach((roomName: string) => {
+        const roomId = identifyRoomFromText(roomName);
+        if (roomId) {
+          extractedRoomsList.push(roomId);
+          
+          // Initialize room with default values if not already present
+          if (!extractedRooms[roomId]) {
+            extractedRooms[roomId] = {
+              walls: false,
+              ceiling: false,
+              trim: false,
+              doors: 0,
+              windows: 0,
+              cabinets: false
+            };
+          }
+        }
+      });
+    }
+    
+    // Handle surface information from general surfaces to paint
+    const surfacesToPaintField = fields.find((field: ExtractedField) => field.formField === 'surfacesToPaint');
+    const surfacesToPaint = surfacesToPaintField?.value || [];
+    
+    // If we have general surfaces but no specific rooms, apply to all detected rooms
+    if (Array.isArray(surfacesToPaint) && surfacesToPaint.length > 0 && extractedRoomsList.length > 0) {
+      // For each room in our list
+      extractedRoomsList.forEach(roomId => {
         if (!extractedRooms[roomId]) {
           extractedRooms[roomId] = {
             walls: false,
@@ -36,87 +94,32 @@ export const extractRoomsFromFields = (fields: ExtractedField[]) => {
             cabinets: false
           };
         }
-      }
-    });
-  }
-  
-  // Process specific room fields for detailed surface information
-  fields.forEach(field => {
-    // Check if the field corresponds to a room
-    const roomKey = Object.keys(roomNameMapping).find(key => 
-      field.formField.toLowerCase() === key.toLowerCase() ||
-      field.formField.toLowerCase() === roomNameMapping[key].toLowerCase() ||
-      field.formField.toLowerCase().replace(/[^a-z0-9]/g, '') === roomNameMapping[key].toLowerCase().replace(/[^a-z0-9]/g, '')
-    );
-    
-    if (roomKey) {
-      const roomId = roomNameMapping[roomKey];
-      
-      // Add to the extracted rooms list if not already there
-      if (!extractedRoomsList.includes(roomId)) {
-        extractedRoomsList.push(roomId);
-      }
-      
-      // Get room details
-      const roomValue = field.value;
-      
-      // Add room with its details to extracted rooms
-      if (typeof roomValue === 'object' && roomValue !== null) {
-        extractedRooms[roomId] = {
-          walls: Boolean(roomValue.walls),
-          ceiling: Boolean(roomValue.ceiling),
-          trim: Boolean(roomValue.trim),
-          doors: typeof roomValue.doors === 'number' ? roomValue.doors : Boolean(roomValue.doors) ? 1 : 0,
-          windows: typeof roomValue.windows === 'number' ? roomValue.windows : Boolean(roomValue.windows) ? 1 : 0,
-          cabinets: Boolean(roomValue.cabinets)
-        };
-      }
-    }
-  });
-  
-  // Handle surface information from general surfaces to paint
-  const surfacesToPaintField = fields.find(field => field.formField === 'surfacesToPaint');
-  const surfacesToPaint = surfacesToPaintField?.value || [];
-  
-  // If we have general surfaces but no specific rooms, apply to all detected rooms
-  if (Array.isArray(surfacesToPaint) && surfacesToPaint.length > 0 && extractedRoomsList.length > 0) {
-    // For each room in our list
-    extractedRoomsList.forEach(roomId => {
-      if (!extractedRooms[roomId]) {
-        extractedRooms[roomId] = {
-          walls: false,
-          ceiling: false,
-          trim: false,
-          doors: 0,
-          windows: 0,
-          cabinets: false
-        };
-      }
-      
-      // Apply general surfaces to each room
-      surfacesToPaint.forEach((surface: string) => {
-        const surfaceLower = surface.toLowerCase();
         
-        if (surfaceLower.includes('wall')) {
-          extractedRooms[roomId].walls = true;
-        }
-        if (surfaceLower.includes('ceiling')) {
-          extractedRooms[roomId].ceiling = true;
-        }
-        if (surfaceLower.includes('trim') || surfaceLower.includes('baseboard')) {
-          extractedRooms[roomId].trim = true;
-        }
-        if (surfaceLower.includes('door')) {
-          extractedRooms[roomId].doors = typeof extractedRooms[roomId].doors === 'number' ? extractedRooms[roomId].doors + 1 : 1;
-        }
-        if (surfaceLower.includes('window')) {
-          extractedRooms[roomId].windows = typeof extractedRooms[roomId].windows === 'number' ? extractedRooms[roomId].windows + 1 : 1;
-        }
-        if (surfaceLower.includes('cabinet')) {
-          extractedRooms[roomId].cabinets = true;
-        }
+        // Apply general surfaces to each room
+        surfacesToPaint.forEach((surface: string) => {
+          const surfaceLower = surface.toLowerCase();
+          
+          if (surfaceLower.includes('wall')) {
+            extractedRooms[roomId].walls = true;
+          }
+          if (surfaceLower.includes('ceiling')) {
+            extractedRooms[roomId].ceiling = true;
+          }
+          if (surfaceLower.includes('trim') || surfaceLower.includes('baseboard')) {
+            extractedRooms[roomId].trim = true;
+          }
+          if (surfaceLower.includes('door')) {
+            extractedRooms[roomId].doors = typeof extractedRooms[roomId].doors === 'number' ? extractedRooms[roomId].doors + 1 : 1;
+          }
+          if (surfaceLower.includes('window')) {
+            extractedRooms[roomId].windows = typeof extractedRooms[roomId].windows === 'number' ? extractedRooms[roomId].windows + 1 : 1;
+          }
+          if (surfaceLower.includes('cabinet')) {
+            extractedRooms[roomId].cabinets = true;
+          }
+        });
       });
-    });
+    }
   }
   
   return { extractedRooms, extractedRoomsList };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,14 +87,17 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           throw new Error(error.message || "Information extraction failed");
         }
         
-        if (!data || !data.fields) {
+        if (!data) {
           throw new Error("No information extracted");
         }
         
         setExtractionProgress(100);
         
         // Process the extracted fields
-        const processedFields: EstimateField[] = data.fields.map((field: any) => ({
+        const processedData = processExtractedData(data);
+        const processedFields = processedData.fields || [];
+        
+        const formattedFields = processedFields.map((field: any) => ({
           name: field.name,
           value: field.value,
           confidence: field.confidence,
@@ -106,14 +108,14 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         // Add missing info to the fields
         Object.entries(missingInfo).forEach(([key, value]) => {
           // Check if the field already exists
-          const existingField = processedFields.find(field => field.formField === key);
+          const existingField = formattedFields.find(field => field.formField === key);
           
           if (existingField) {
             existingField.value = value;
             existingField.confidence = 1.0; // User-provided info has 100% confidence
           } else {
             // Add as a new field
-            processedFields.push({
+            formattedFields.push({
               name: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()), // Convert camelCase to Title Case
               value,
               confidence: 1.0,
@@ -123,11 +125,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           }
         });
         
-        setEstimateFields(processedFields);
+        setEstimateFields(formattedFields);
         
         // For interior projects, extract room information
         if (projectType === 'interior') {
-          const { extractedRooms, extractedRoomsList } = extractRoomsFromFields(processedFields);
+          const { extractedRooms, extractedRoomsList } = extractRoomsFromFields(processedData);
           
           // Initialize room matrix with extracted data
           const initialMatrix = initializeRoomsMatrix(extractedRooms);
@@ -142,7 +144,7 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           calculateTotals(generatedLineItems);
         } else {
           // For exterior projects, use the original line item generation
-          generateLineItems(processedFields, projectType);
+          generateLineItems(formattedFields, projectType);
         }
       } catch (error) {
         console.error("Information extraction error:", error);

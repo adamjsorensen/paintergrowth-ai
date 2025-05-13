@@ -36,196 +36,135 @@ serve(async (req) => {
     }
 
     // Create the prompt for information extraction with enhanced room detection
-    const prompt = `
-You are an AI assistant for painting contractors. Your task is to extract relevant information from a transcript of a contractor walking through a property or discussing a project with a client.
+    const prompt = `You are an AI assistant for painting contractors. Your task is to extract relevant information from a transcript of a contractor walking through a property or discussing a project with a client.
 
-Extract the following information with specific field mappings:
+============================================================================
+OUTPUT CONTRACT  (HARD LIMIT = 1 000 TOKENS — drop lowest‑confidence items first)
+Return **ONLY** a valid, minified JSON object with the two top‑level keys shown
+below.  Do **not** wrap the response in markdown.
 
-## Client Information
-- Client Name (formField: clientName)
-- Client Email (formField: clientEmail)
-- Client Phone (formField: clientPhone)
-- Project Address (formField: projectAddress)
-
-## Project Details
-- Job Type (formField: jobType) - Choose from: interior, exterior, cabinets, deck, commercial
-- Square Footage (formField: squareFootage) - Numeric value only
-- Timeline or Start Date (formField: timeline) - Date or timeframe
-- Special Notes (formField: specialNotes) - Any special requirements or concerns
-
-## Interior Rooms
-For interior projects, identify specific rooms mentioned and what needs to be painted in each room:
-- Rooms To Paint (formField: roomsToPaint) - Array of room names like living room, bedroom, kitchen, etc.
-- For EACH room identified, create a separate field named after the room with surfaces to paint, like:
-  - Living Room (formField: livingRoom) - Object containing:
-    - Walls (boolean)
-    - Ceiling (boolean) 
-    - Trim (boolean)
-    - Doors (number of doors or boolean)
-    - Windows (number of windows or boolean)
-    - Cabinets (boolean)
-
-## Scope of Work
-- Surfaces to Paint (formField: surfacesToPaint) - Array of surfaces like walls, ceilings, trim, doors, cabinets
-- Preparation Needs (formField: prepNeeds) - Array of prep work like scraping, sanding, patching
-- Color Preferences (formField: colorPalette) - Any color preferences mentioned
-
-For each piece of information, provide:
-- The extracted value (formatted appropriately)
-- A confidence score (0.0 to 1.0) indicating how certain you are about this extraction
-- The corresponding form field name as specified above
-
-EXAMPLES:
-
-Example 1 (Interior):
-Transcript: "I'm visiting the Johnson residence at 42 Oak Street. They want to paint the living room walls and ceiling, plus the kitchen cabinets. The master bedroom needs all walls and trim done. They mentioned they want a light blue for the bedroom and white for the kitchen cabinets. The house is about 1,800 square feet and they want to start in two weeks."
-
-Response:
 {
-  "fields": [
+  "fields":[
+    {"name":"","value":"","confidence":0.00,"formField":""}
+  ],
+  "rooms":[
     {
-      "name": "Client Name",
-      "value": "Johnson",
-      "confidence": 0.9,
-      "formField": "clientName"
-    },
-    {
-      "name": "Project Address",
-      "value": "42 Oak Street",
-      "confidence": 0.95,
-      "formField": "projectAddress"
-    },
-    {
-      "name": "Job Type",
-      "value": "interior",
-      "confidence": 0.95,
-      "formField": "jobType"
-    },
-    {
-      "name": "Square Footage",
-      "value": 1800,
-      "confidence": 0.9,
-      "formField": "squareFootage"
-    },
-    {
-      "name": "Timeline",
-      "value": "two weeks",
-      "confidence": 0.85,
-      "formField": "timeline"
-    },
-    {
-      "name": "Rooms To Paint",
-      "value": ["living room", "kitchen", "master bedroom"],
-      "confidence": 0.95,
-      "formField": "roomsToPaint"
-    },
-    {
-      "name": "Living Room",
-      "value": {
-        "walls": true,
-        "ceiling": true,
-        "trim": false,
-        "doors": false,
-        "windows": false,
-        "cabinets": false
+      "room_id":"",
+      "label":"",
+      "surfaces":{
+        "walls":false,
+        "ceiling":false,
+        "trim":false,
+        "doors":null,     // integer ≥0 OR null when count unknown
+        "windows":null,   // integer ≥0 OR null when count unknown
+        "cabinets":false
       },
-      "confidence": 0.9,
-      "formField": "livingRoom"
+      "confidence":0.00
+    }
+  ]
+}
+============================================================================
+
+CONFIDENCE RULES
+• Every object in **fields** and **rooms** must include a \`confidence\` float          
+  0.00 – 1.00 with exactly two decimal places.  
+• If confidence < 0.25 **or** the datum is absent, omit that object entirely —  
+  never invent data.
+
+────────────────────────────────────────────────────────────────────────────
+CLIENT INFORMATION
+• Client Name      (formField \`clientName\`)  
+• Client Email     (formField \`clientEmail\`)  
+• Client Phone     (formField \`clientPhone\`)  
+• Project Address  (formField \`projectAddress\`)
+
+PROJECT DETAILS
+• Job Type         (formField \`jobType\`) – one of: **interior**, **exterior**,  
+  **deck**, **commercial**  
+• Square Footage   (formField \`squareFootage\`) – integer (sq ft)  
+• Timeline         (formField \`timeline\`) – either an ISO‑8601 date string  
+  (\`"2025-06-01"\`) **or** an object \`{"relative":"<text>"}\`  
+• Special Notes    (formField \`specialNotes\`)
+
+INTERIOR ROOMS   (only when \`jobType = "interior"\`)
+• Rooms To Paint   (formField \`roomsToPaint\`) – array of room names.  
+• For each detected room add an entry to **rooms** using the exact structure
+  shown in the OUTPUT CONTRACT.  
+  ‑ \`room_id\` = canonical snake‑case id (e.g. \`"living-room"\`).  
+  ‑ \`label\`   = human‑readable name (e.g. \`"Living Room"\`).  
+  ‑ \`doors\` and \`windows\` are integer counts **or** null if count not stated.
+
+SCOPE OF WORK
+• Surfaces to Paint  (formField \`surfacesToPaint\`) – array  
+• Preparation Needs  (formField \`prepNeeds\`)       – array  
+• Color Preferences  (formField \`colorPalette\`)
+
+────────────────────────────────────────────────────────────────────────────
+EXAMPLE 1  (Interior)
+
+Transcript:  
+"I'm visiting the Johnson residence at 42 Oak Street. They want to paint the living room walls and ceiling, plus the kitchen cabinets. The master bedroom needs all walls and trim done. They mentioned they want a light blue for the bedroom and white for the kitchen cabinets. The house is about 1,800 square feet and they want to start in two weeks."
+
+Response:  
+{
+  "fields":[
+    {"name":"Client Name","value":"Johnson","confidence":0.90,"formField":"clientName"},
+    {"name":"Project Address","value":"42 Oak Street","confidence":0.95,"formField":"projectAddress"},
+    {"name":"Job Type","value":"interior","confidence":0.95,"formField":"jobType"},
+    {"name":"Square Footage","value":1800,"confidence":0.90,"formField":"squareFootage"},
+    {"name":"Timeline","value":{"relative":"2 weeks"},"confidence":0.85,"formField":"timeline"},
+    {"name":"Rooms To Paint","value":["living room","kitchen","master bedroom"],"confidence":0.95,"formField":"roomsToPaint"},
+    {"name":"Surfaces to Paint","value":["walls","ceiling","trim","cabinets"],"confidence":0.90,"formField":"surfacesToPaint"},
+    {"name":"Color Preferences","value":"light blue for bedroom, white for kitchen cabinets","confidence":0.85,"formField":"colorPalette"}
+  ],
+  "rooms":[
+    {
+      "room_id":"living-room",
+      "label":"Living Room",
+      "surfaces":{"walls":true,"ceiling":true,"trim":false,"doors":null,"windows":null,"cabinets":false},
+      "confidence":0.90
     },
     {
-      "name": "Kitchen",
-      "value": {
-        "walls": false,
-        "ceiling": false,
-        "trim": false,
-        "doors": false,
-        "windows": false,
-        "cabinets": true
-      },
-      "confidence": 0.9,
-      "formField": "kitchen"
+      "room_id":"kitchen",
+      "label":"Kitchen",
+      "surfaces":{"walls":false,"ceiling":false,"trim":false,"doors":null,"windows":null,"cabinets":true},
+      "confidence":0.90
     },
     {
-      "name": "Master Bedroom",
-      "value": {
-        "walls": true,
-        "ceiling": false,
-        "trim": true,
-        "doors": false,
-        "windows": false,
-        "cabinets": false
-      },
-      "confidence": 0.9,
-      "formField": "masterBedroom"
-    },
-    {
-      "name": "Surfaces to Paint",
-      "value": ["walls", "ceiling", "trim", "cabinets"],
-      "confidence": 0.9,
-      "formField": "surfacesToPaint"
-    },
-    {
-      "name": "Color Preferences",
-      "value": "light blue for bedroom, white for kitchen cabinets",
-      "confidence": 0.85,
-      "formField": "colorPalette"
+      "room_id":"master-bedroom",
+      "label":"Master Bedroom",
+      "surfaces":{"walls":true,"ceiling":false,"trim":true,"doors":null,"windows":null,"cabinets":false},
+      "confidence":0.90
     }
   ]
 }
 
-Example 2 (Exterior):
-Transcript: "We're looking at painting the exterior of this two-story house at 123 Maple Drive. The homeowner, Mr. Smith, wants all the siding and trim painted, plus the garage door. The house is blue now but they want to change it to a warm gray. Some areas need scraping and priming where the paint is peeling."
+────────────────────────────────────────────────────────────────────────────
+EXAMPLE 2  (Exterior)
 
-Response:
+Transcript:  
+"We're looking at painting the exterior of this two‑story house at 123 Maple Drive. The homeowner, Mr. Smith, wants all the siding and trim painted, plus the garage door. The house is blue now but they want to change it to a warm gray. Some areas need scraping and priming where the paint is peeling."
+
+Response:  
 {
-  "fields": [
-    {
-      "name": "Client Name",
-      "value": "Smith",
-      "confidence": 0.9,
-      "formField": "clientName"
-    },
-    {
-      "name": "Project Address",
-      "value": "123 Maple Drive",
-      "confidence": 0.95,
-      "formField": "projectAddress"
-    },
-    {
-      "name": "Job Type",
-      "value": "exterior",
-      "confidence": 0.95,
-      "formField": "jobType"
-    },
-    {
-      "name": "Surfaces to Paint",
-      "value": ["siding", "trim", "garage door"],
-      "confidence": 0.9,
-      "formField": "surfacesToPaint"
-    },
-    {
-      "name": "Preparation Needs",
-      "value": ["scraping", "priming"],
-      "confidence": 0.85,
-      "formField": "prepNeeds"
-    },
-    {
-      "name": "Color Preferences",
-      "value": "warm gray (changing from blue)",
-      "confidence": 0.9,
-      "formField": "colorPalette"
-    }
-  ]
+  "fields":[
+    {"name":"Client Name","value":"Smith","confidence":0.90,"formField":"clientName"},
+    {"name":"Project Address","value":"123 Maple Drive","confidence":0.95,"formField":"projectAddress"},
+    {"name":"Job Type","value":"exterior","confidence":0.95,"formField":"jobType"},
+    {"name":"Surfaces to Paint","value":["siding","trim","garage door"],"confidence":0.90,"formField":"surfacesToPaint"},
+    {"name":"Preparation Needs","value":["scraping","priming"],"confidence":0.85,"formField":"prepNeeds"},
+    {"name":"Color Preferences","value":"warm gray (changing from blue)","confidence":0.90,"formField":"colorPalette"}
+  ],
+  "rooms":[]
 }
 
-Now, analyze the following transcript and extract all relevant information:
+────────────────────────────────────────────────────────────────────────────
+Now, analyze the following transcript and extract all relevant information.
 
 ${transcript}
 
-Focus especially on identifying specific rooms and what surfaces need to be painted within each room. Be thorough in your extraction of room-specific details.
-
-Respond ONLY with a valid JSON object containing the extracted fields. Do not include any explanatory text outside the JSON structure.
-`;
+**Return nothing but the JSON object described above.**  
+If the result would exceed 1 000 tokens, discard the lowest‑confidence items until it fits.`;
 
     console.log("Sending request to OpenRouter API");
 
@@ -318,8 +257,8 @@ Respond ONLY with a valid JSON object containing the extracted fields. Do not in
         console.log("Successfully parsed extracted data");
         
         // Validate the structure of the extracted data
-        if (!extractedData.fields || !Array.isArray(extractedData.fields)) {
-          throw new Error("Invalid response format: missing fields array");
+        if (!extractedData.fields && !extractedData.rooms) {
+          throw new Error("Invalid response format: missing required keys");
         }
         
         return new Response(
