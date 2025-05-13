@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -34,7 +35,7 @@ serve(async (req) => {
       );
     }
 
-    // Create the prompt for information extraction with specific field mapping
+    // Create the prompt for information extraction with enhanced room detection
     const prompt = `
 You are an AI assistant for painting contractors. Your task is to extract relevant information from a transcript of a contractor walking through a property or discussing a project with a client.
 
@@ -52,6 +53,18 @@ Extract the following information with specific field mappings:
 - Timeline or Start Date (formField: timeline) - Date or timeframe
 - Special Notes (formField: specialNotes) - Any special requirements or concerns
 
+## Interior Rooms
+For interior projects, identify specific rooms mentioned and what needs to be painted in each room:
+- Rooms To Paint (formField: roomsToPaint) - Array of room names like living room, bedroom, kitchen, etc.
+- For EACH room identified, create a separate field named after the room with surfaces to paint, like:
+  - Living Room (formField: livingRoom) - Object containing:
+    - Walls (boolean)
+    - Ceiling (boolean) 
+    - Trim (boolean)
+    - Doors (number of doors or boolean)
+    - Windows (number of windows or boolean)
+    - Cabinets (boolean)
+
 ## Scope of Work
 - Surfaces to Paint (formField: surfacesToPaint) - Array of surfaces like walls, ceilings, trim, doors, cabinets
 - Preparation Needs (formField: prepNeeds) - Array of prep work like scraping, sanding, patching
@@ -64,92 +77,143 @@ For each piece of information, provide:
 
 EXAMPLES:
 
-Example 1:
-Transcript: "I'm John Smith and I need my living room and kitchen painted. The walls are in pretty good shape but will need some patching. I'm thinking of a light blue color. My number is 555-123-4567 and my address is 123 Main Street."
+Example 1 (Interior):
+Transcript: "I'm visiting the Johnson residence at 42 Oak Street. They want to paint the living room walls and ceiling, plus the kitchen cabinets. The master bedroom needs all walls and trim done. They mentioned they want a light blue for the bedroom and white for the kitchen cabinets. The house is about 1,800 square feet and they want to start in two weeks."
 
 Response:
 {
   "fields": [
     {
       "name": "Client Name",
-      "value": "John Smith",
-      "confidence": 0.95,
+      "value": "Johnson",
+      "confidence": 0.9,
       "formField": "clientName"
     },
     {
-      "name": "Client Phone",
-      "value": "555-123-4567",
-      "confidence": 0.9,
-      "formField": "clientPhone"
-    },
-    {
       "name": "Project Address",
-      "value": "123 Main Street",
-      "confidence": 0.85,
+      "value": "42 Oak Street",
+      "confidence": 0.95,
       "formField": "projectAddress"
     },
     {
       "name": "Job Type",
       "value": "interior",
-      "confidence": 0.8,
+      "confidence": 0.95,
       "formField": "jobType"
     },
     {
+      "name": "Square Footage",
+      "value": 1800,
+      "confidence": 0.9,
+      "formField": "squareFootage"
+    },
+    {
+      "name": "Timeline",
+      "value": "two weeks",
+      "confidence": 0.85,
+      "formField": "timeline"
+    },
+    {
+      "name": "Rooms To Paint",
+      "value": ["living room", "kitchen", "master bedroom"],
+      "confidence": 0.95,
+      "formField": "roomsToPaint"
+    },
+    {
+      "name": "Living Room",
+      "value": {
+        "walls": true,
+        "ceiling": true,
+        "trim": false,
+        "doors": false,
+        "windows": false,
+        "cabinets": false
+      },
+      "confidence": 0.9,
+      "formField": "livingRoom"
+    },
+    {
+      "name": "Kitchen",
+      "value": {
+        "walls": false,
+        "ceiling": false,
+        "trim": false,
+        "doors": false,
+        "windows": false,
+        "cabinets": true
+      },
+      "confidence": 0.9,
+      "formField": "kitchen"
+    },
+    {
+      "name": "Master Bedroom",
+      "value": {
+        "walls": true,
+        "ceiling": false,
+        "trim": true,
+        "doors": false,
+        "windows": false,
+        "cabinets": false
+      },
+      "confidence": 0.9,
+      "formField": "masterBedroom"
+    },
+    {
       "name": "Surfaces to Paint",
-      "value": ["walls"],
-      "confidence": 0.7,
+      "value": ["walls", "ceiling", "trim", "cabinets"],
+      "confidence": 0.9,
       "formField": "surfacesToPaint"
     },
     {
-      "name": "Preparation Needs",
-      "value": ["patching"],
-      "confidence": 0.8,
-      "formField": "prepNeeds"
-    },
-    {
       "name": "Color Preferences",
-      "value": "light blue",
+      "value": "light blue for bedroom, white for kitchen cabinets",
       "confidence": 0.85,
       "formField": "colorPalette"
     }
   ]
 }
 
-Example 2:
-Transcript: "We're looking at a 2-story house, about 2500 square feet. The homeowner wants all the bedrooms and bathrooms painted, plus the trim throughout. They want to start in about 3 weeks. The house is at 456 Oak Avenue."
+Example 2 (Exterior):
+Transcript: "We're looking at painting the exterior of this two-story house at 123 Maple Drive. The homeowner, Mr. Smith, wants all the siding and trim painted, plus the garage door. The house is blue now but they want to change it to a warm gray. Some areas need scraping and priming where the paint is peeling."
 
 Response:
 {
   "fields": [
     {
-      "name": "Project Address",
-      "value": "456 Oak Avenue",
+      "name": "Client Name",
+      "value": "Smith",
       "confidence": 0.9,
+      "formField": "clientName"
+    },
+    {
+      "name": "Project Address",
+      "value": "123 Maple Drive",
+      "confidence": 0.95,
       "formField": "projectAddress"
     },
     {
       "name": "Job Type",
-      "value": "interior",
-      "confidence": 0.85,
+      "value": "exterior",
+      "confidence": 0.95,
       "formField": "jobType"
     },
     {
-      "name": "Square Footage",
-      "value": 2500,
-      "confidence": 0.9,
-      "formField": "squareFootage"
-    },
-    {
-      "name": "Timeline",
-      "value": "3 weeks",
-      "confidence": 0.8,
-      "formField": "timeline"
-    },
-    {
       "name": "Surfaces to Paint",
-      "value": ["walls", "trim"],
-      "confidence": 0.85,
+      "value": ["siding", "trim", "garage door"],
+      "confidence": 0.9,
       "formField": "surfacesToPaint"
+    },
+    {
+      "name": "Preparation Needs",
+      "value": ["scraping", "priming"],
+      "confidence": 0.85,
+      "formField": "prepNeeds"
+    },
+    {
+      "name": "Color Preferences",
+      "value": "warm gray (changing from blue)",
+      "confidence": 0.9,
+      "formField": "colorPalette"
     }
   ]
 }
@@ -157,6 +221,8 @@ Response:
 Now, analyze the following transcript and extract all relevant information:
 
 ${transcript}
+
+Focus especially on identifying specific rooms and what surfaces need to be painted within each room. Be thorough in your extraction of room-specific details.
 
 Respond ONLY with a valid JSON object containing the extracted fields. Do not include any explanatory text outside the JSON structure.
 `;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, Check, Edit, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/formatUtils';
+import RoomsMatrixField from './rooms/RoomsMatrixField';
+import { interiorRoomsMatrixConfig, initializeRoomsMatrix } from './rooms/InteriorRoomsConfig';
+import { extractRoomsFromFields, generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
 
 interface EstimateReviewProps {
   transcript: string;
@@ -53,6 +57,10 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   const [taxRate, setTaxRate] = useState(7.5); // Default tax rate
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  
+  // Room matrix state
+  const [roomsMatrix, setRoomsMatrix] = useState<any[]>([]);
+  const [extractedRoomsList, setExtractedRoomsList] = useState<string[]>([]);
 
   // Extract information from transcript and generate estimate
   useEffect(() => {
@@ -117,8 +125,25 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         
         setEstimateFields(processedFields);
         
-        // Generate line items based on extracted information
-        generateLineItems(processedFields, projectType);
+        // For interior projects, extract room information
+        if (projectType === 'interior') {
+          const { extractedRooms, extractedRoomsList } = extractRoomsFromFields(processedFields);
+          
+          // Initialize room matrix with extracted data
+          const initialMatrix = initializeRoomsMatrix(extractedRooms);
+          setRoomsMatrix(initialMatrix);
+          setExtractedRoomsList(extractedRoomsList);
+          
+          // Generate line items based on room data
+          const generatedLineItems = generateLineItemsFromRooms(initialMatrix);
+          setLineItems(generatedLineItems);
+          
+          // Calculate totals
+          calculateTotals(generatedLineItems);
+        } else {
+          // For exterior projects, use the original line item generation
+          generateLineItems(processedFields, projectType);
+        }
       } catch (error) {
         console.error("Information extraction error:", error);
         // Create some default fields if extraction fails
@@ -140,6 +165,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         ];
         
         setEstimateFields(defaultFields);
+        
+        // Initialize empty room matrix for interior projects
+        if (projectType === 'interior') {
+          setRoomsMatrix(initializeRoomsMatrix());
+        }
       } finally {
         setIsExtracting(false);
         setIsLoading(false);
@@ -149,7 +179,17 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     extractInformation();
   }, [transcript, missingInfo, projectType]);
 
-  // Generate line items based on extracted information
+  // Calculate totals based on line items
+  const calculateTotals = (items: LineItem[]) => {
+    const calculatedSubtotal = items.reduce((sum, item) => sum + item.total, 0);
+    setSubtotal(calculatedSubtotal);
+    
+    const calculatedTax = calculatedSubtotal * (taxRate / 100);
+    setTax(calculatedTax);
+    setTotal(calculatedSubtotal + calculatedTax);
+  };
+
+  // Generate line items based on extracted information (for non-room based estimates)
   const generateLineItems = (fields: EstimateField[], projectType: 'interior' | 'exterior') => {
     const items: LineItem[] = [];
     let itemId = 1;
@@ -168,21 +208,8 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     
     // Check for rooms to paint
     const surfacesField = fields.find(f => f.formField === 'surfacesToPaint');
-    const roomsField = fields.find(f => f.formField === 'roomsToPaint');
     
-    if (roomsField && Array.isArray(roomsField.value) && roomsField.value.length > 0) {
-      // Add line items for each room
-      roomsField.value.forEach((room: string) => {
-        addItem(`Paint ${room} - Walls`, 1, 'room', 350);
-        
-        // Add ceiling if it's a common room that typically has painted ceilings
-        if (['kitchen', 'bathroom', 'living room', 'dining room'].some(
-          r => room.toLowerCase().includes(r)
-        )) {
-          addItem(`Paint ${room} - Ceiling`, 1, 'room', 200);
-        }
-      });
-    } else if (surfacesField && Array.isArray(surfacesField.value) && surfacesField.value.length > 0) {
+    if (surfacesField && Array.isArray(surfacesField.value) && surfacesField.value.length > 0) {
       // Add line items for each surface type
       const surfaces = surfacesField.value as string[];
       
@@ -206,9 +233,14 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         addItem('Paint Cabinets', 1, 'project', 1800);
       }
     } else {
-      // Default items if no specific rooms or surfaces mentioned
-      addItem('Interior Painting - Walls', 1, 'project', 1500);
-      addItem('Interior Painting - Trim', 1, 'project', 750);
+      // Default items if no specific surfaces mentioned
+      if (projectType === 'interior') {
+        addItem('Interior Painting - Walls', 1, 'project', 1500);
+        addItem('Interior Painting - Trim', 1, 'project', 750);
+      } else {
+        addItem('Exterior Painting - Siding', 1, 'project', 3200);
+        addItem('Exterior Painting - Trim', 1, 'project', 1200);
+      }
     }
     
     // Check for prep work
@@ -237,12 +269,7 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     
     // Calculate totals
     setLineItems(items);
-    const calculatedSubtotal = items.reduce((sum, item) => sum + item.total, 0);
-    setSubtotal(calculatedSubtotal);
-    
-    const calculatedTax = calculatedSubtotal * (taxRate / 100);
-    setTax(calculatedTax);
-    setTotal(calculatedSubtotal + calculatedTax);
+    calculateTotals(items);
   };
 
   // Handle editing a field
@@ -291,6 +318,18 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     setTotal(newSubtotal + (newSubtotal * (taxRate / 100)));
   };
 
+  // Handle room matrix changes
+  const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
+    setRoomsMatrix(updatedMatrix);
+    
+    // Generate new line items based on updated room data
+    const newLineItems = generateLineItemsFromRooms(updatedMatrix);
+    setLineItems(newLineItems);
+    
+    // Recalculate totals
+    calculateTotals(newLineItems);
+  };
+
   // Add new line item
   const handleAddLineItem = () => {
     const newItem: LineItem = {
@@ -302,19 +341,16 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       total: 0
     };
     
-    setLineItems([...lineItems, newItem]);
+    const newLineItems = [...lineItems, newItem];
+    setLineItems(newLineItems);
+    calculateTotals(newLineItems);
   };
 
   // Remove line item
   const handleRemoveLineItem = (id: string) => {
-    setLineItems(prev => prev.filter(item => item.id !== id));
-    
-    // Recalculate totals
     const newLineItems = lineItems.filter(item => item.id !== id);
-    const newSubtotal = newLineItems.reduce((sum, item) => sum + item.total, 0);
-    setSubtotal(newSubtotal);
-    setTax(newSubtotal * (taxRate / 100));
-    setTotal(newSubtotal + (newSubtotal * (taxRate / 100)));
+    setLineItems(newLineItems);
+    calculateTotals(newLineItems);
   };
 
   // Handle tax rate change
@@ -350,6 +386,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       acc[field.formField] = field.value;
       return acc;
     }, {} as Record<string, any>);
+    
+    // For interior projects, add the room matrix data
+    if (projectType === 'interior') {
+      fieldsObject.roomsMatrix = roomsMatrix;
+    }
     
     onComplete(fieldsObject, finalEstimate);
   };
@@ -409,7 +450,12 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {estimateFields.map((field) => (
+                    {estimateFields
+                      .filter(field => 
+                        !field.formField.includes('Room') && 
+                        field.formField !== 'roomsToPaint'
+                      )
+                      .map((field) => (
                       <TableRow key={field.formField}>
                         <TableCell className="font-medium">{field.name}</TableCell>
                         <TableCell>
@@ -455,6 +501,15 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
               </div>
             </CardContent>
           </Card>
+          
+          {/* Room Matrix for Interior Projects */}
+          {projectType === 'interior' && (
+            <RoomsMatrixField 
+              matrixValue={roomsMatrix}
+              onChange={handleRoomsMatrixChange}
+              extractedRoomsList={extractedRoomsList}
+            />
+          )}
           
           {/* Estimate Line Items */}
           <Card>
