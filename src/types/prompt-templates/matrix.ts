@@ -1,3 +1,4 @@
+
 /**
  * Matrix field specific types
  */
@@ -6,6 +7,7 @@
 export interface MatrixRow {
   id: string;
   label: string;
+  group?: string; // Added group property for room categorization
 }
 
 export interface MatrixColumn {
@@ -13,6 +15,9 @@ export interface MatrixColumn {
   label: string;
   type: 'number' | 'checkbox' | 'text';
   tooltip?: string; // Optional tooltip text for the column header/label
+  min?: number; // Added min property for number inputs
+  max?: number; // Added max property for number inputs
+  step?: number; // Added step property for number inputs
 }
 
 export interface MatrixGroup {

@@ -22,3 +22,18 @@ export const formatDate = (dateString: string): string => {
     day: 'numeric'
   }).format(date);
 };
+
+/**
+ * Truncate text to a specified length
+ */
+export const truncateText = (text: string, maxLength: number = 100): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
+/**
+ * Format similarity score as percentage
+ */
+export const formatSimilarity = (similarity: number): string => {
+  return `${Math.round(similarity * 100)}%`;
+};

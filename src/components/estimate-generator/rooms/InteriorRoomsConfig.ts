@@ -107,6 +107,7 @@ export const roomGroups: MatrixGroup[] = [
 
 // Create the full matrix configuration
 export const interiorRoomsMatrixConfig: MatrixConfig = {
+  type: 'matrix-config', // Added the required type property
   columns: surfaceColumns,
   rows: roomRows,
   groups: roomGroups
