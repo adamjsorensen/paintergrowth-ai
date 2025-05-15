@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, Check, Edit, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/formatUtils';
+import { processExtractedData } from '@/components/audio-transcript/extract-information-utils';
 import RoomsMatrixField from './rooms/RoomsMatrixField';
 import { interiorRoomsMatrixConfig, initializeRoomsMatrix } from './rooms/InteriorRoomsConfig';
 import { extractRoomsFromFields, generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
