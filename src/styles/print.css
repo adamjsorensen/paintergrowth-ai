@@ -1,0 +1,113 @@
+
+@media print {
+  /* Hide non-printable elements */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Page setup */
+  @page {
+    margin: 1in;
+    size: letter;
+  }
+  
+  /* Body styles */
+  body {
+    font-family: 'Times New Roman', serif !important;
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+    color: black !important;
+    background: white !important;
+  }
+  
+  /* Estimate header */
+  .estimate-header {
+    border-bottom: 2px solid #333 !important;
+    padding-bottom: 20px !important;
+    margin-bottom: 30px !important;
+  }
+  
+  .estimate-header h1 {
+    font-size: 24pt !important;
+    font-weight: bold !important;
+    margin-bottom: 10px !important;
+  }
+  
+  /* Section styling */
+  .section {
+    margin-bottom: 25px !important;
+    page-break-inside: avoid !important;
+  }
+  
+  .section h3 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    color: #333 !important;
+    border-bottom: 1px solid #ddd !important;
+    padding-bottom: 5px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .section p {
+    margin-bottom: 10px !important;
+  }
+  
+  /* Table styling */
+  .line-items table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .line-items th,
+  .line-items td {
+    border: 1px solid #333 !important;
+    padding: 8px !important;
+    text-align: left !important;
+  }
+  
+  .line-items th {
+    background-color: #f5f5f5 !important;
+    font-weight: bold !important;
+  }
+  
+  /* Totals styling */
+  .totals {
+    text-align: right !important;
+    margin-top: 20px !important;
+    font-weight: bold !important;
+    font-size: 14pt !important;
+  }
+  
+  .totals p {
+    margin-bottom: 5px !important;
+  }
+  
+  /* Page breaks */
+  .page-break {
+    page-break-before: always !important;
+  }
+  
+  /* Avoid breaks */
+  .avoid-break {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Hide shadows and rounded corners */
+  * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Remove unnecessary spacing */
+  .space-y-6 > * + * {
+    margin-top: 0 !important;
+  }
+  
+  /* Ensure text is black */
+  .text-muted-foreground,
+  .text-gray-600,
+  .text-gray-700 {
+    color: #333 !important;
+  }
+}
