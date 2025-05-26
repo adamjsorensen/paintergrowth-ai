@@ -104,30 +104,39 @@ const Transcriber: React.FC<TranscriberProps> = ({ audioBlob, onComplete }) => {
   const generateSummary = async (text: string) => {
     setIsSummarizing(true);
     setSummarizationProgress(0);
+    setError(null); // Clear previous errors
 
     try {
-      // Simulate progress
+      // Simulate progress for a better UX while waiting for the API
       const progressInterval = setInterval(() => {
-        setSummarizationProgress(prev => {
-          const newProgress = prev + Math.random() * 15;
-          return newProgress > 95 ? 95 : newProgress;
-        });
-      }, 500);
+        setSummarizationProgress(prev => (prev + 10 > 90 ? 90 : prev + 10));
+      }, 300);
 
-      // In a real implementation, you would call an AI service to generate a summary
-      // For now, we'll simulate a delay and create a simple summary
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create a simple summary by extracting key sentences
-      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-      const shortSummary = sentences.slice(0, 3).join('. ') + '.';
-      
+      // Call the summarize-text edge function
+      const { data, error: summaryError } = await supabase.functions.invoke('summarize-text', {
+        body: { transcript: text }
+      });
+
       clearInterval(progressInterval);
+
+      if (summaryError) {
+        console.error('Summarization Edge Function error:', summaryError);
+        throw new Error(summaryError.message || 'Summarization failed');
+      }
+
+      if (!data || !data.summary) {
+        throw new Error('No summary returned from the service');
+      }
+
       setSummarizationProgress(100);
-      setSummary(shortSummary);
-    } catch (error) {
-      console.error('Summary generation error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate summary');
+      setSummary(data.summary);
+
+    } catch (err) {
+      console.error('Summarization error:', err);
+      setError(err instanceof Error ? `Summarization failed: ${err.message}` : 'An unknown error occurred during summarization');
+      // Optionally, set a basic summary or leave it empty
+      setSummary(''); // Clear summary on error
+      setSummarizationProgress(0); // Reset progress on error
     } finally {
       setIsSummarizing(false);
     }
@@ -150,14 +159,6 @@ const Transcriber: React.FC<TranscriberProps> = ({ audioBlob, onComplete }) => {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
       <Card>
         <CardContent className="pt-6 space-y-6">
           <div className="space-y-4">
@@ -173,6 +174,15 @@ const Transcriber: React.FC<TranscriberProps> = ({ audioBlob, onComplete }) => {
                 </Button>
               )}
             </div>
+
+            {/* Transcription Error */}
+            {error && !isTranscribing && !isSummarizing && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
             {/* Transcription Progress */}
             {isTranscribing && (
@@ -218,21 +228,42 @@ const Transcriber: React.FC<TranscriberProps> = ({ audioBlob, onComplete }) => {
                   <span className="text-sm text-muted-foreground">{Math.round(summarizationProgress)}%</span>
                 </div>
                 <Progress value={summarizationProgress} className="h-2" />
+                <div className="flex items-center justify-center mt-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              </div>
+            )}
+
+            {/* Summarization Error & Retry Button */}
+            {error && !isTranscribing && !isSummarizing && error.includes('Summarization failed') && (
+              <div className="space-y-2 mt-6">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Summary failed</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+                <Button 
+                  variant="outline" 
+                  onClick={() => transcript && generateSummary(transcript)}
+                  className="mt-2"
+                >
+                  Retry Summary
+                </Button>
               </div>
             )}
 
             {/* Summary Display */}
-            {summary && !isSummarizing && (
+            {summary && !isSummarizing && !error && (
               <div className="space-y-2 mt-6">
                 <h3 className="text-md font-medium">Summary</h3>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                  <p className="text-sm text-blue-800">{summary}</p>
+                  <p className="text-sm text-blue-800 whitespace-pre-wrap">{summary}</p>
                 </div>
               </div>
             )}
 
             {/* Continue Button */}
-            {transcript && summary && !isTranscribing && !isSummarizing && (
+            {transcript && summary && !isTranscribing && !isSummarizing && !error && (
               <div className="flex justify-end mt-4">
                 <Button onClick={handleContinue}>
                   Continue
@@ -240,8 +271,8 @@ const Transcriber: React.FC<TranscriberProps> = ({ audioBlob, onComplete }) => {
               </div>
             )}
 
-            {/* Retry Button */}
-            {error && (
+            {/* Retry Transcription Button */}
+            {error && error.includes('Transcription') && (
               <div className="flex justify-center mt-4">
                 <Button variant="outline" onClick={transcribeAudio}>
                   <FileText className="mr-2 h-4 w-4" />

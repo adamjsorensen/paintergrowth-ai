@@ -14,17 +14,17 @@ serve(async (req) => {
   }
 
   try {
-    const { transcript } = await req.json();
+    const { text } = await req.json();
     
-    if (!transcript) {
+    if (!text) {
       return new Response(
-        JSON.stringify({ error: 'No transcript provided' }),
+        JSON.stringify({ error: 'No text content provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Log transcript length for debugging
-    console.log(`Processing transcript of length: ${transcript.length} characters`);
+    // Log input length for debugging
+    console.log(`Processing text of length: ${text.length} characters`);
 
     // Get OpenRouter API key from environment
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
@@ -36,7 +36,12 @@ serve(async (req) => {
     }
 
     // Create the prompt for information extraction with enhanced room detection
-    const prompt = `You are an AI assistant for painting contractors. Your task is to extract relevant information from a transcript of a contractor walking through a property or discussing a project with a client.
+    const prompt = `You are an AI assistant for painting contractors. Your task is to extract relevant information from a summary of a property walkthrough or project discussion with a client.
+
+## INPUT SUMMARY:
+${text}
+
+## YOUR TASK:
 
 ============================================================================
 OUTPUT CONTRACT  (HARD LIMIT = 1 000 TOKENS — drop lowest‑confidence items first)
@@ -168,8 +173,8 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
 
     console.log("Sending request to OpenRouter API");
 
-    // Track token usage
-    const inputTokens = prompt.length / 4; // Rough estimate
+    // Track token usage (using the input text length for a rough estimate)
+    const inputTokens = text.length / 4; // Rough estimate
     console.log(`Estimated input tokens: ${Math.ceil(inputTokens)}`);
 
     // Implement retry logic for API calls

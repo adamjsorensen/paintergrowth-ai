@@ -77,9 +77,12 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           });
         }, 500);
         
-        // Call the extract-information edge function
+        // Use summary if available, otherwise fall back to transcript
+        const inputText = summary.trim() || transcript;
+        
+        // Call the extract-information edge function with the summary
         const { data, error } = await supabase.functions.invoke('extract-information', {
-          body: { transcript }
+          body: { text: inputText }
         });
         
         clearInterval(progressInterval);
@@ -180,7 +183,7 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     };
     
     extractInformation();
-  }, [transcript, missingInfo, projectType]);
+  }, [transcript, summary, missingInfo, projectType]); // Added summary to dependencies
 
   // Calculate totals based on line items
   const calculateTotals = (items: LineItem[]) => {
