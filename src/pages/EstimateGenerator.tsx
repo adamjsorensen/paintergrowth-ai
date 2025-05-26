@@ -1,21 +1,19 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mic, FileText, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import ModalProjectType from '@/components/estimate-generator/ModalProjectType';
-import Recorder from '@/components/estimate-generator/Recorder';
-import Transcriber from '@/components/estimate-generator/Transcriber';
+import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
 import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
 import EstimateReview from '@/components/estimate-generator/EstimateReview';
 
-// Define the steps in the wizard
+// Define the updated steps in the wizard (reduced from 5 to 4 steps)
 const STEPS = [
   { id: 'project-type', label: 'Project Type' },
-  { id: 'record', label: 'Record' },
-  { id: 'transcribe', label: 'Transcribe' },
+  { id: 'input', label: 'Input' },
   { id: 'check', label: 'Review' },
   { id: 'estimate', label: 'Estimate' }
 ];
@@ -25,7 +23,7 @@ const EstimateGenerator = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [projectType, setProjectType] = useState<'interior' | 'exterior'>('interior');
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(true);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [extractedData, setExtractedData] = useState<Record<string, any>>({});
   const [transcript, setTranscript] = useState('');
   const [summary, setSummary] = useState('');
   const [missingInfo, setMissingInfo] = useState<Record<string, any>>({});
@@ -35,26 +33,29 @@ const EstimateGenerator = () => {
   const handleProjectTypeSelect = (type: 'interior' | 'exterior') => {
     setProjectType(type);
     setIsTypeModalOpen(false);
-    setCurrentStep(1); // Move to recording step
+    setCurrentStep(1); // Move to input step
   };
 
-  // Handle audio recording completion
-  const handleRecordingComplete = (blob: Blob) => {
-    setAudioBlob(blob);
-    setCurrentStep(2); // Move to transcription step
-  };
-
-  // Handle transcription completion
-  const handleTranscriptionComplete = (text: string, summaryText: string) => {
-    setTranscript(text);
-    setSummary(summaryText);
-    setCurrentStep(3); // Move to summary checker step
+  // Handle information extraction from TranscriptInput
+  const handleInformationExtracted = (data: Record<string, any>) => {
+    console.log('EstimateGenerator - Information extracted:', data);
+    setExtractedData(data);
+    
+    // Extract transcript and summary from the data if available
+    if (data.transcript) {
+      setTranscript(data.transcript);
+    }
+    if (data.summary) {
+      setSummary(data.summary);
+    }
+    
+    setCurrentStep(2); // Move to review step
   };
 
   // Handle missing info completion
   const handleMissingInfoComplete = (info: Record<string, any>) => {
     setMissingInfo(info);
-    setCurrentStep(4); // Move to estimate review step
+    setCurrentStep(3); // Move to estimate review step
   };
 
   // Handle estimate completion
@@ -90,30 +91,24 @@ const EstimateGenerator = () => {
         );
       case 1:
         return (
-          <Recorder 
-            onComplete={handleRecordingComplete} 
+          <TranscriptInput 
+            onInformationExtracted={handleInformationExtracted}
+            onClose={() => {}} // No-op since we don't want to close in this context
           />
         );
       case 2:
         return (
-          <Transcriber 
-            audioBlob={audioBlob} 
-            onComplete={handleTranscriptionComplete} 
+          <SummaryChecker 
+            summary={summary || 'Project information extracted from your input'} 
+            transcript={transcript || 'Information extracted from your input'}
+            onComplete={handleMissingInfoComplete} 
           />
         );
       case 3:
         return (
-          <SummaryChecker 
-            summary={summary} 
-            transcript={transcript}
-            onComplete={handleMissingInfoComplete} 
-          />
-        );
-      case 4:
-        return (
           <EstimateReview 
-            transcript={transcript}
-            summary={summary}
+            transcript={transcript || 'Information extracted from your input'}
+            summary={summary || 'Project information extracted from your input'}
             missingInfo={missingInfo}
             projectType={projectType}
             onComplete={handleEstimateComplete} 
@@ -131,7 +126,7 @@ const EstimateGenerator = () => {
           <CardHeader>
             <CardTitle className="text-2xl font-bold">Create an Estimate with Voice</CardTitle>
             <CardDescription>
-              Record your voice, describe the project, and we'll generate an estimate for you
+              Record audio, upload files, or paste a transcript to generate an estimate
             </CardDescription>
             
             {/* Step indicator */}
@@ -193,9 +188,8 @@ const EstimateGenerator = () => {
               <Button 
                 onClick={() => setCurrentStep(Math.min(STEPS.length - 1, currentStep + 1))}
                 disabled={
-                  (currentStep === 1 && !audioBlob) || 
-                  (currentStep === 2 && !transcript) ||
-                  (currentStep === 3 && Object.keys(missingInfo).length === 0)
+                  (currentStep === 1 && Object.keys(extractedData).length === 0) ||
+                  (currentStep === 2 && Object.keys(missingInfo).length === 0)
                 }
               >
                 Continue
