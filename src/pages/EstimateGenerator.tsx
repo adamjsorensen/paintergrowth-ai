@@ -1,214 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React from 'react';
 import PageLayout from '@/components/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import ModalProjectType from '@/components/estimate-generator/ModalProjectType';
-import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
-import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
-import EstimateReview from '@/components/estimate-generator/EstimateReview';
-import EstimateContentGenerator from '@/components/estimate-generator/EstimateContentGenerator';
-import EstimateContentEditor from '@/components/estimate-generator/EstimateContentEditor';
-import EstimatePDFGenerator from '@/components/estimate-generator/EstimatePDFGenerator';
-
-// Updated steps to include all phases
-const STEPS = [
-  { id: 'project-type', label: 'Project Type' },
-  { id: 'input', label: 'Input' },
-  { id: 'check', label: 'Review' },
-  { id: 'estimate', label: 'Pricing' },
-  { id: 'content', label: 'Generate' },
-  { id: 'edit', label: 'Edit' },
-  { id: 'pdf', label: 'PDF' }
-];
+import StepIndicator from '@/components/estimate-generator/components/StepIndicator';
+import StepRenderer from '@/components/estimate-generator/components/StepRenderer';
+import { useEstimateFlow } from '@/components/estimate-generator/hooks/useEstimateFlow';
+import { ESTIMATE_STEPS } from '@/components/estimate-generator/constants/EstimateSteps';
 
 const EstimateGenerator = () => {
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [projectType, setProjectType] = useState<'interior' | 'exterior'>('interior');
-  const [isTypeModalOpen, setIsTypeModalOpen] = useState(true);
-  const [extractedData, setExtractedData] = useState<Record<string, any>>({});
-  const [transcript, setTranscript] = useState('');
-  const [summary, setSummary] = useState('');
-  const [missingInfo, setMissingInfo] = useState<Record<string, any>>({});
-  const [estimateFields, setEstimateFields] = useState<Record<string, any>>({});
-  const [lineItems, setLineItems] = useState<any[]>([]);
-  const [totals, setTotals] = useState<Record<string, any>>({});
-  const [generatedContent, setGeneratedContent] = useState<Record<string, any>>({});
-  const [editedContent, setEditedContent] = useState<Record<string, any>>({});
-
-  // Handle project type selection
-  const handleProjectTypeSelect = (type: 'interior' | 'exterior') => {
-    setProjectType(type);
-    setIsTypeModalOpen(false);
-    setCurrentStep(1);
-  };
-
-  // Handle information extraction from TranscriptInput
-  const handleInformationExtracted = (data: Record<string, any>) => {
-    console.log('EstimateGenerator - Information extracted:', data);
-    
-    if (data.fields && Array.isArray(data.fields)) {
-      console.log('EstimateGenerator - Extracted fields:', data.fields.map(f => ({
-        name: f.name,
-        formField: f.formField,
-        value: f.value
-      })));
-    }
-    
-    setExtractedData(data);
-    
-    if (data.transcript) {
-      setTranscript(data.transcript);
-    }
-    if (data.summary) {
-      setSummary(data.summary);
-    }
-    
-    setCurrentStep(2);
-  };
-
-  // Handle missing info completion
-  const handleMissingInfoComplete = (info: Record<string, any>) => {
-    setMissingInfo(info);
-    setCurrentStep(3);
-  };
-
-  // Handle estimate completion
-  const handleEstimateComplete = (fields: Record<string, any>, finalEstimate: Record<string, any>) => {
-    console.log('EstimateGenerator - Estimate completed:', { fields, finalEstimate });
-    setEstimateFields(fields);
-    
-    if (finalEstimate.lineItems) {
-      setLineItems(finalEstimate.lineItems);
-    }
-    if (finalEstimate.totals) {
-      setTotals(finalEstimate.totals);
-    }
-    
-    setCurrentStep(4);
-  };
-
-  // Handle content generation completion
-  const handleContentGenerated = (content: Record<string, any>) => {
-    console.log('EstimateGenerator - Content generated:', content);
-    setGeneratedContent(content);
-    setEditedContent(content); // Initialize edited content
-    setCurrentStep(5);
-  };
-
-  // Handle content editing completion
-  const handleContentEdited = (editedContent: Record<string, any>) => {
-    console.log('EstimateGenerator - Content edited:', editedContent);
-    setEditedContent(editedContent);
-    setCurrentStep(6);
-  };
-
-  // Handle final PDF completion
-  const handlePDFComplete = () => {
-    // Save the complete estimate
-    const savedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
-    const completeEstimate = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      projectType,
-      extractedData,
-      missingInfo,
-      estimateFields,
-      lineItems,
-      totals,
-      generatedContent,
-      editedContent
-    };
-    
-    savedEstimates.push(completeEstimate);
-    localStorage.setItem('estimates', JSON.stringify(savedEstimates));
-    
-    console.log('Complete estimate saved:', completeEstimate);
-    navigate('/dashboard');
-  };
-
-  // Handle back navigation for content steps
-  const handleBackToContentGeneration = () => {
-    setCurrentStep(4);
-  };
-
-  const handleBackToContentEditor = () => {
-    setCurrentStep(5);
-  };
-
-  // Render the current step
-  const renderStep = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <ModalProjectType 
-            isOpen={isTypeModalOpen} 
-            onSelect={handleProjectTypeSelect} 
-          />
-        );
-      case 1:
-        return (
-          <TranscriptInput 
-            onInformationExtracted={handleInformationExtracted}
-            onClose={() => {}}
-          />
-        );
-      case 2:
-        return (
-          <SummaryChecker 
-            summary={summary || 'Project information extracted from your input'} 
-            transcript={transcript || 'Information extracted from your input'}
-            extractedData={extractedData}
-            onComplete={handleMissingInfoComplete} 
-          />
-        );
-      case 3:
-        return (
-          <EstimateReview 
-            transcript={transcript || 'Information extracted from your input'}
-            summary={summary || 'Project information extracted from your input'}
-            missingInfo={missingInfo}
-            projectType={projectType}
-            extractedData={extractedData}
-            onComplete={handleEstimateComplete} 
-          />
-        );
-      case 4:
-        return (
-          <EstimateContentGenerator
-            estimateData={{ ...extractedData, ...missingInfo }}
-            projectType={projectType}
-            lineItems={lineItems}
-            totals={totals}
-            onComplete={handleContentGenerated}
-          />
-        );
-      case 5:
-        return (
-          <EstimateContentEditor
-            content={generatedContent}
-            onComplete={handleContentEdited}
-            onBack={handleBackToContentGeneration}
-          />
-        );
-      case 6:
-        return (
-          <EstimatePDFGenerator
-            estimateData={{ ...extractedData, ...missingInfo }}
-            projectType={projectType}
-            lineItems={lineItems}
-            totals={totals}
-            content={editedContent}
-            onComplete={handlePDFComplete}
-            onBack={handleBackToContentEditor}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  const { state, handlers, setCurrentStep } = useEstimateFlow();
 
   return (
     <PageLayout title="Voice-Driven Estimate Generator">
@@ -220,68 +22,28 @@ const EstimateGenerator = () => {
               Record audio, upload files, or paste a transcript to generate an estimate
             </CardDescription>
             
-            {/* Step indicator */}
-            <div className="mt-6">
-              <div className="flex justify-between">
-                {STEPS.map((step, index) => (
-                  <div 
-                    key={step.id} 
-                    className="flex flex-col items-center"
-                  >
-                    <div 
-                      className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-                        index < currentStep 
-                          ? 'bg-green-500 text-white' 
-                          : index === currentStep 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-gray-200 text-gray-500'
-                      }`}
-                    >
-                      {index < currentStep ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    <span className={`text-xs ${
-                      index === currentStep ? 'text-blue-600 font-medium' : 'text-gray-500'
-                    }`}>
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="relative mt-2">
-                <div className="absolute top-0 left-0 h-1 bg-gray-200 w-full rounded"></div>
-                <div 
-                  className="absolute top-0 left-0 h-1 bg-blue-600 rounded transition-all duration-300" 
-                  style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
-                ></div>
-              </div>
-            </div>
+            <StepIndicator steps={ESTIMATE_STEPS} currentStep={state.currentStep} />
           </CardHeader>
           
           <CardContent className="pt-6">
-            {renderStep()}
+            <StepRenderer state={state} handlers={handlers} />
           </CardContent>
           
-          {currentStep > 0 && currentStep < 4 && (
+          {state.currentStep > 0 && state.currentStep < 4 && (
             <CardFooter className="flex justify-between border-t pt-6">
               <Button 
                 variant="outline" 
-                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                onClick={() => setCurrentStep(Math.max(0, state.currentStep - 1))}
               >
                 Back
               </Button>
               
               <Button 
-                onClick={() => setCurrentStep(Math.min(STEPS.length - 1, currentStep + 1))}
+                onClick={() => setCurrentStep(Math.min(ESTIMATE_STEPS.length - 1, state.currentStep + 1))}
                 disabled={
-                  (currentStep === 1 && Object.keys(extractedData).length === 0) ||
-                  (currentStep === 2 && Object.keys(missingInfo).length === 0) ||
-                  (currentStep === 3 && Object.keys(estimateFields).length === 0)
+                  (state.currentStep === 1 && Object.keys(state.extractedData).length === 0) ||
+                  (state.currentStep === 2 && Object.keys(state.missingInfo).length === 0) ||
+                  (state.currentStep === 3 && Object.keys(state.estimateFields).length === 0)
                 }
               >
                 Continue
