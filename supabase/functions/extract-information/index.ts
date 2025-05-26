@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -17,23 +16,26 @@ serve(async (req) => {
     const requestBody = await req.json();
     console.log('Received request body:', JSON.stringify(requestBody, null, 2));
     
-    // Accept either 'transcript' or 'text' for backward compatibility
-    const { transcript, text } = requestBody;
-    const inputText = transcript || text;
+    // Accept 'transcript' as the primary field name
+    const { transcript } = requestBody;
+    const inputText = transcript;
     
-    if (!inputText) {
-      console.error('Missing required field: transcript or text');
+    console.log('Input text extracted:', inputText ? `${inputText.length} characters` : 'null/undefined');
+    
+    if (!inputText || inputText.trim() === '') {
+      console.error('Missing or empty transcript field');
       return new Response(
         JSON.stringify({ 
-          error: 'Missing required field: transcript or text', 
-          received: Object.keys(requestBody) 
+          error: 'Missing or empty transcript field', 
+          received: Object.keys(requestBody),
+          receivedValues: requestBody
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Log input length for debugging
-    console.log(`Processing text of length: ${inputText.length} characters`);
+    console.log(`Processing transcript of length: ${inputText.length} characters`);
 
     // Get OpenRouter API key from environment
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
