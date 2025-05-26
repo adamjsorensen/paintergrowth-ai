@@ -13,6 +13,7 @@ import { processExtractedData } from '@/components/audio-transcript/extract-info
 import RoomsMatrixField from './rooms/RoomsMatrixField';
 import { interiorRoomsMatrixConfig, initializeRoomsMatrix } from './rooms/InteriorRoomsConfig';
 import { extractRoomsFromFields, generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
+import { StandardizedRoom } from '@/types/room-types';
 
 interface EstimateReviewProps {
   transcript: string;
@@ -131,17 +132,40 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         
         setEstimateFields(formattedFields);
         
-        // For interior projects, extract room information
+        // For interior projects, extract room information using standardized format
         if (projectType === 'interior') {
+          console.log('EstimateReview - Processing interior project rooms');
           const { extractedRooms, extractedRoomsList } = extractRoomsFromFields(processedData);
           
-          // Initialize room matrix with extracted data
+          console.log('EstimateReview - Extracted rooms from fields:', extractedRooms);
+          console.log('EstimateReview - Extracted rooms list:', extractedRoomsList);
+          
+          // Initialize room matrix with extracted data (now using standardized room objects)
           const initialMatrix = initializeRoomsMatrix(extractedRooms);
+          console.log('EstimateReview - Initialized room matrix:', initialMatrix);
+          
           setRoomsMatrix(initialMatrix);
           setExtractedRoomsList(extractedRoomsList);
           
-          // Generate line items based on room data
-          const generatedLineItems = generateLineItemsFromRooms(initialMatrix);
+          // Generate line items based on room data (convert MatrixRoom[] to StandardizedRoom[])
+          const standardizedRooms: StandardizedRoom[] = initialMatrix
+            .filter(room => room.selected)
+            .map(room => ({
+              id: room.id,
+              label: room.label,
+              walls: room.walls,
+              ceiling: room.ceiling,
+              trim: room.trim,
+              doors: room.doors,
+              windows: room.windows,
+              cabinets: room.cabinets,
+              confidence: room.confidence
+            }));
+          
+          console.log('EstimateReview - Converting to standardized rooms for line items:', standardizedRooms);
+          const generatedLineItems = generateLineItemsFromRooms(standardizedRooms);
+          console.log('EstimateReview - Generated line items:', generatedLineItems);
+          
           setLineItems(generatedLineItems);
           
           // Calculate totals
@@ -324,12 +348,32 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     setTotal(newSubtotal + (newSubtotal * (taxRate / 100)));
   };
 
-  // Handle room matrix changes
+  // Handle room matrix changes with standardized room objects
   const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
+    console.log('EstimateReview - Room matrix changed:', updatedMatrix);
     setRoomsMatrix(updatedMatrix);
     
+    // Convert matrix rooms to standardized rooms for line item generation
+    const selectedStandardizedRooms: StandardizedRoom[] = updatedMatrix
+      .filter(room => room.selected)
+      .map(room => ({
+        id: room.id,
+        label: room.label,
+        walls: room.walls,
+        ceiling: room.ceiling,
+        trim: room.trim,
+        doors: room.doors,
+        windows: room.windows,
+        cabinets: room.cabinets,
+        confidence: room.confidence || 0.5
+      }));
+    
+    console.log('EstimateReview - Converting updated matrix to standardized rooms:', selectedStandardizedRooms);
+    
     // Generate new line items based on updated room data
-    const newLineItems = generateLineItemsFromRooms(updatedMatrix);
+    const newLineItems = generateLineItemsFromRooms(selectedStandardizedRooms);
+    console.log('EstimateReview - Generated new line items:', newLineItems);
+    
     setLineItems(newLineItems);
     
     // Recalculate totals
