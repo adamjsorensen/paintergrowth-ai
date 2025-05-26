@@ -14,21 +14,31 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const requestBody = await req.json();
+    console.log('Received request body:', JSON.stringify(requestBody, null, 2));
     
-    if (!text) {
+    // Accept either 'transcript' or 'text' for backward compatibility
+    const { transcript, text } = requestBody;
+    const inputText = transcript || text;
+    
+    if (!inputText) {
+      console.error('Missing required field: transcript or text');
       return new Response(
-        JSON.stringify({ error: 'No text content provided' }),
+        JSON.stringify({ 
+          error: 'Missing required field: transcript or text', 
+          received: Object.keys(requestBody) 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Log input length for debugging
-    console.log(`Processing text of length: ${text.length} characters`);
+    console.log(`Processing text of length: ${inputText.length} characters`);
 
     // Get OpenRouter API key from environment
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
     if (!openRouterApiKey) {
+      console.error('OpenRouter API key not configured');
       return new Response(
         JSON.stringify({ error: 'OpenRouter API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -39,7 +49,7 @@ serve(async (req) => {
     const prompt = `You are an AI assistant for painting contractors. Your task is to extract relevant information from a summary of a property walkthrough or project discussion with a client.
 
 ## INPUT SUMMARY:
-${text}
+${inputText}
 
 ## YOUR TASK:
 
@@ -166,15 +176,13 @@ Response:
 ────────────────────────────────────────────────────────────────────────────
 Now, analyze the following transcript and extract all relevant information.
 
-${transcript}
-
 **Return nothing but the JSON object described above.**  
 If the result would exceed 1 000 tokens, discard the lowest‑confidence items until it fits.`;
 
     console.log("Sending request to OpenRouter API");
 
     // Track token usage (using the input text length for a rough estimate)
-    const inputTokens = text.length / 4; // Rough estimate
+    const inputTokens = inputText.length / 4; // Rough estimate
     console.log(`Estimated input tokens: ${Math.ceil(inputTokens)}`);
 
     // Implement retry logic for API calls
@@ -206,6 +214,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
 
         if (response.ok) {
           responseData = await response.json();
+          console.log('OpenRouter API response received successfully');
           break; // Success, exit retry loop
         } else {
           const errorText = await response.text();
@@ -229,6 +238,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
     }
 
     if (!response || !response.ok) {
+      console.error(`Information extraction failed after ${maxRetries} attempts`);
       return new Response(
         JSON.stringify({ error: `Information extraction failed after ${maxRetries} attempts` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -238,6 +248,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
     const content = responseData.choices[0]?.message?.content;
     
     if (!content) {
+      console.error('No content returned from AI');
       return new Response(
         JSON.stringify({ error: 'No content returned from AI' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -249,7 +260,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
     console.log(`Estimated output tokens: ${Math.ceil(outputTokens)}`);
     console.log(`Total estimated tokens: ${Math.ceil(inputTokens + outputTokens)}`);
 
-    console.log("Received response from OpenRouter API");
+    console.log("Processing AI response");
 
     // Parse the JSON response from the AI
     try {
@@ -260,6 +271,10 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
       try {
         const extractedData = JSON.parse(jsonString);
         console.log("Successfully parsed extracted data");
+        console.log("Extracted data structure:", JSON.stringify({
+          fieldsCount: extractedData.fields?.length || 0,
+          roomsCount: extractedData.rooms?.length || 0
+        }));
         
         // Validate the structure of the extracted data
         if (!extractedData.fields && !extractedData.rooms) {
@@ -272,6 +287,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
         );
       } catch (jsonError) {
         console.error('JSON parsing error:', jsonError);
+        console.error('Raw JSON string:', jsonString);
         
         // Try to clean up the JSON string and parse again
         const cleanedJsonString = jsonString
@@ -293,6 +309,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } catch (secondJsonError) {
+          console.error('Second JSON parsing attempt failed:', secondJsonError);
           throw new Error(`Failed to parse JSON: ${secondJsonError.message}`);
         }
       }
@@ -303,7 +320,7 @@ If the result would exceed 1 000 tokens, discard the lowest‑confidence items u
       return new Response(
         JSON.stringify({ 
           error: 'Failed to parse AI response', 
-          rawContent: content 
+          rawContent: content.substring(0, 500) + (content.length > 500 ? '...' : '')
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
