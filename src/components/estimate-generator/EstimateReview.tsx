@@ -66,6 +66,14 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   // Extract information from transcript and generate estimate
   useEffect(() => {
     const extractInformation = async () => {
+      console.log('=== ESTIMATE REVIEW EXTRACTION START ===');
+      console.log('EstimateReview - Starting extraction with:', {
+        transcriptLength: transcript.length,
+        summaryLength: summary.length,
+        missingInfoKeys: Object.keys(missingInfo),
+        projectType
+      });
+      
       setIsExtracting(true);
       setExtractionProgress(0);
       
@@ -80,8 +88,14 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         
         // Use summary if available, otherwise fall back to transcript
         const inputText = summary.trim() || transcript;
+        console.log('EstimateReview - Using input text:', {
+          source: summary.trim() ? 'summary' : 'transcript',
+          length: inputText.length,
+          preview: inputText.substring(0, 200) + '...'
+        });
         
         // Call the extract-information edge function with the summary
+        console.log('EstimateReview - Calling extract-information function');
         const { data, error } = await supabase.functions.invoke('extract-information', {
           body: { text: inputText }
         });
@@ -89,68 +103,102 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         clearInterval(progressInterval);
         
         if (error) {
+          console.error('EstimateReview - Extract-information error:', error);
           throw new Error(error.message || "Information extraction failed");
         }
         
         if (!data) {
+          console.error('EstimateReview - No data returned from extraction');
           throw new Error("No information extracted");
         }
         
+        console.log('EstimateReview - Raw extraction data:', data);
         setExtractionProgress(100);
         
         // Process the extracted fields
+        console.log('EstimateReview - Processing extracted data');
         const processedData = processExtractedData(data);
-        const processedFields = processedData.fields || [];
+        console.log('EstimateReview - Processed data:', processedData);
         
-        const formattedFields = processedFields.map((field: any) => ({
-          name: field.name,
-          value: field.value,
-          confidence: field.confidence,
-          formField: field.formField,
-          editable: true
-        }));
+        const processedFields = Array.isArray(processedData.fields) ? processedData.fields : [];
+        console.log('EstimateReview - Processed fields:', processedFields);
+        
+        const formattedFields = processedFields.map((field: any, index: number) => {
+          console.log(`EstimateReview - Formatting field ${index + 1}:`, field);
+          
+          const formattedField = {
+            name: field.name || `Field ${index + 1}`,
+            value: field.value,
+            confidence: typeof field.confidence === 'number' ? field.confidence : 0.5,
+            formField: field.formField || `field_${index}`,
+            editable: true
+          };
+          
+          console.log(`EstimateReview - Formatted field ${index + 1}:`, formattedField);
+          return formattedField;
+        });
+        
+        console.log('EstimateReview - All formatted fields:', formattedFields);
         
         // Add missing info to the fields
+        console.log('EstimateReview - Adding missing info to fields:', missingInfo);
         Object.entries(missingInfo).forEach(([key, value]) => {
+          console.log(`EstimateReview - Processing missing info: ${key} = ${value}`);
+          
           // Check if the field already exists
           const existingField = formattedFields.find(field => field.formField === key);
           
           if (existingField) {
+            console.log(`EstimateReview - Updating existing field ${key}:`, existingField);
             existingField.value = value;
             existingField.confidence = 1.0; // User-provided info has 100% confidence
+            console.log(`EstimateReview - Updated field ${key}:`, existingField);
           } else {
             // Add as a new field
-            formattedFields.push({
+            const newField = {
               name: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()), // Convert camelCase to Title Case
               value,
               confidence: 1.0,
               formField: key,
               editable: true
-            });
+            };
+            formattedFields.push(newField);
+            console.log(`EstimateReview - Added new field ${key}:`, newField);
           }
         });
         
+        console.log('EstimateReview - Final formatted fields:', formattedFields);
         setEstimateFields(formattedFields);
         
         // For interior projects, extract room information using standardized format
         if (projectType === 'interior') {
+          console.log('=== INTERIOR PROJECT ROOM PROCESSING START ===');
           console.log('EstimateReview - Processing interior project rooms');
+          
           const { extractedRooms, extractedRoomsList } = extractRoomsFromFields(processedData);
           
           console.log('EstimateReview - Extracted rooms from fields:', extractedRooms);
           console.log('EstimateReview - Extracted rooms list:', extractedRoomsList);
+          console.log('EstimateReview - Total extracted rooms:', Object.keys(extractedRooms).length);
           
           // Initialize room matrix with extracted data (now using standardized room objects)
+          console.log('EstimateReview - Initializing room matrix');
           const initialMatrix = initializeRoomsMatrix(extractedRooms);
           console.log('EstimateReview - Initialized room matrix:', initialMatrix);
+          console.log('EstimateReview - Matrix length:', initialMatrix.length);
           
           setRoomsMatrix(initialMatrix);
           setExtractedRoomsList(extractedRoomsList);
           
           // Generate line items based on room data (convert MatrixRoom[] to StandardizedRoom[])
-          const standardizedRooms: StandardizedRoom[] = initialMatrix
-            .filter(room => room.selected)
-            .map(room => ({
+          console.log('EstimateReview - Converting matrix rooms to standardized rooms for line items');
+          const selectedRooms = initialMatrix.filter(room => room.selected);
+          console.log('EstimateReview - Selected rooms from matrix:', selectedRooms);
+          
+          const standardizedRooms: StandardizedRoom[] = selectedRooms.map((room, index) => {
+            console.log(`EstimateReview - Converting matrix room ${index + 1} to standardized:`, room);
+            
+            const standardized = {
               id: room.id,
               label: room.label,
               walls: room.walls,
@@ -160,22 +208,34 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
               windows: room.windows,
               cabinets: room.cabinets,
               confidence: room.confidence
-            }));
+            };
+            
+            console.log(`EstimateReview - Standardized room ${index + 1}:`, standardized);
+            return standardized;
+          });
           
-          console.log('EstimateReview - Converting to standardized rooms for line items:', standardizedRooms);
+          console.log('EstimateReview - Final standardized rooms for line items:', standardizedRooms);
           const generatedLineItems = generateLineItemsFromRooms(standardizedRooms);
-          console.log('EstimateReview - Generated line items:', generatedLineItems);
+          console.log('EstimateReview - Generated line items from rooms:', generatedLineItems);
           
           setLineItems(generatedLineItems);
           
           // Calculate totals
+          console.log('EstimateReview - Calculating totals for interior project');
           calculateTotals(generatedLineItems);
+          
+          console.log('=== INTERIOR PROJECT ROOM PROCESSING COMPLETE ===');
         } else {
           // For exterior projects, use the original line item generation
+          console.log('EstimateReview - Processing exterior project (using original method)');
           generateLineItems(formattedFields, projectType);
         }
+        
+        console.log('=== ESTIMATE REVIEW EXTRACTION COMPLETE ===');
       } catch (error) {
-        console.error("Information extraction error:", error);
+        console.error("=== ESTIMATE REVIEW EXTRACTION ERROR ===");
+        console.error("EstimateReview - Information extraction error:", error);
+        
         // Create some default fields if extraction fails
         const defaultFields: EstimateField[] = [
           {
@@ -194,15 +254,20 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           }
         ];
         
+        console.log('EstimateReview - Setting default fields due to error:', defaultFields);
         setEstimateFields(defaultFields);
         
         // Initialize empty room matrix for interior projects
         if (projectType === 'interior') {
-          setRoomsMatrix(initializeRoomsMatrix());
+          console.log('EstimateReview - Initializing empty room matrix for interior project');
+          const emptyMatrix = initializeRoomsMatrix();
+          console.log('EstimateReview - Empty room matrix:', emptyMatrix);
+          setRoomsMatrix(emptyMatrix);
         }
       } finally {
         setIsExtracting(false);
         setIsLoading(false);
+        console.log('EstimateReview - Extraction process completed');
       }
     };
     
@@ -350,13 +415,42 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
 
   // Handle room matrix changes with standardized room objects
   const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
+    console.log('=== ROOM MATRIX CHANGE START ===');
     console.log('EstimateReview - Room matrix changed:', updatedMatrix);
-    setRoomsMatrix(updatedMatrix);
+    console.log('EstimateReview - Matrix length:', updatedMatrix.length);
+    
+    // Validate the updated matrix
+    const validatedMatrix = updatedMatrix.filter((room, index) => {
+      const isValid = room && 
+                     typeof room === 'object' && 
+                     room.id && 
+                     room.label && 
+                     typeof room.walls === 'boolean' &&
+                     typeof room.ceiling === 'boolean' &&
+                     typeof room.trim === 'boolean' &&
+                     typeof room.doors === 'number' &&
+                     typeof room.windows === 'number' &&
+                     typeof room.cabinets === 'boolean';
+      
+      if (!isValid) {
+        console.error(`EstimateReview - Invalid room in matrix at index ${index}:`, room);
+      }
+      
+      return isValid;
+    });
+    
+    console.log(`EstimateReview - Valid rooms in matrix: ${validatedMatrix.length}/${updatedMatrix.length}`);
+    setRoomsMatrix(validatedMatrix);
     
     // Convert matrix rooms to standardized rooms for line item generation
-    const selectedStandardizedRooms: StandardizedRoom[] = updatedMatrix
-      .filter(room => room.selected)
-      .map(room => ({
+    console.log('EstimateReview - Converting matrix rooms to standardized rooms');
+    const selectedRooms = validatedMatrix.filter(room => room.selected);
+    console.log('EstimateReview - Selected rooms from updated matrix:', selectedRooms);
+    
+    const selectedStandardizedRooms: StandardizedRoom[] = selectedRooms.map((room, index) => {
+      console.log(`EstimateReview - Converting selected room ${index + 1}:`, room);
+      
+      const standardized = {
         id: room.id,
         label: room.label,
         walls: room.walls,
@@ -366,18 +460,25 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         windows: room.windows,
         cabinets: room.cabinets,
         confidence: room.confidence || 0.5
-      }));
+      };
+      
+      console.log(`EstimateReview - Converted selected room ${index + 1}:`, standardized);
+      return standardized;
+    });
     
-    console.log('EstimateReview - Converting updated matrix to standardized rooms:', selectedStandardizedRooms);
+    console.log('EstimateReview - Final selected standardized rooms:', selectedStandardizedRooms);
     
     // Generate new line items based on updated room data
     const newLineItems = generateLineItemsFromRooms(selectedStandardizedRooms);
-    console.log('EstimateReview - Generated new line items:', newLineItems);
+    console.log('EstimateReview - Generated new line items from updated matrix:', newLineItems);
     
     setLineItems(newLineItems);
     
     // Recalculate totals
+    console.log('EstimateReview - Recalculating totals');
     calculateTotals(newLineItems);
+    
+    console.log('=== ROOM MATRIX CHANGE COMPLETE ===');
   };
 
   // Add new line item

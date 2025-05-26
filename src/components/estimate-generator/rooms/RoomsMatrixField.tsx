@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,12 +30,58 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
     roomGroups.reduce((acc, group) => ({ ...acc, [group.id]: true }), {})
   );
   
+  console.log('=== ROOMS MATRIX FIELD RENDER ===');
   console.log('RoomsMatrixField - Current matrix value:', matrixValue);
+  console.log('RoomsMatrixField - Matrix length:', matrixValue?.length || 0);
   console.log('RoomsMatrixField - Extracted rooms list:', extractedRoomsList);
+  console.log('RoomsMatrixField - Extracted rooms count:', extractedRoomsList.length);
+  
+  // Validate matrix value
+  if (!Array.isArray(matrixValue)) {
+    console.error('RoomsMatrixField - Invalid matrix value (not an array):', matrixValue);
+    return (
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <div className="text-center text-red-500">
+            <p>Error: Invalid room matrix data</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Validate each room in the matrix
+  const validatedMatrix = matrixValue.filter((room, index) => {
+    const isValid = room && 
+                   typeof room === 'object' && 
+                   room.id && 
+                   typeof room.id === 'string' &&
+                   room.label && 
+                   typeof room.label === 'string' &&
+                   typeof room.walls === 'boolean' &&
+                   typeof room.ceiling === 'boolean' &&
+                   typeof room.trim === 'boolean' &&
+                   typeof room.doors === 'number' &&
+                   typeof room.windows === 'number' &&
+                   typeof room.cabinets === 'boolean';
+    
+    if (!isValid) {
+      console.error(`RoomsMatrixField - Invalid room at index ${index}:`, room);
+    } else {
+      console.log(`RoomsMatrixField - Valid room at index ${index}:`, room);
+    }
+    
+    return isValid;
+  });
+  
+  console.log(`RoomsMatrixField - Valid rooms: ${validatedMatrix.length}/${matrixValue.length}`);
+  
+  // Use validated matrix for all operations
+  const workingMatrix = validatedMatrix;
   
   // Calculate if any room in this group is visible in the matrix
   const isRoomInGroupVisible = (groupId: string) => {
-    return matrixValue.some(room => {
+    return workingMatrix.some(room => {
       const roomRow = interiorRoomsMatrixConfig.rows.find(r => r.id === room.id);
       return roomRow?.group === groupId;
     });
@@ -52,12 +97,34 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   
   // Handle checkbox change for a specific room and column
   const handleCheckboxChange = (roomId: string, columnId: string, checked: boolean) => {
+    console.log(`=== CHECKBOX CHANGE ===`);
     console.log(`RoomsMatrixField - Checkbox change: ${roomId}.${columnId} = ${checked}`);
     
-    const updatedMatrix = matrixValue.map(room => {
+    if (!roomId || !columnId) {
+      console.error('RoomsMatrixField - Invalid parameters for checkbox change:', { roomId, columnId, checked });
+      return;
+    }
+    
+    const updatedMatrix = workingMatrix.map(room => {
       if (room.id === roomId) {
         const updatedRoom = { ...room, [columnId]: checked };
         console.log(`RoomsMatrixField - Updated room ${roomId}:`, updatedRoom);
+        
+        // Validate updated room
+        const isValid = updatedRoom.id && 
+                       updatedRoom.label && 
+                       typeof updatedRoom.walls === 'boolean' &&
+                       typeof updatedRoom.ceiling === 'boolean' &&
+                       typeof updatedRoom.trim === 'boolean' &&
+                       typeof updatedRoom.doors === 'number' &&
+                       typeof updatedRoom.windows === 'number' &&
+                       typeof updatedRoom.cabinets === 'boolean';
+        
+        if (!isValid) {
+          console.error(`RoomsMatrixField - Updated room ${roomId} is invalid:`, updatedRoom);
+          return room; // Return original room if update is invalid
+        }
+        
         return updatedRoom;
       }
       return room;
@@ -69,12 +136,40 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   
   // Handle number input change for a specific room and column
   const handleNumberChange = (roomId: string, columnId: string, value: number) => {
+    console.log(`=== NUMBER CHANGE ===`);
     console.log(`RoomsMatrixField - Number change: ${roomId}.${columnId} = ${value}`);
     
-    const updatedMatrix = matrixValue.map(room => {
+    if (!roomId || !columnId) {
+      console.error('RoomsMatrixField - Invalid parameters for number change:', { roomId, columnId, value });
+      return;
+    }
+    
+    // Validate the number value
+    const validatedValue = typeof value === 'number' && value >= 0 ? Math.floor(value) : 0;
+    if (validatedValue !== value) {
+      console.warn(`RoomsMatrixField - Invalid number value ${value}, using ${validatedValue} instead`);
+    }
+    
+    const updatedMatrix = workingMatrix.map(room => {
       if (room.id === roomId) {
-        const updatedRoom = { ...room, [columnId]: value };
+        const updatedRoom = { ...room, [columnId]: validatedValue };
         console.log(`RoomsMatrixField - Updated room ${roomId}:`, updatedRoom);
+        
+        // Validate updated room
+        const isValid = updatedRoom.id && 
+                       updatedRoom.label && 
+                       typeof updatedRoom.walls === 'boolean' &&
+                       typeof updatedRoom.ceiling === 'boolean' &&
+                       typeof updatedRoom.trim === 'boolean' &&
+                       typeof updatedRoom.doors === 'number' &&
+                       typeof updatedRoom.windows === 'number' &&
+                       typeof updatedRoom.cabinets === 'boolean';
+        
+        if (!isValid) {
+          console.error(`RoomsMatrixField - Updated room ${roomId} is invalid:`, updatedRoom);
+          return room; // Return original room if update is invalid
+        }
+        
         return updatedRoom;
       }
       return room;
@@ -86,19 +181,29 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   
   // Check if room is mentioned in extracted text
   const isRoomExtracted = (roomId: string) => {
-    return extractedRoomsList.includes(roomId);
+    const isExtracted = extractedRoomsList.includes(roomId);
+    console.log(`RoomsMatrixField - Room ${roomId} extracted: ${isExtracted}`);
+    return isExtracted;
   };
   
   // Add a custom room to the matrix
   const handleAddRoom = () => {
-    if (!newRoomType) return;
+    console.log(`=== ADD ROOM ===`);
+    console.log(`RoomsMatrixField - Adding room: ${newRoomType}`);
+    
+    if (!newRoomType) {
+      console.warn('RoomsMatrixField - No room type selected for adding');
+      return;
+    }
     
     // Find the room configuration
     const roomConfig = interiorRoomsMatrixConfig.rows.find(r => r.id === newRoomType);
     
     if (roomConfig) {
+      console.log('RoomsMatrixField - Found room config:', roomConfig);
+      
       // Check if this room already exists in the matrix
-      const existingRoom = matrixValue.find(r => r.id === newRoomType);
+      const existingRoom = workingMatrix.find(r => r.id === newRoomType);
       
       if (!existingRoom) {
         // Create a new standardized room entry
@@ -114,19 +219,40 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
           confidence: 1.0
         };
         
-        console.log('RoomsMatrixField - Adding new room:', newRoom);
-        onChange([...matrixValue, newRoom]);
+        console.log('RoomsMatrixField - Creating new room:', newRoom);
+        
+        // Validate new room
+        const isValid = newRoom.id && 
+                       newRoom.label && 
+                       typeof newRoom.walls === 'boolean' &&
+                       typeof newRoom.ceiling === 'boolean' &&
+                       typeof newRoom.trim === 'boolean' &&
+                       typeof newRoom.doors === 'number' &&
+                       typeof newRoom.windows === 'number' &&
+                       typeof newRoom.cabinets === 'boolean';
+        
+        if (isValid) {
+          const updatedMatrix = [...workingMatrix, newRoom];
+          console.log('RoomsMatrixField - Updated matrix with new room:', updatedMatrix);
+          onChange(updatedMatrix);
+        } else {
+          console.error('RoomsMatrixField - New room is invalid:', newRoom);
+        }
+      } else {
+        console.warn(`RoomsMatrixField - Room ${newRoomType} already exists in matrix`);
       }
       
       // Reset the form
       setNewRoomType("");
       setShowAddRoom(false);
+    } else {
+      console.error(`RoomsMatrixField - Room configuration not found for: ${newRoomType}`);
     }
   };
   
   // Filter available room options (not already in matrix)
   const availableRoomOptions = interiorRoomsMatrixConfig.rows.filter(
-    row => !matrixValue.some(room => room.id === row.id)
+    row => !workingMatrix.some(room => room.id === row.id)
   );
   
   // Check if a room has any surfaces selected
@@ -142,7 +268,8 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   };
   
   // Filter visible rooms (only show rooms with selected surfaces)
-  const visibleMatrix = matrixValue.filter(hasSelectedSurfaces);
+  const visibleMatrix = workingMatrix.filter(hasSelectedSurfaces);
+  console.log(`RoomsMatrixField - Visible rooms: ${visibleMatrix.length}/${workingMatrix.length}`);
 
   return (
     <Card className="mt-6">
@@ -174,7 +301,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
               <TableBody>
                 {roomGroups.map(group => {
                   // Get rooms in this group
-                  const groupRooms = matrixValue.filter(room => {
+                  const groupRooms = workingMatrix.filter(room => {
                     const roomConfig = interiorRoomsMatrixConfig.rows.find(r => r.id === room.id);
                     return roomConfig?.group === group.id;
                   });
@@ -247,7 +374,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
           <div className="md:hidden space-y-4">
             {roomGroups.map(group => {
               // Get rooms in this group
-              const groupRooms = matrixValue.filter(room => {
+              const groupRooms = workingMatrix.filter(room => {
                 const roomConfig = interiorRoomsMatrixConfig.rows.find(r => r.id === room.id);
                 return roomConfig?.group === group.id;
               }).filter(hasSelectedSurfaces);
