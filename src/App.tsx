@@ -37,7 +37,13 @@ const RedirectToPrint = () => {
   return <Navigate to={`/proposal/print/${id}`} replace />;
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
