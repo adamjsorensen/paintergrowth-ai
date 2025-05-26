@@ -39,6 +39,16 @@ const EstimateGenerator = () => {
   // Handle information extraction from TranscriptInput
   const handleInformationExtracted = (data: Record<string, any>) => {
     console.log('EstimateGenerator - Information extracted:', data);
+    
+    // Log the fields array if it exists
+    if (data.fields && Array.isArray(data.fields)) {
+      console.log('EstimateGenerator - Extracted fields:', data.fields.map(f => ({
+        name: f.name,
+        formField: f.formField,
+        value: f.value
+      })));
+    }
+    
     setExtractedData(data);
     
     // Extract transcript and summary from the data if available
@@ -101,6 +111,7 @@ const EstimateGenerator = () => {
           <SummaryChecker 
             summary={summary || 'Project information extracted from your input'} 
             transcript={transcript || 'Information extracted from your input'}
+            extractedData={extractedData} // Pass the extracted data
             onComplete={handleMissingInfoComplete} 
           />
         );
@@ -111,6 +122,7 @@ const EstimateGenerator = () => {
             summary={summary || 'Project information extracted from your input'}
             missingInfo={missingInfo}
             projectType={projectType}
+            extractedData={extractedData} // Pass the extracted data
             onComplete={handleEstimateComplete} 
           />
         );

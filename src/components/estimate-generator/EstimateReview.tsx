@@ -20,6 +20,7 @@ interface EstimateReviewProps {
   summary: string;
   missingInfo: Record<string, any>;
   projectType: 'interior' | 'exterior';
+  extractedData?: Record<string, any>; // Add this prop to receive pre-extracted data
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
 }
 
@@ -45,10 +46,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   summary, 
   missingInfo, 
   projectType,
+  extractedData, // Add this to props
   onComplete 
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isExtracting, setIsExtracting] = useState(true);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [estimateFields, setEstimateFields] = useState<EstimateField[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
@@ -65,60 +67,74 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
 
   // Extract information from transcript and generate estimate
   useEffect(() => {
-    const extractInformation = async () => {
-      console.log('=== ESTIMATE REVIEW EXTRACTION START ===');
-      console.log('EstimateReview - Starting extraction with:', {
+    const processInformation = async () => {
+      console.log('=== ESTIMATE REVIEW PROCESSING START ===');
+      console.log('EstimateReview - Starting with:', {
+        hasExtractedData: !!extractedData,
         transcriptLength: transcript.length,
         summaryLength: summary.length,
         missingInfoKeys: Object.keys(missingInfo),
         projectType
       });
       
-      setIsExtracting(true);
-      setExtractionProgress(0);
+      setIsLoading(true);
       
       try {
-        // Simulate progress updates
-        const progressInterval = setInterval(() => {
-          setExtractionProgress(prev => {
-            const newProgress = prev + Math.random() * 15;
-            return newProgress > 95 ? 95 : newProgress;
+        let processedData;
+        
+        // Use pre-extracted data if available, otherwise extract from transcript
+        if (extractedData && Object.keys(extractedData).length > 0) {
+          console.log('EstimateReview - Using pre-extracted data:', extractedData);
+          processedData = extractedData;
+        } else {
+          console.log('EstimateReview - No pre-extracted data, extracting from transcript');
+          setIsExtracting(true);
+          setExtractionProgress(0);
+          
+          // Simulate progress updates
+          const progressInterval = setInterval(() => {
+            setExtractionProgress(prev => {
+              const newProgress = prev + Math.random() * 15;
+              return newProgress > 95 ? 95 : newProgress;
+            });
+          }, 500);
+          
+          // Use summary if available, otherwise fall back to transcript
+          const inputText = summary.trim() || transcript;
+          console.log('EstimateReview - Using input text:', {
+            source: summary.trim() ? 'summary' : 'transcript',
+            length: inputText.length,
+            preview: inputText.substring(0, 200) + '...'
           });
-        }, 500);
-        
-        // Use summary if available, otherwise fall back to transcript
-        const inputText = summary.trim() || transcript;
-        console.log('EstimateReview - Using input text:', {
-          source: summary.trim() ? 'summary' : 'transcript',
-          length: inputText.length,
-          preview: inputText.substring(0, 200) + '...'
-        });
-        
-        // Call the extract-information edge function with the summary
-        console.log('EstimateReview - Calling extract-information function');
-        const { data, error } = await supabase.functions.invoke('extract-information', {
-          body: { text: inputText }
-        });
-        
-        clearInterval(progressInterval);
-        
-        if (error) {
-          console.error('EstimateReview - Extract-information error:', error);
-          throw new Error(error.message || "Information extraction failed");
+          
+          // Call the extract-information edge function with the correct field name
+          console.log('EstimateReview - Calling extract-information function');
+          const { data, error } = await supabase.functions.invoke('extract-information', {
+            body: { transcript: inputText } // Fixed: use 'transcript' instead of 'text'
+          });
+          
+          clearInterval(progressInterval);
+          
+          if (error) {
+            console.error('EstimateReview - Extract-information error:', error);
+            throw new Error(error.message || "Information extraction failed");
+          }
+          
+          if (!data) {
+            console.error('EstimateReview - No data returned from extraction');
+            throw new Error("No information extracted");
+          }
+          
+          console.log('EstimateReview - Raw extraction data:', data);
+          setExtractionProgress(100);
+          
+          // Process the extracted fields
+          console.log('EstimateReview - Processing extracted data');
+          processedData = processExtractedData(data);
+          setIsExtracting(false);
         }
         
-        if (!data) {
-          console.error('EstimateReview - No data returned from extraction');
-          throw new Error("No information extracted");
-        }
-        
-        console.log('EstimateReview - Raw extraction data:', data);
-        setExtractionProgress(100);
-        
-        // Process the extracted fields
-        console.log('EstimateReview - Processing extracted data');
-        const processedData = processExtractedData(data);
-        console.log('EstimateReview - Processed data:', processedData);
+        console.log('EstimateReview - Final processed data:', processedData);
         
         const processedFields = Array.isArray(processedData.fields) ? processedData.fields : [];
         console.log('EstimateReview - Processed fields:', processedFields);
@@ -231,12 +247,12 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           generateLineItems(formattedFields, projectType);
         }
         
-        console.log('=== ESTIMATE REVIEW EXTRACTION COMPLETE ===');
+        console.log('=== ESTIMATE REVIEW PROCESSING COMPLETE ===');
       } catch (error) {
-        console.error("=== ESTIMATE REVIEW EXTRACTION ERROR ===");
-        console.error("EstimateReview - Information extraction error:", error);
+        console.error("=== ESTIMATE REVIEW PROCESSING ERROR ===");
+        console.error("EstimateReview - Information processing error:", error);
         
-        // Create some default fields if extraction fails
+        // Create some default fields if processing fails
         const defaultFields: EstimateField[] = [
           {
             name: "Client Name",
@@ -267,12 +283,12 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       } finally {
         setIsExtracting(false);
         setIsLoading(false);
-        console.log('EstimateReview - Extraction process completed');
+        console.log('EstimateReview - Processing completed');
       }
     };
     
-    extractInformation();
-  }, [transcript, summary, missingInfo, projectType]); // Added summary to dependencies
+    processInformation();
+  }, [transcript, summary, missingInfo, projectType, extractedData]); // Added extractedData to dependencies
 
   // Calculate totals based on line items
   const calculateTotals = (items: LineItem[]) => {
@@ -567,20 +583,22 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           <CardContent className="pt-6 flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <h3 className="text-lg font-medium mb-2">Generating Estimate</h3>
-            <div className="w-full max-w-md">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Extracting Information</span>
-                  <span>{Math.round(extractionProgress)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-primary h-2.5 rounded-full" 
-                    style={{ width: `${extractionProgress}%` }}
-                  ></div>
+            {isExtracting && (
+              <div className="w-full max-w-md">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Extracting Information</span>
+                    <span>{Math.round(extractionProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-primary h-2.5 rounded-full" 
+                      style={{ width: `${extractionProgress}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       ) : (
