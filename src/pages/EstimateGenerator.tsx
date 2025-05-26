@@ -9,13 +9,17 @@ import ModalProjectType from '@/components/estimate-generator/ModalProjectType';
 import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
 import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
 import EstimateReview from '@/components/estimate-generator/EstimateReview';
+import EstimateContentGenerator from '@/components/estimate-generator/EstimateContentGenerator';
 
-// Define the updated steps in the wizard (reduced from 5 to 4 steps)
+// Updated steps to include content generation phases
 const STEPS = [
   { id: 'project-type', label: 'Project Type' },
   { id: 'input', label: 'Input' },
   { id: 'check', label: 'Review' },
-  { id: 'estimate', label: 'Estimate' }
+  { id: 'estimate', label: 'Pricing' },
+  { id: 'content', label: 'Content' },
+  { id: 'edit', label: 'Edit' },
+  { id: 'pdf', label: 'PDF' }
 ];
 
 const EstimateGenerator = () => {
@@ -28,6 +32,9 @@ const EstimateGenerator = () => {
   const [summary, setSummary] = useState('');
   const [missingInfo, setMissingInfo] = useState<Record<string, any>>({});
   const [estimateFields, setEstimateFields] = useState<Record<string, any>>({});
+  const [lineItems, setLineItems] = useState<any[]>([]);
+  const [totals, setTotals] = useState<Record<string, any>>({});
+  const [generatedContent, setGeneratedContent] = useState<Record<string, any>>({});
 
   // Handle project type selection
   const handleProjectTypeSelect = (type: 'interior' | 'exterior') => {
@@ -40,7 +47,6 @@ const EstimateGenerator = () => {
   const handleInformationExtracted = (data: Record<string, any>) => {
     console.log('EstimateGenerator - Information extracted:', data);
     
-    // Log the fields array if it exists
     if (data.fields && Array.isArray(data.fields)) {
       console.log('EstimateGenerator - Extracted fields:', data.fields.map(f => ({
         name: f.name,
@@ -51,7 +57,6 @@ const EstimateGenerator = () => {
     
     setExtractedData(data);
     
-    // Extract transcript and summary from the data if available
     if (data.transcript) {
       setTranscript(data.transcript);
     }
@@ -68,24 +73,58 @@ const EstimateGenerator = () => {
     setCurrentStep(3); // Move to estimate review step
   };
 
-  // Handle estimate completion
+  // Handle estimate completion - now moves to content generation
   const handleEstimateComplete = (fields: Record<string, any>, finalEstimate: Record<string, any>) => {
+    console.log('EstimateGenerator - Estimate completed:', { fields, finalEstimate });
     setEstimateFields(fields);
     
-    // Save the estimate to localStorage
+    // Extract line items and totals from finalEstimate
+    if (finalEstimate.lineItems) {
+      setLineItems(finalEstimate.lineItems);
+    }
+    if (finalEstimate.totals) {
+      setTotals(finalEstimate.totals);
+    }
+    
+    setCurrentStep(4); // Move to content generation step
+  };
+
+  // Handle content generation completion
+  const handleContentGenerated = (content: Record<string, any>) => {
+    console.log('EstimateGenerator - Content generated:', content);
+    setGeneratedContent(content);
+    setCurrentStep(5); // Move to content editing step
+  };
+
+  // Handle content editing completion
+  const handleContentEdited = (editedContent: Record<string, any>) => {
+    setGeneratedContent(editedContent);
+    setCurrentStep(6); // Move to PDF generation step
+  };
+
+  // Handle final PDF completion
+  const handlePDFComplete = () => {
+    // Save the complete estimate to localStorage
     const savedEstimates = JSON.parse(localStorage.getItem('estimates') || '[]');
     savedEstimates.push({
       id: Date.now().toString(),
       date: new Date().toISOString(),
       projectType,
-      ...finalEstimate
+      estimateFields,
+      lineItems,
+      totals,
+      content: generatedContent
     });
     localStorage.setItem('estimates', JSON.stringify(savedEstimates));
     
-    // Log the final estimate
-    console.log('Final estimate:', finalEstimate);
+    console.log('Complete estimate saved:', {
+      projectType,
+      estimateFields,
+      lineItems,
+      totals,
+      content: generatedContent
+    });
     
-    // Navigate to dashboard or show success message
     navigate('/dashboard');
   };
 
@@ -103,7 +142,7 @@ const EstimateGenerator = () => {
         return (
           <TranscriptInput 
             onInformationExtracted={handleInformationExtracted}
-            onClose={() => {}} // No-op since we don't want to close in this context
+            onClose={() => {}}
           />
         );
       case 2:
@@ -111,7 +150,7 @@ const EstimateGenerator = () => {
           <SummaryChecker 
             summary={summary || 'Project information extracted from your input'} 
             transcript={transcript || 'Information extracted from your input'}
-            extractedData={extractedData} // Pass the extracted data
+            extractedData={extractedData}
             onComplete={handleMissingInfoComplete} 
           />
         );
@@ -122,9 +161,39 @@ const EstimateGenerator = () => {
             summary={summary || 'Project information extracted from your input'}
             missingInfo={missingInfo}
             projectType={projectType}
-            extractedData={extractedData} // Pass the extracted data
+            extractedData={extractedData}
             onComplete={handleEstimateComplete} 
           />
+        );
+      case 4:
+        return (
+          <EstimateContentGenerator
+            estimateData={{ ...extractedData, ...missingInfo }}
+            projectType={projectType}
+            lineItems={lineItems}
+            totals={totals}
+            onComplete={handleContentGenerated}
+          />
+        );
+      case 5:
+        return (
+          <div className="text-center p-8">
+            <h3 className="text-lg font-medium mb-4">Content Editing</h3>
+            <p className="text-muted-foreground mb-4">Content editing component coming next...</p>
+            <Button onClick={() => handleContentEdited(generatedContent)}>
+              Continue to PDF Generation
+            </Button>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="text-center p-8">
+            <h3 className="text-lg font-medium mb-4">PDF Generation</h3>
+            <p className="text-muted-foreground mb-4">PDF generation component coming next...</p>
+            <Button onClick={handlePDFComplete}>
+              Complete Estimate
+            </Button>
+          </div>
         );
       default:
         return null;
@@ -201,7 +270,9 @@ const EstimateGenerator = () => {
                 onClick={() => setCurrentStep(Math.min(STEPS.length - 1, currentStep + 1))}
                 disabled={
                   (currentStep === 1 && Object.keys(extractedData).length === 0) ||
-                  (currentStep === 2 && Object.keys(missingInfo).length === 0)
+                  (currentStep === 2 && Object.keys(missingInfo).length === 0) ||
+                  (currentStep === 3 && Object.keys(estimateFields).length === 0) ||
+                  (currentStep === 4 && Object.keys(generatedContent).length === 0)
                 }
               >
                 Continue
