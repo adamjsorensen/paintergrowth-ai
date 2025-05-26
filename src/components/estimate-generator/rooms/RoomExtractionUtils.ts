@@ -134,6 +134,12 @@ export const extractRoomsFromFields = (extractedData: Record<string, any>) => {
 export const generateLineItemsFromRooms = (roomsMatrix: StandardizedRoom[]) => {
   console.log('generateLineItemsFromRooms - Input rooms matrix:', roomsMatrix);
   
+  // Validate input
+  if (!Array.isArray(roomsMatrix)) {
+    console.error('generateLineItemsFromRooms - Invalid input: roomsMatrix is not an array', roomsMatrix);
+    return [];
+  }
+  
   const lineItems: Array<{
     id: string;
     description: string;
@@ -146,8 +152,18 @@ export const generateLineItemsFromRooms = (roomsMatrix: StandardizedRoom[]) => {
   let itemId = 1;
   
   // Process each room
-  roomsMatrix.forEach(room => {
-    console.log('generateLineItemsFromRooms - Processing room:', room);
+  roomsMatrix.forEach((room, index) => {
+    console.log(`generateLineItemsFromRooms - Processing room ${index + 1}:`, room);
+    
+    // Validate room object structure
+    if (!room || typeof room !== 'object') {
+      console.error('generateLineItemsFromRooms - Invalid room object:', room);
+      return;
+    }
+    
+    // Ensure we have required properties with fallbacks
+    const roomId = room.id || `room-${index}`;
+    const roomLabel = room.label || roomId;
     
     // Calculate if this room has any surfaces selected
     const hasWalls = Boolean(room.walls);
@@ -157,90 +173,99 @@ export const generateLineItemsFromRooms = (roomsMatrix: StandardizedRoom[]) => {
     const windowCount = typeof room.windows === 'number' ? room.windows : 0;
     const hasCabinets = Boolean(room.cabinets);
     
+    console.log(`generateLineItemsFromRooms - Room ${roomLabel} surface analysis:`, {
+      hasWalls,
+      hasCeiling,
+      hasTrim,
+      doorCount,
+      windowCount,
+      hasCabinets
+    });
+    
     // Skip rooms with no surfaces
     if (!hasWalls && !hasCeiling && !hasTrim && doorCount === 0 && windowCount === 0 && !hasCabinets) {
-      console.log('generateLineItemsFromRooms - Skipping room with no surfaces:', room.label);
+      console.log('generateLineItemsFromRooms - Skipping room with no surfaces:', roomLabel);
       return;
     }
     
     // Add line items for each surface type
     if (hasWalls) {
-      const wallsPrice = calculateWallsPrice(room.label);
+      const wallsPrice = calculateWallsPrice(roomLabel);
       lineItems.push({
         id: `item-${itemId++}`,
-        description: `Paint ${room.label} - Walls`,
+        description: `Paint ${roomLabel} - Walls`,
         quantity: 1,
         unit: 'room',
         unitPrice: wallsPrice,
         total: wallsPrice
       });
-      console.log(`generateLineItemsFromRooms - Added walls item for ${room.label}: $${wallsPrice}`);
+      console.log(`generateLineItemsFromRooms - Added walls item for ${roomLabel}: $${wallsPrice}`);
     }
     
     if (hasCeiling) {
-      const ceilingPrice = calculateCeilingPrice(room.label);
+      const ceilingPrice = calculateCeilingPrice(roomLabel);
       lineItems.push({
         id: `item-${itemId++}`,
-        description: `Paint ${room.label} - Ceiling`,
+        description: `Paint ${roomLabel} - Ceiling`,
         quantity: 1,
         unit: 'room',
         unitPrice: ceilingPrice,
         total: ceilingPrice
       });
-      console.log(`generateLineItemsFromRooms - Added ceiling item for ${room.label}: $${ceilingPrice}`);
+      console.log(`generateLineItemsFromRooms - Added ceiling item for ${roomLabel}: $${ceilingPrice}`);
     }
     
     if (hasTrim) {
       lineItems.push({
         id: `item-${itemId++}`,
-        description: `Paint ${room.label} - Trim/Baseboards`,
+        description: `Paint ${roomLabel} - Trim/Baseboards`,
         quantity: 1,
         unit: 'room',
         unitPrice: 250,
         total: 250
       });
-      console.log(`generateLineItemsFromRooms - Added trim item for ${room.label}: $250`);
+      console.log(`generateLineItemsFromRooms - Added trim item for ${roomLabel}: $250`);
     }
     
     if (doorCount > 0) {
       lineItems.push({
         id: `item-${itemId++}`,
-        description: `Paint ${room.label} - Doors`,
+        description: `Paint ${roomLabel} - Doors`,
         quantity: doorCount,
         unit: 'door',
         unitPrice: 100,
         total: 100 * doorCount
       });
-      console.log(`generateLineItemsFromRooms - Added doors item for ${room.label}: ${doorCount} doors @ $100 = $${100 * doorCount}`);
+      console.log(`generateLineItemsFromRooms - Added doors item for ${roomLabel}: ${doorCount} doors @ $100 = $${100 * doorCount}`);
     }
     
     if (windowCount > 0) {
       lineItems.push({
         id: `item-${itemId++}`,
-        description: `Paint ${room.label} - Window Trim`,
+        description: `Paint ${roomLabel} - Window Trim`,
         quantity: windowCount,
         unit: 'window',
         unitPrice: 75,
         total: 75 * windowCount
       });
-      console.log(`generateLineItemsFromRooms - Added windows item for ${room.label}: ${windowCount} windows @ $75 = $${75 * windowCount}`);
+      console.log(`generateLineItemsFromRooms - Added windows item for ${roomLabel}: ${windowCount} windows @ $75 = $${75 * windowCount}`);
     }
     
     if (hasCabinets) {
-      const cabinetPrice = calculateCabinetPrice(room.label);
+      const cabinetPrice = calculateCabinetPrice(roomLabel);
       lineItems.push({
         id: `item-${itemId++}`,
-        description: `Paint ${room.label} - Cabinets`,
+        description: `Paint ${roomLabel} - Cabinets`,
         quantity: 1,
         unit: 'set',
         unitPrice: cabinetPrice,
         total: cabinetPrice
       });
-      console.log(`generateLineItemsFromRooms - Added cabinets item for ${room.label}: $${cabinetPrice}`);
+      console.log(`generateLineItemsFromRooms - Added cabinets item for ${roomLabel}: $${cabinetPrice}`);
     }
   });
   
-  // Add general items
+  // Add general items only if we have room-specific items
   if (lineItems.length > 0) {
     lineItems.push({
       id: `item-${itemId++}`,
@@ -261,14 +286,21 @@ export const generateLineItemsFromRooms = (roomsMatrix: StandardizedRoom[]) => {
     });
     
     console.log('generateLineItemsFromRooms - Added general preparation and materials items');
+  } else {
+    console.log('generateLineItemsFromRooms - No line items generated, skipping general items');
   }
   
   console.log('generateLineItemsFromRooms - Final line items:', lineItems);
   return lineItems;
 };
 
-// Helper functions to calculate prices based on room type (using label instead of name)
+// Helper functions to calculate prices based on room label (consistent naming)
 const calculateWallsPrice = (roomLabel: string): number => {
+  if (!roomLabel || typeof roomLabel !== 'string') {
+    console.warn('calculateWallsPrice - Invalid roomLabel:', roomLabel);
+    return 300; // Default price
+  }
+  
   const roomLower = roomLabel.toLowerCase();
   
   if (roomLower.includes('kitchen') || roomLower.includes('bathroom')) {
@@ -281,6 +313,11 @@ const calculateWallsPrice = (roomLabel: string): number => {
 };
 
 const calculateCeilingPrice = (roomLabel: string): number => {
+  if (!roomLabel || typeof roomLabel !== 'string') {
+    console.warn('calculateCeilingPrice - Invalid roomLabel:', roomLabel);
+    return 180; // Default price
+  }
+  
   const roomLower = roomLabel.toLowerCase();
   
   if (roomLower.includes('kitchen') || roomLower.includes('bathroom')) {
@@ -293,6 +330,11 @@ const calculateCeilingPrice = (roomLabel: string): number => {
 };
 
 const calculateCabinetPrice = (roomLabel: string): number => {
+  if (!roomLabel || typeof roomLabel !== 'string') {
+    console.warn('calculateCabinetPrice - Invalid roomLabel:', roomLabel);
+    return 500; // Default price
+  }
+  
   const roomLower = roomLabel.toLowerCase();
   
   if (roomLower.includes('kitchen')) {

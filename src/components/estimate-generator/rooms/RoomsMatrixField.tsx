@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle, CheckCircle, Info } from "lucide-react";
 import { interiorRoomsMatrixConfig, roomGroups } from "./InteriorRoomsConfig";
+import { StandardizedRoom } from "@/types/room-types";
 
 interface RoomsMatrixFieldProps {
-  matrixValue: any[];
-  onChange: (updatedMatrix: any[]) => void;
+  matrixValue: StandardizedRoom[];
+  onChange: (updatedMatrix: StandardizedRoom[]) => void;
   extractedRoomsList?: string[];
 }
 
@@ -29,6 +30,9 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   const [visibleGroups, setVisibleGroups] = useState<Record<string, boolean>>(
     roomGroups.reduce((acc, group) => ({ ...acc, [group.id]: true }), {})
   );
+  
+  console.log('RoomsMatrixField - Current matrix value:', matrixValue);
+  console.log('RoomsMatrixField - Extracted rooms list:', extractedRoomsList);
   
   // Calculate if any room in this group is visible in the matrix
   const isRoomInGroupVisible = (groupId: string) => {
@@ -48,23 +52,35 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   
   // Handle checkbox change for a specific room and column
   const handleCheckboxChange = (roomId: string, columnId: string, checked: boolean) => {
+    console.log(`RoomsMatrixField - Checkbox change: ${roomId}.${columnId} = ${checked}`);
+    
     const updatedMatrix = matrixValue.map(room => {
       if (room.id === roomId) {
-        return { ...room, [columnId]: checked };
+        const updatedRoom = { ...room, [columnId]: checked };
+        console.log(`RoomsMatrixField - Updated room ${roomId}:`, updatedRoom);
+        return updatedRoom;
       }
       return room;
     });
+    
+    console.log('RoomsMatrixField - Sending updated matrix to parent:', updatedMatrix);
     onChange(updatedMatrix);
   };
   
   // Handle number input change for a specific room and column
   const handleNumberChange = (roomId: string, columnId: string, value: number) => {
+    console.log(`RoomsMatrixField - Number change: ${roomId}.${columnId} = ${value}`);
+    
     const updatedMatrix = matrixValue.map(room => {
       if (room.id === roomId) {
-        return { ...room, [columnId]: value };
+        const updatedRoom = { ...room, [columnId]: value };
+        console.log(`RoomsMatrixField - Updated room ${roomId}:`, updatedRoom);
+        return updatedRoom;
       }
       return room;
     });
+    
+    console.log('RoomsMatrixField - Sending updated matrix to parent:', updatedMatrix);
     onChange(updatedMatrix);
   };
   
@@ -85,18 +101,20 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
       const existingRoom = matrixValue.find(r => r.id === newRoomType);
       
       if (!existingRoom) {
-        // Create a new room entry
-        const newRoom = {
+        // Create a new standardized room entry
+        const newRoom: StandardizedRoom = {
           id: roomConfig.id,
-          name: roomConfig.label,
+          label: roomConfig.label || roomConfig.id,
           walls: false,
           ceiling: false,
           trim: false,
           doors: 0,
           windows: 0,
-          cabinets: false
+          cabinets: false,
+          confidence: 1.0
         };
         
+        console.log('RoomsMatrixField - Adding new room:', newRoom);
         onChange([...matrixValue, newRoom]);
       }
       
@@ -112,12 +130,12 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   );
   
   // Check if a room has any surfaces selected
-  const hasSelectedSurfaces = (room: any) => {
+  const hasSelectedSurfaces = (room: StandardizedRoom) => {
     return interiorRoomsMatrixConfig.columns.some(column => {
       if (column.type === "checkbox") {
-        return room[column.id] === true;
+        return room[column.id as keyof StandardizedRoom] === true;
       } else if (column.type === "number") {
-        return room[column.id] > 0;
+        return (room[column.id as keyof StandardizedRoom] as number) > 0;
       }
       return false;
     });
@@ -184,7 +202,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
                       {visibleGroups[group.id] && groupRooms.map(room => (
                         <TableRow key={room.id} className={isRoomExtracted(room.id) ? "bg-primary/5" : ""}>
                           <TableCell className="font-medium flex items-center gap-1">
-                            {room.name}
+                            {room.label}
                             {isRoomExtracted(room.id) && (
                               <Badge variant="secondary" className="ml-1 text-xs">
                                 Detected
@@ -196,7 +214,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
                             <TableCell key={column.id} className="text-center">
                               {column.type === "checkbox" ? (
                                 <Checkbox
-                                  checked={Boolean(room[column.id])}
+                                  checked={Boolean(room[column.id as keyof StandardizedRoom])}
                                   onCheckedChange={checked => 
                                     handleCheckboxChange(room.id, column.id, Boolean(checked))
                                   }
@@ -207,7 +225,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
                                   type="number"
                                   min={0}
                                   step={1}
-                                  value={room[column.id]}
+                                  value={room[column.id as keyof StandardizedRoom] as number}
                                   onChange={e => 
                                     handleNumberChange(room.id, column.id, parseInt(e.target.value) || 0)
                                   }
@@ -256,7 +274,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
                           <CardContent className="p-3">
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="font-medium text-sm flex items-center">
-                                {room.name}
+                                {room.label}
                                 {isRoomExtracted(room.id) && (
                                   <Badge variant="secondary" className="ml-1 text-xs">
                                     Detected
@@ -272,7 +290,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
                                   
                                   {column.type === "checkbox" ? (
                                     <Checkbox
-                                      checked={Boolean(room[column.id])}
+                                      checked={Boolean(room[column.id as keyof StandardizedRoom])}
                                       onCheckedChange={checked => 
                                         handleCheckboxChange(room.id, column.id, Boolean(checked))
                                       }
@@ -282,7 +300,7 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
                                       type="number"
                                       min={0}
                                       step={1}
-                                      value={room[column.id]}
+                                      value={room[column.id as keyof StandardizedRoom] as number}
                                       onChange={e => 
                                         handleNumberChange(room.id, column.id, parseInt(e.target.value) || 0)
                                       }
