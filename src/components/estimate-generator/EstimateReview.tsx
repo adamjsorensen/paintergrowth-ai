@@ -1,18 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Check, Edit, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { formatCurrency } from '@/utils/formatUtils';
-import { processExtractedData } from '@/components/audio-transcript/extract-information-utils';
 import RoomsMatrixField from './rooms/RoomsMatrixField';
-import { interiorRoomsMatrixConfig, initializeRoomsMatrix } from './rooms/InteriorRoomsConfig';
-import { extractRoomsFromFields, generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
+import { useEstimateProcessing } from './estimate-review/hooks/useEstimateProcessing';
+import LoadingCard from './estimate-review/components/LoadingCard';
+import ExtractedInformationTable from './estimate-review/components/ExtractedInformationTable';
+import EstimateDetailsTable from './estimate-review/components/EstimateDetailsTable';
+import { generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
 import { StandardizedRoom } from '@/types/room-types';
 
 interface EstimateReviewProps {
@@ -20,16 +14,8 @@ interface EstimateReviewProps {
   summary: string;
   missingInfo: Record<string, any>;
   projectType: 'interior' | 'exterior';
-  extractedData?: Record<string, any>; // Add this prop to receive pre-extracted data
+  extractedData?: Record<string, any>;
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
-}
-
-interface EstimateField {
-  name: string;
-  value: string | number | boolean | string[];
-  confidence: number;
-  formField: string;
-  editable?: boolean;
 }
 
 interface LineItem {
@@ -46,249 +32,26 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   summary, 
   missingInfo, 
   projectType,
-  extractedData, // Add this to props
+  extractedData,
   onComplete 
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionProgress, setExtractionProgress] = useState(0);
-  const [estimateFields, setEstimateFields] = useState<EstimateField[]>([]);
-  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const {
+    isLoading,
+    isExtracting,
+    extractionProgress,
+    estimateFields,
+    setEstimateFields,
+    lineItems,
+    setLineItems,
+    roomsMatrix,
+    setRoomsMatrix,
+    extractedRoomsList
+  } = useEstimateProcessing(transcript, summary, missingInfo, projectType, extractedData);
+
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
-  const [taxRate, setTaxRate] = useState(7.5); // Default tax rate
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<string>('');
-  
-  // Room matrix state
-  const [roomsMatrix, setRoomsMatrix] = useState<any[]>([]);
-  const [extractedRoomsList, setExtractedRoomsList] = useState<string[]>([]);
-
-  // Extract information from transcript and generate estimate
-  useEffect(() => {
-    const processInformation = async () => {
-      console.log('=== ESTIMATE REVIEW PROCESSING START ===');
-      console.log('EstimateReview - Starting with:', {
-        hasExtractedData: !!extractedData,
-        transcriptLength: transcript.length,
-        summaryLength: summary.length,
-        missingInfoKeys: Object.keys(missingInfo),
-        projectType
-      });
-      
-      setIsLoading(true);
-      
-      try {
-        let processedData;
-        
-        // Use pre-extracted data if available, otherwise extract from transcript
-        if (extractedData && Object.keys(extractedData).length > 0) {
-          console.log('EstimateReview - Using pre-extracted data:', extractedData);
-          processedData = extractedData;
-        } else {
-          console.log('EstimateReview - No pre-extracted data, extracting from transcript');
-          setIsExtracting(true);
-          setExtractionProgress(0);
-          
-          // Simulate progress updates
-          const progressInterval = setInterval(() => {
-            setExtractionProgress(prev => {
-              const newProgress = prev + Math.random() * 15;
-              return newProgress > 95 ? 95 : newProgress;
-            });
-          }, 500);
-          
-          // Use summary if available, otherwise fall back to transcript
-          const inputText = summary.trim() || transcript;
-          console.log('EstimateReview - Using input text:', {
-            source: summary.trim() ? 'summary' : 'transcript',
-            length: inputText.length,
-            preview: inputText.substring(0, 200) + '...'
-          });
-          
-          // Call the extract-information edge function with the correct field name
-          console.log('EstimateReview - Calling extract-information function');
-          const { data, error } = await supabase.functions.invoke('extract-information', {
-            body: { transcript: inputText } // Fixed: use 'transcript' instead of 'text'
-          });
-          
-          clearInterval(progressInterval);
-          
-          if (error) {
-            console.error('EstimateReview - Extract-information error:', error);
-            throw new Error(error.message || "Information extraction failed");
-          }
-          
-          if (!data) {
-            console.error('EstimateReview - No data returned from extraction');
-            throw new Error("No information extracted");
-          }
-          
-          console.log('EstimateReview - Raw extraction data:', data);
-          setExtractionProgress(100);
-          
-          // Process the extracted fields
-          console.log('EstimateReview - Processing extracted data');
-          processedData = processExtractedData(data);
-          setIsExtracting(false);
-        }
-        
-        console.log('EstimateReview - Final processed data:', processedData);
-        
-        const processedFields = Array.isArray(processedData.fields) ? processedData.fields : [];
-        console.log('EstimateReview - Processed fields:', processedFields);
-        
-        const formattedFields = processedFields.map((field: any, index: number) => {
-          console.log(`EstimateReview - Formatting field ${index + 1}:`, field);
-          
-          const formattedField = {
-            name: field.name || `Field ${index + 1}`,
-            value: field.value,
-            confidence: typeof field.confidence === 'number' ? field.confidence : 0.5,
-            formField: field.formField || `field_${index}`,
-            editable: true
-          };
-          
-          console.log(`EstimateReview - Formatted field ${index + 1}:`, formattedField);
-          return formattedField;
-        });
-        
-        console.log('EstimateReview - All formatted fields:', formattedFields);
-        
-        // Add missing info to the fields
-        console.log('EstimateReview - Adding missing info to fields:', missingInfo);
-        Object.entries(missingInfo).forEach(([key, value]) => {
-          console.log(`EstimateReview - Processing missing info: ${key} = ${value}`);
-          
-          // Check if the field already exists
-          const existingField = formattedFields.find(field => field.formField === key);
-          
-          if (existingField) {
-            console.log(`EstimateReview - Updating existing field ${key}:`, existingField);
-            existingField.value = value;
-            existingField.confidence = 1.0; // User-provided info has 100% confidence
-            console.log(`EstimateReview - Updated field ${key}:`, existingField);
-          } else {
-            // Add as a new field
-            const newField = {
-              name: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()), // Convert camelCase to Title Case
-              value,
-              confidence: 1.0,
-              formField: key,
-              editable: true
-            };
-            formattedFields.push(newField);
-            console.log(`EstimateReview - Added new field ${key}:`, newField);
-          }
-        });
-        
-        console.log('EstimateReview - Final formatted fields:', formattedFields);
-        setEstimateFields(formattedFields);
-        
-        // For interior projects, extract room information using standardized format
-        if (projectType === 'interior') {
-          console.log('=== INTERIOR PROJECT ROOM PROCESSING START ===');
-          console.log('EstimateReview - Processing interior project rooms');
-          
-          const { extractedRooms, extractedRoomsList } = extractRoomsFromFields(processedData);
-          
-          console.log('EstimateReview - Extracted rooms from fields:', extractedRooms);
-          console.log('EstimateReview - Extracted rooms list:', extractedRoomsList);
-          console.log('EstimateReview - Total extracted rooms:', Object.keys(extractedRooms).length);
-          
-          // Initialize room matrix with extracted data (now using standardized room objects)
-          console.log('EstimateReview - Initializing room matrix');
-          const initialMatrix = initializeRoomsMatrix(extractedRooms);
-          console.log('EstimateReview - Initialized room matrix:', initialMatrix);
-          console.log('EstimateReview - Matrix length:', initialMatrix.length);
-          
-          setRoomsMatrix(initialMatrix);
-          setExtractedRoomsList(extractedRoomsList);
-          
-          // Generate line items based on room data (convert MatrixRoom[] to StandardizedRoom[])
-          console.log('EstimateReview - Converting matrix rooms to standardized rooms for line items');
-          const selectedRooms = initialMatrix.filter(room => room.selected);
-          console.log('EstimateReview - Selected rooms from matrix:', selectedRooms);
-          
-          const standardizedRooms: StandardizedRoom[] = selectedRooms.map((room, index) => {
-            console.log(`EstimateReview - Converting matrix room ${index + 1} to standardized:`, room);
-            
-            const standardized = {
-              id: room.id,
-              label: room.label,
-              walls: room.walls,
-              ceiling: room.ceiling,
-              trim: room.trim,
-              doors: room.doors,
-              windows: room.windows,
-              cabinets: room.cabinets,
-              confidence: room.confidence
-            };
-            
-            console.log(`EstimateReview - Standardized room ${index + 1}:`, standardized);
-            return standardized;
-          });
-          
-          console.log('EstimateReview - Final standardized rooms for line items:', standardizedRooms);
-          const generatedLineItems = generateLineItemsFromRooms(standardizedRooms);
-          console.log('EstimateReview - Generated line items from rooms:', generatedLineItems);
-          
-          setLineItems(generatedLineItems);
-          
-          // Calculate totals
-          console.log('EstimateReview - Calculating totals for interior project');
-          calculateTotals(generatedLineItems);
-          
-          console.log('=== INTERIOR PROJECT ROOM PROCESSING COMPLETE ===');
-        } else {
-          // For exterior projects, use the original line item generation
-          console.log('EstimateReview - Processing exterior project (using original method)');
-          generateLineItems(formattedFields, projectType);
-        }
-        
-        console.log('=== ESTIMATE REVIEW PROCESSING COMPLETE ===');
-      } catch (error) {
-        console.error("=== ESTIMATE REVIEW PROCESSING ERROR ===");
-        console.error("EstimateReview - Information processing error:", error);
-        
-        // Create some default fields if processing fails
-        const defaultFields: EstimateField[] = [
-          {
-            name: "Client Name",
-            value: "",
-            confidence: 0.5,
-            formField: "clientName",
-            editable: true
-          },
-          {
-            name: "Project Address",
-            value: "",
-            confidence: 0.5,
-            formField: "projectAddress",
-            editable: true
-          }
-        ];
-        
-        console.log('EstimateReview - Setting default fields due to error:', defaultFields);
-        setEstimateFields(defaultFields);
-        
-        // Initialize empty room matrix for interior projects
-        if (projectType === 'interior') {
-          console.log('EstimateReview - Initializing empty room matrix for interior project');
-          const emptyMatrix = initializeRoomsMatrix();
-          console.log('EstimateReview - Empty room matrix:', emptyMatrix);
-          setRoomsMatrix(emptyMatrix);
-        }
-      } finally {
-        setIsExtracting(false);
-        setIsLoading(false);
-        console.log('EstimateReview - Processing completed');
-      }
-    };
-    
-    processInformation();
-  }, [transcript, summary, missingInfo, projectType, extractedData]); // Added extractedData to dependencies
+  const [taxRate, setTaxRate] = useState(7.5);
 
   // Calculate totals based on line items
   const calculateTotals = (items: LineItem[]) => {
@@ -300,142 +63,12 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     setTotal(calculatedSubtotal + calculatedTax);
   };
 
-  // Generate line items based on extracted information (for non-room based estimates)
-  const generateLineItems = (fields: EstimateField[], projectType: 'interior' | 'exterior') => {
-    const items: LineItem[] = [];
-    let itemId = 1;
-    
-    // Helper function to add a line item
-    const addItem = (description: string, quantity: number, unit: string, unitPrice: number) => {
-      items.push({
-        id: `item-${itemId++}`,
-        description,
-        quantity,
-        unit,
-        unitPrice,
-        total: quantity * unitPrice
-      });
-    };
-    
-    // Check for rooms to paint
-    const surfacesField = fields.find(f => f.formField === 'surfacesToPaint');
-    
-    if (surfacesField && Array.isArray(surfacesField.value) && surfacesField.value.length > 0) {
-      // Add line items for each surface type
-      const surfaces = surfacesField.value as string[];
-      
-      if (surfaces.includes('walls')) {
-        addItem('Paint Walls', 1, 'project', 1200);
-      }
-      
-      if (surfaces.includes('ceilings')) {
-        addItem('Paint Ceilings', 1, 'project', 800);
-      }
-      
-      if (surfaces.includes('trim') || surfaces.includes('baseboards')) {
-        addItem('Paint Trim/Baseboards', 1, 'project', 600);
-      }
-      
-      if (surfaces.includes('doors')) {
-        addItem('Paint Doors', 1, 'project', 500);
-      }
-      
-      if (surfaces.includes('cabinets')) {
-        addItem('Paint Cabinets', 1, 'project', 1800);
-      }
-    } else {
-      // Default items if no specific surfaces mentioned
-      if (projectType === 'interior') {
-        addItem('Interior Painting - Walls', 1, 'project', 1500);
-        addItem('Interior Painting - Trim', 1, 'project', 750);
-      } else {
-        addItem('Exterior Painting - Siding', 1, 'project', 3200);
-        addItem('Exterior Painting - Trim', 1, 'project', 1200);
-      }
-    }
-    
-    // Check for prep work
-    const prepField = fields.find(f => f.formField === 'prepNeeds');
-    if (prepField && Array.isArray(prepField.value) && prepField.value.length > 0) {
-      const prepNeeds = prepField.value as string[];
-      
-      if (prepNeeds.includes('patching') || prepNeeds.includes('repair')) {
-        addItem('Wall Repair and Patching', 1, 'project', 350);
-      }
-      
-      if (prepNeeds.includes('sanding')) {
-        addItem('Surface Sanding and Preparation', 1, 'project', 250);
-      }
-      
-      if (prepNeeds.includes('priming') || prepNeeds.includes('primer')) {
-        addItem('Primer Application', 1, 'project', 400);
-      }
-    } else {
-      // Default prep item
-      addItem('Surface Preparation', 1, 'project', 300);
-    }
-    
-    // Add paint and materials
-    addItem('Premium Paint and Materials', 1, 'project', 450);
-    
-    // Calculate totals
-    setLineItems(items);
-    calculateTotals(items);
-  };
-
-  // Handle editing a field
-  const handleEditField = (formField: string, currentValue: any) => {
-    setEditingField(formField);
-    setEditValue(String(currentValue));
-  };
-
-  // Save edited field
-  const handleSaveEdit = () => {
-    if (!editingField) return;
-    
-    setEstimateFields(prev => 
-      prev.map(field => 
-        field.formField === editingField 
-          ? { ...field, value: editValue, confidence: 1.0 } // Set confidence to 1.0 for user-edited fields
-          : field
-      )
-    );
-    
-    setEditingField(null);
-  };
-
-  // Update line item
-  const handleUpdateLineItem = (id: string, field: keyof LineItem, value: any) => {
-    setLineItems(prev => 
-      prev.map(item => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          
-          // Recalculate total if quantity or unitPrice changes
-          if (field === 'quantity' || field === 'unitPrice') {
-            updatedItem.total = updatedItem.quantity * updatedItem.unitPrice;
-          }
-          
-          return updatedItem;
-        }
-        return item;
-      })
-    );
-    
-    // Recalculate totals
-    const newSubtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
-    setSubtotal(newSubtotal);
-    setTax(newSubtotal * (taxRate / 100));
-    setTotal(newSubtotal + (newSubtotal * (taxRate / 100)));
-  };
-
   // Handle room matrix changes with standardized room objects
   const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
     console.log('=== ROOM MATRIX CHANGE START ===');
     console.log('EstimateReview - Room matrix changed:', updatedMatrix);
     console.log('EstimateReview - Matrix length:', updatedMatrix.length);
     
-    // Validate the updated matrix
     const validatedMatrix = updatedMatrix.filter((room, index) => {
       const isValid = room && 
                      typeof room === 'object' && 
@@ -458,7 +91,6 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     console.log(`EstimateReview - Valid rooms in matrix: ${validatedMatrix.length}/${updatedMatrix.length}`);
     setRoomsMatrix(validatedMatrix);
     
-    // Convert matrix rooms to standardized rooms for line item generation
     console.log('EstimateReview - Converting matrix rooms to standardized rooms');
     const selectedRooms = validatedMatrix.filter(room => room.selected);
     console.log('EstimateReview - Selected rooms from updated matrix:', selectedRooms);
@@ -484,40 +116,13 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     
     console.log('EstimateReview - Final selected standardized rooms:', selectedStandardizedRooms);
     
-    // Generate new line items based on updated room data
     const newLineItems = generateLineItemsFromRooms(selectedStandardizedRooms);
     console.log('EstimateReview - Generated new line items from updated matrix:', newLineItems);
     
     setLineItems(newLineItems);
-    
-    // Recalculate totals
-    console.log('EstimateReview - Recalculating totals');
     calculateTotals(newLineItems);
     
     console.log('=== ROOM MATRIX CHANGE COMPLETE ===');
-  };
-
-  // Add new line item
-  const handleAddLineItem = () => {
-    const newItem: LineItem = {
-      id: `item-${Date.now()}`,
-      description: 'New Item',
-      quantity: 1,
-      unit: 'item',
-      unitPrice: 0,
-      total: 0
-    };
-    
-    const newLineItems = [...lineItems, newItem];
-    setLineItems(newLineItems);
-    calculateTotals(newLineItems);
-  };
-
-  // Remove line item
-  const handleRemoveLineItem = (id: string) => {
-    const newLineItems = lineItems.filter(item => item.id !== id);
-    setLineItems(newLineItems);
-    calculateTotals(newLineItems);
   };
 
   // Handle tax rate change
@@ -532,7 +137,6 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
 
   // Complete the estimate
   const handleComplete = () => {
-    // Create a final estimate object
     const finalEstimate = {
       clientName: estimateFields.find(f => f.formField === 'clientName')?.value || '',
       clientEmail: estimateFields.find(f => f.formField === 'clientEmail')?.value || '',
@@ -548,13 +152,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       status: 'draft'
     };
     
-    // Convert estimateFields to a simple key-value object
     const fieldsObject = estimateFields.reduce((acc, field) => {
       acc[field.formField] = field.value;
       return acc;
     }, {} as Record<string, any>);
     
-    // For interior projects, add the room matrix data
     if (projectType === 'interior') {
       fieldsObject.roomsMatrix = roomsMatrix;
     }
@@ -562,116 +164,24 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     onComplete(fieldsObject, finalEstimate);
   };
 
-  // Get confidence badge variant
-  const getConfidenceBadge = (confidence: number) => {
-    if (confidence >= 0.8) return "default";
-    if (confidence >= 0.5) return "secondary";
-    return "outline";
-  };
-
-  // Format field value for display
-  const formatFieldValue = (value: any): string => {
-    if (Array.isArray(value)) return value.join(', ');
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    return String(value);
-  };
+  // Initialize totals when lineItems change
+  React.useEffect(() => {
+    if (lineItems.length > 0) {
+      calculateTotals(lineItems);
+    }
+  }, [lineItems, taxRate]);
 
   return (
     <div className="space-y-6">
       {isLoading ? (
-        <Card>
-          <CardContent className="pt-6 flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <h3 className="text-lg font-medium mb-2">Generating Estimate</h3>
-            {isExtracting && (
-              <div className="w-full max-w-md">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Extracting Information</span>
-                    <span>{Math.round(extractionProgress)}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-primary h-2.5 rounded-full" 
-                      style={{ width: `${extractionProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <LoadingCard isExtracting={isExtracting} extractionProgress={extractionProgress} />
       ) : (
         <>
-          {/* Extracted Information */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Extracted Information</h3>
-              
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Field</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Confidence</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {estimateFields
-                      .filter(field => 
-                        !field.formField.includes('Room') && 
-                        field.formField !== 'roomsToPaint'
-                      )
-                      .map((field) => (
-                      <TableRow key={field.formField}>
-                        <TableCell className="font-medium">{field.name}</TableCell>
-                        <TableCell>
-                          {editingField === field.formField ? (
-                            <Input
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              className="w-full"
-                            />
-                          ) : (
-                            formatFieldValue(field.value)
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getConfidenceBadge(field.confidence)}>
-                            {Math.round(field.confidence * 100)}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {editingField === field.formField ? (
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={handleSaveEdit}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => handleEditField(field.formField, field.value)}
-                              disabled={!field.editable}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <ExtractedInformationTable 
+            estimateFields={estimateFields}
+            setEstimateFields={setEstimateFields}
+          />
           
-          {/* Room Matrix for Interior Projects */}
           {projectType === 'interior' && (
             <RoomsMatrixField 
               matrixValue={roomsMatrix}
@@ -680,125 +190,16 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
             />
           )}
           
-          {/* Estimate Line Items */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Estimate Details</h3>
-              
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="w-[100px]">Quantity</TableHead>
-                      <TableHead className="w-[100px]">Unit</TableHead>
-                      <TableHead className="w-[150px]">Unit Price</TableHead>
-                      <TableHead className="w-[150px]">Total</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {lineItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <Input
-                            value={item.description}
-                            onChange={(e) => handleUpdateLineItem(item.id, 'description', e.target.value)}
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={item.quantity}
-                            onChange={(e) => handleUpdateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.unit}
-                            onChange={(e) => handleUpdateLineItem(item.id, 'unit', e.target.value)}
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2">$</span>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.unitPrice}
-                              onChange={(e) => handleUpdateLineItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              className="w-full pl-7"
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(item.total)}
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleRemoveLineItem(item.id)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
-                              <path d="M3 6h18"></path>
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                            </svg>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <div className="mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleAddLineItem}
-                >
-                  + Add Line Item
-                </Button>
-              </div>
-              
-              {/* Totals */}
-              <div className="mt-6 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Tax Rate (%)</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={taxRate}
-                      onChange={handleTaxRateChange}
-                      className="w-20"
-                    />
-                  </div>
-                  <span>{formatCurrency(tax)}</span>
-                </div>
-                
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                  <span className="text-lg font-bold">Total</span>
-                  <span className="text-lg font-bold">{formatCurrency(total)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <EstimateDetailsTable
+            lineItems={lineItems}
+            setLineItems={setLineItems}
+            subtotal={subtotal}
+            tax={tax}
+            total={total}
+            taxRate={taxRate}
+            onTaxRateChange={handleTaxRateChange}
+            onCalculateTotals={calculateTotals}
+          />
           
           <div className="flex justify-end">
             <Button onClick={handleComplete}>
