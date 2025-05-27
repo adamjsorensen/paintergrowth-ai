@@ -61,7 +61,7 @@ export const useEstimateStore = ({ extractedData, projectType }: UseEstimateStor
         isInitialized.current = true;
       }
     }
-  }, [projectType, extractedData]); // Simplified dependencies - only re-run if project type or extracted data changes
+  }, [projectType]); // Removed extractedData dependency to prevent re-initialization
 
   // Unified state update helper
   const updateEstimate = (section: keyof EstimateStore, payload: any) => {

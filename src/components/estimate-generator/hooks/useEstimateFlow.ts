@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const STORAGE_KEY = 'estimate-workflow-state';
 const STATE_VERSION = 1;
@@ -73,7 +74,16 @@ const clearSavedState = () => {
 
 export const useEstimateFlow = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [state, setState] = useState<EstimateState>(getInitialState);
+
+  // Mobile step 3 protection - automatically redirect to step 4
+  useEffect(() => {
+    if (isMobile && state.currentStep === 3) {
+      console.log('Mobile user detected on step 3, redirecting to step 4');
+      setState(prev => ({ ...prev, currentStep: 4 }));
+    }
+  }, [isMobile, state.currentStep]);
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -183,6 +193,13 @@ export const useEstimateFlow = () => {
   };
 
   const setCurrentStep = (step: number) => {
+    // Prevent mobile users from going to step 3
+    if (isMobile && step === 3) {
+      console.log('Preventing mobile navigation to step 3, redirecting to step 4');
+      setState(prev => ({ ...prev, currentStep: 4 }));
+      return;
+    }
+    
     setState(prev => ({ ...prev, currentStep: step }));
   };
 

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { StandardizedRoom } from '@/types/room-types';
 
 interface TabValidationState {
@@ -23,20 +23,11 @@ export const useTabValidation = ({
   lineItems, 
   hasSelectedSurfaces 
 }: UseTabValidationProps) => {
-  const [tabValidation, setTabValidation] = useState<TabValidationState>({
-    project: true,
-    rooms: true,
-    pricing: false
-  });
-
-  useEffect(() => {
-    setTabValidation(prev => ({
-      ...prev,
-      project: Object.keys(projectDetails).length > 0,
-      rooms: projectType === 'exterior' || roomsMatrix.some(room => hasSelectedSurfaces(room)),
-      pricing: lineItems.length > 0
-    }));
-  }, [projectDetails, roomsMatrix, lineItems, projectType, hasSelectedSurfaces]);
+  const tabValidation = useMemo<TabValidationState>(() => ({
+    project: Object.keys(projectDetails).length > 0,
+    rooms: projectType === 'exterior' || roomsMatrix.some(room => hasSelectedSurfaces(room)),
+    pricing: lineItems.length > 0
+  }), [projectDetails, roomsMatrix, lineItems, projectType, hasSelectedSurfaces]);
 
   return { tabValidation };
 };

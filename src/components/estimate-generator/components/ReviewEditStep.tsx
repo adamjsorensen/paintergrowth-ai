@@ -52,9 +52,8 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     hasSelectedSurfaces: hasSelectedSurfacesForRoom
   });
 
-  console.log('ReviewEditStep - Current estimate store:', estimateStore);
-  console.log('ReviewEditStep - Project type:', projectType);
-  console.log('ReviewEditStep - Tab validation:', tabValidation);
+  // Only log once when component mounts, not on every render
+  console.log('ReviewEditStep initialized with:', { projectType, estimateStoreReady: !!estimateStore });
 
   /* ---------- project / rooms / pricing handlers unchanged ---------- */
 
@@ -92,7 +91,62 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
-      {/* …full JSX unchanged… */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="md:hidden">
+        <TabsList className="flex justify-between bg-white">
+          <TabsTrigger value="project" className="w-full py-2.5 text-sm font-medium">
+            <Home className="mr-2 h-4 w-4" />
+            Project
+            {tabValidation.project ? null : <AlertTriangle className="ml-1 h-3 w-3 text-red-500" />}
+          </TabsTrigger>
+          <TabsTrigger value="rooms" className="w-full py-2.5 text-sm font-medium">
+            <FileText className="mr-2 h-4 w-4" />
+            Rooms
+            {tabValidation.rooms ? null : <AlertTriangle className="ml-1 h-3 w-3 text-red-500" />}
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="w-full py-2.5 text-sm font-medium">
+            <Receipt className="mr-2 h-4 w-4" />
+            Pricing
+            {tabValidation.pricing ? null : <AlertTriangle className="ml-1 h-3 w-3 text-red-500" />}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="project" className="space-y-2 p-4">
+          <MobileReviewStep
+            summary={summary}
+            transcript={transcript}
+            extractedData={extractedData}
+            missingInfo={missingInfo}
+            projectType={projectType}
+            onComplete={handlePricingComplete}
+          />
+        </TabsContent>
+        <TabsContent value="rooms" className="space-y-2 p-4">
+          <RoomsTabContent
+            projectType={projectType}
+            extractedData={extractedData}
+            onComplete={handlePricingComplete}
+          />
+        </TabsContent>
+        <TabsContent value="pricing" className="space-y-2 p-4">
+          <MobilePricingStep
+            projectType={projectType}
+            extractedData={extractedData}
+            missingInfo={missingInfo}
+            onComplete={handlePricingComplete}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Desktop Content */}
+      <div className="hidden md:block">
+        <MobileReviewStep
+          summary={summary}
+          transcript={transcript}
+          extractedData={extractedData}
+          missingInfo={missingInfo}
+          projectType={projectType}
+          onComplete={onComplete}
+        />
+      </div>
     </div>
   );
 };
