@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PageLayout from '@/components/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -14,40 +15,70 @@ const EstimateGenerator = () => {
   const { state, handlers, setCurrentStep } = useEstimateFlow();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const canGoBack = state.currentStep > 0 && state.currentStep < 4;
-  const canGoForward = state.currentStep > 0 && state.currentStep < 4;
+  // Adjust step logic for mobile flow (skip step 3 since it's combined with step 2)
+  const getMaxStep = () => isMobile ? 3 : 4;
+  const canGoBack = state.currentStep > 0 && state.currentStep < getMaxStep();
+  const canGoForward = state.currentStep > 0 && state.currentStep < getMaxStep();
   
   const isStepComplete = () => {
     switch (state.currentStep) {
       case 1: return Object.keys(state.extractedData).length > 0;
-      case 2: return Object.keys(state.missingInfo).length > 0;
-      case 3: return Object.keys(state.estimateFields).length > 0;
+      case 2: 
+        // On mobile, step 2 is now the combined ReviewEditStep, so completion means estimate is ready
+        if (isMobile) {
+          return Object.keys(state.estimateFields).length > 0;
+        }
+        // On desktop, step 2 is still just missing info
+        return Object.keys(state.missingInfo).length > 0;
+      case 3: 
+        // Only applies to desktop
+        return !isMobile && Object.keys(state.estimateFields).length > 0;
       default: return true;
+    }
+  };
+
+  const handleContinue = () => {
+    // Skip step 3 on mobile since it's combined with step 2
+    if (isMobile && state.currentStep === 2) {
+      setCurrentStep(4); // Jump to content generation
+    } else {
+      setCurrentStep(Math.min(ESTIMATE_STEPS.length - 1, state.currentStep + 1));
+    }
+  };
+
+  const handleBack = () => {
+    // Handle back navigation properly for mobile
+    if (isMobile && state.currentStep === 4) {
+      setCurrentStep(2); // Jump back to ReviewEditStep
+    } else {
+      setCurrentStep(Math.max(0, state.currentStep - 1));
     }
   };
 
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Mobile Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
-          <h1 className="text-lg font-semibold text-center">Estimate Generator</h1>
-          <MobileStepIndicator steps={ESTIMATE_STEPS} currentStep={state.currentStep} />
-        </div>
+        {/* Mobile Header - only show for steps that need it */}
+        {state.currentStep !== 2 && (
+          <div className="bg-white border-b border-gray-200 px-4 py-4">
+            <h1 className="text-lg font-semibold text-center">Estimate Generator</h1>
+            <MobileStepIndicator steps={ESTIMATE_STEPS} currentStep={state.currentStep} />
+          </div>
+        )}
 
         {/* Mobile Content */}
         <div className="flex-1">
           <StepRenderer state={state} handlers={handlers} />
         </div>
 
-        {/* Mobile Footer Navigation */}
-        {(canGoBack || canGoForward) && (
+        {/* Mobile Footer Navigation - hide for ReviewEditStep since it has its own navigation */}
+        {(canGoBack || canGoForward) && state.currentStep !== 2 && (
           <div className="bg-white border-t border-gray-200 p-4 safe-area-pb">
             <div className="flex gap-3">
               {canGoBack && (
                 <Button
                   variant="outline"
-                  onClick={() => setCurrentStep(Math.max(0, state.currentStep - 1))}
+                  onClick={handleBack}
                   className="flex-1 min-h-[56px] text-base font-medium"
                   size="lg"
                 >
@@ -58,7 +89,7 @@ const EstimateGenerator = () => {
               
               {canGoForward && (
                 <Button
-                  onClick={() => setCurrentStep(Math.min(ESTIMATE_STEPS.length - 1, state.currentStep + 1))}
+                  onClick={handleContinue}
                   disabled={!isStepComplete()}
                   className="flex-1 min-h-[56px] text-base font-medium"
                   size="lg"

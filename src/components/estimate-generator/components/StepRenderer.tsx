@@ -2,6 +2,7 @@
 import React from 'react';
 import InlineProjectTypeSelector from './InlineProjectTypeSelector';
 import MobileProjectTypeSelector from './MobileProjectTypeSelector';
+import ReviewEditStep from './ReviewEditStep';
 import MobileReviewStep from './MobileReviewStep';
 import MobilePricingStep from './MobilePricingStep';
 import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
@@ -63,12 +64,15 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
         </div>
       );
     case 2:
+      // Use the new ReviewEditStep for mobile, combining steps 2 and 3
       return isMobile ? (
-        <MobileReviewStep 
+        <ReviewEditStep
           summary={summary || 'Project information extracted from your input'} 
           transcript={transcript || 'Information extracted from your input'}
           extractedData={extractedData}
-          onComplete={handleMissingInfoComplete} 
+          missingInfo={missingInfo}
+          projectType={projectType}
+          onComplete={handleEstimateComplete}
         />
       ) : (
         <SummaryChecker 
@@ -79,16 +83,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
         />
       );
     case 3:
-      return isMobile ? (
-        <MobilePricingStep 
-          transcript={transcript || 'Information extracted from your input'}
-          summary={summary || 'Project information extracted from your input'}
-          missingInfo={missingInfo}
-          projectType={projectType}
-          extractedData={extractedData}
-          onComplete={handleEstimateComplete} 
-        />
-      ) : (
+      // Skip step 3 on mobile since it's now part of step 2 (ReviewEditStep)
+      return isMobile ? null : (
         <EstimateReview 
           transcript={transcript || 'Information extracted from your input'}
           summary={summary || 'Project information extracted from your input'}
