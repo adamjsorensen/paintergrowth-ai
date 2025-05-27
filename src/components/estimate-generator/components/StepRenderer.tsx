@@ -1,6 +1,9 @@
 
 import React from 'react';
 import InlineProjectTypeSelector from './InlineProjectTypeSelector';
+import MobileProjectTypeSelector from './MobileProjectTypeSelector';
+import MobileReviewStep from './MobileReviewStep';
+import MobilePricingStep from './MobilePricingStep';
 import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
 import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
 import EstimateReview from '@/components/estimate-generator/EstimateReview';
@@ -8,6 +11,7 @@ import EstimateContentGenerator from '@/components/estimate-generator/EstimateCo
 import EstimateContentEditor from '@/components/estimate-generator/EstimateContentEditor';
 import EstimatePDFGenerator from '@/components/estimate-generator/EstimatePDFGenerator';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface StepRendererProps {
   state: EstimateState;
@@ -15,6 +19,8 @@ interface StepRendererProps {
 }
 
 const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
   const {
     currentStep,
     projectType,
@@ -42,20 +48,29 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
 
   switch (currentStep) {
     case 0:
-      return (
-        <InlineProjectTypeSelector 
-          onSelect={handleProjectTypeSelect} 
-        />
+      return isMobile ? (
+        <MobileProjectTypeSelector onSelect={handleProjectTypeSelect} />
+      ) : (
+        <InlineProjectTypeSelector onSelect={handleProjectTypeSelect} />
       );
     case 1:
       return (
-        <TranscriptInput 
-          onInformationExtracted={handleInformationExtracted}
-          onClose={() => {}}
-        />
+        <div className={isMobile ? "px-4 py-6" : ""}>
+          <TranscriptInput 
+            onInformationExtracted={handleInformationExtracted}
+            onClose={() => {}}
+          />
+        </div>
       );
     case 2:
-      return (
+      return isMobile ? (
+        <MobileReviewStep 
+          summary={summary || 'Project information extracted from your input'} 
+          transcript={transcript || 'Information extracted from your input'}
+          extractedData={extractedData}
+          onComplete={handleMissingInfoComplete} 
+        />
+      ) : (
         <SummaryChecker 
           summary={summary || 'Project information extracted from your input'} 
           transcript={transcript || 'Information extracted from your input'}
@@ -64,7 +79,16 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
         />
       );
     case 3:
-      return (
+      return isMobile ? (
+        <MobilePricingStep 
+          transcript={transcript || 'Information extracted from your input'}
+          summary={summary || 'Project information extracted from your input'}
+          missingInfo={missingInfo}
+          projectType={projectType}
+          extractedData={extractedData}
+          onComplete={handleEstimateComplete} 
+        />
+      ) : (
         <EstimateReview 
           transcript={transcript || 'Information extracted from your input'}
           summary={summary || 'Project information extracted from your input'}
