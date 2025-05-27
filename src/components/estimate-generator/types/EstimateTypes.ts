@@ -1,13 +1,12 @@
 
 export interface EstimateStep {
-  id: string;
+  id: number;
   label: string;
 }
 
 export interface EstimateState {
   currentStep: number;
   projectType: 'interior' | 'exterior';
-  isTypeModalOpen: boolean;
   extractedData: Record<string, any>;
   transcript: string;
   summary: string;

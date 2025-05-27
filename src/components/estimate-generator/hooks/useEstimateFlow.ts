@@ -37,7 +37,6 @@ const getInitialState = (): EstimateState => {
   return {
     currentStep: 0,
     projectType: 'interior',
-    isTypeModalOpen: true,
     extractedData: {},
     transcript: '',
     summary: '',
@@ -86,7 +85,6 @@ export const useEstimateFlow = () => {
       setState(prev => ({
         ...prev,
         projectType: type,
-        isTypeModalOpen: false,
         currentStep: 1
       }));
     },
@@ -194,7 +192,6 @@ export const useEstimateFlow = () => {
     setState({
       currentStep: 0,
       projectType: 'interior',
-      isTypeModalOpen: true,
       extractedData: {},
       transcript: '',
       summary: '',

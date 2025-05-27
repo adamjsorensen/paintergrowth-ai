@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ModalProjectType from '@/components/estimate-generator/ModalProjectType';
+import InlineProjectTypeSelector from './InlineProjectTypeSelector';
 import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
 import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
 import EstimateReview from '@/components/estimate-generator/EstimateReview';
@@ -18,7 +18,6 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
   const {
     currentStep,
     projectType,
-    isTypeModalOpen,
     extractedData,
     transcript,
     summary,
@@ -44,8 +43,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
   switch (currentStep) {
     case 0:
       return (
-        <ModalProjectType 
-          isOpen={isTypeModalOpen} 
+        <InlineProjectTypeSelector 
           onSelect={handleProjectTypeSelect} 
         />
       );
