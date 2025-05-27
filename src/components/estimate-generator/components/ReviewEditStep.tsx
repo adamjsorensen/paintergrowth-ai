@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -56,7 +57,17 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   // Handle project details updates from Tab 1
   const handleProjectDetailsUpdate = (updatedData: Record<string, any>) => {
     console.log('ReviewEditStep - Project details updated:', updatedData);
-    updateEstimate('projectDetails', updatedData);
+    
+    // Extract project metadata if it exists
+    const { project_metadata, ...otherData } = updatedData;
+    
+    // Update project details (excluding project_metadata)
+    updateEstimate('projectDetails', otherData);
+    
+    // Update project metadata separately if it exists
+    if (project_metadata) {
+      updateEstimate('projectMetadata', project_metadata);
+    }
   };
 
   // Handle project metadata updates
