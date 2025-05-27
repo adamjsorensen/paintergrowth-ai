@@ -1,8 +1,8 @@
 
 import { useState, useRef } from 'react';
 import { StandardizedRoom } from '@/types/room-types';
-import { roomRows } from '../../../rooms/config/RoomDefinitions';
-import { extractRoomsFromFields } from '../../../rooms/RoomExtractionUtils';
+import { roomRows } from '../../rooms/config/RoomDefinitions';
+import { extractRoomsFromFields } from '../../rooms/RoomExtractionUtils';
 
 export const useRoomMatrix = (extractedData: Record<string, any>) => {
   const isInitialized = useRef(false);
