@@ -1,4 +1,3 @@
-
 import { MatrixConfig, MatrixGroup, MatrixRow, MatrixColumn } from "@/types/prompt-templates";
 import { StandardizedRoom, MatrixRoom } from "@/types/room-types";
 
@@ -108,7 +107,7 @@ export const roomGroups: MatrixGroup[] = [
 
 // Create the full matrix configuration
 export const interiorRoomsMatrixConfig: MatrixConfig = {
-  type: 'matrix-config', // Added the required type property
+  type: 'matrix-config',
   columns: surfaceColumns,
   rows: roomRows,
   groups: roomGroups
@@ -160,103 +159,4 @@ export const initializeRoomsMatrix = (extractedRooms?: Record<string, Standardiz
   
   console.log('initializeRoomsMatrix - Final matrix:', defaultMatrix);
   return defaultMatrix;
-};
-
-// Map common room name variations to our room IDs
-export const roomNameMapping: Record<string, string> = {
-  // Living areas
-  "living": "living-room",
-  "lounge": "living-room",
-  "sitting room": "living-room",
-  "family": "family-room",
-  "den": "den",
-  "great room": "family-room",
-  "dining": "dining-room",
-  
-  // Bedrooms - expanded mapping
-  "master": "master-bedroom",
-  "primary": "master-bedroom",
-  "primary bedroom": "master-bedroom",
-  "main bedroom": "master-bedroom",
-  "master bedroom": "master-bedroom",
-  "bedroom": "bedroom",
-  "guest": "guest-bedroom",
-  "guest bedroom": "guest-bedroom",
-  "kids": "kids-bedroom",
-  "children": "kids-bedroom",
-  "child's room": "kids-bedroom",
-  "childs room": "kids-bedroom",
-  "kids bedroom": "kids-bedroom",
-  "children's bedroom": "kids-bedroom",
-  "upstairs": "master-bedroom", // Often refers to primary bedroom
-  
-  // Wet areas
-  "kitchen": "kitchen",
-  "bathroom": "bathroom",
-  "bath": "bathroom",
-  "main bathroom": "main-bathroom",
-  "master bath": "ensuite-bathroom",
-  "ensuite": "ensuite-bathroom",
-  "en-suite": "ensuite-bathroom",
-  "powder": "powder-room",
-  "half bath": "powder-room",
-  "laundry": "laundry-room",
-  "utility": "laundry-room",
-  "mud room": "laundry-room",
-  
-  // Transitional spaces
-  "hall": "hallway",
-  "hallway": "hallway",
-  "corridor": "hallway",
-  "entry": "entryway",
-  "entryway": "entryway",
-  "foyer": "foyer",
-  "stairs": "staircase",
-  "stairway": "staircase",
-  "stairwell": "staircase",
-  "upstairs hallway": "hallway",
-  
-  // Additional rooms
-  "office": "office",
-  "home office": "office",
-  "study": "office",
-  "basement": "basement",
-  "lower level": "basement",
-  "rec room": "recreation-room",
-  "recreation": "recreation-room",
-  "game room": "recreation-room",
-  "sunroom": "sunroom",
-  "sun porch": "sunroom",
-  "garage": "garage",
-  "attic": "attic",
-  "loft": "attic"
-};
-
-// Helper function to match room names from transcript - improved logic
-export const identifyRoomFromText = (text: string) => {
-  const lowerText = text.toLowerCase().trim();
-  
-  // First, try exact matches
-  if (roomNameMapping[lowerText]) {
-    return roomNameMapping[lowerText];
-  }
-  
-  // Then try partial matches for compound terms
-  for (const [key, value] of Object.entries(roomNameMapping)) {
-    if (lowerText.includes(key.toLowerCase())) {
-      return value;
-    }
-  }
-  
-  // Special handling for "primary" + "bedroom" combinations
-  if (lowerText.includes('primary') && lowerText.includes('bedroom')) {
-    return 'master-bedroom';
-  }
-  
-  // Special handling for "upstairs" + "bedroom" combinations  
-  if (lowerText.includes('upstairs') && lowerText.includes('bedroom')) {
-    return 'master-bedroom';
-  }
-  
-  return null;
 };

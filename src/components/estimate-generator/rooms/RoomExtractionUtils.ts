@@ -1,7 +1,7 @@
 
 import { StandardizedRoom, ExtractedRoom } from "@/types/room-types";
 import { validateStandardizedRoom } from "./validation/RoomValidationUtils";
-import { processRoomsFromAIFormat, processRoomsFromFields, applySurfacesToRooms } from "./processing/RoomProcessingUtils";
+import { processRoomsFromAIFormat } from "./processing/RoomProcessingUtils";
 import { generateLineItemsFromRooms } from "./line-items/LineItemsGenerator";
 
 interface ExtractedField {
@@ -11,9 +11,9 @@ interface ExtractedField {
   formField: string;
 }
 
-// Process room data from extracted fields and return standardized room objects
+// Process room data from extracted fields using AI-first approach
 export const extractRoomsFromFields = (extractedData: Record<string, any>) => {
-  console.log('=== EXTRACT ROOMS FROM FIELDS START ===');
+  console.log('=== AI-FIRST ROOM EXTRACTION START ===');
   console.log('extractRoomsFromFields - Input data:', JSON.stringify(extractedData, null, 2));
   
   // Input validation
@@ -22,36 +22,29 @@ export const extractRoomsFromFields = (extractedData: Record<string, any>) => {
     return { extractedRooms: {}, extractedRoomsList: [] };
   }
   
-  // Get fields and rooms arrays from extractedData
-  const fields = Array.isArray(extractedData.fields) ? extractedData.fields : [];
+  // Get rooms array from extractedData (AI extraction)
   const rooms = Array.isArray(extractedData.rooms) ? extractedData.rooms : [];
   
-  console.log('extractRoomsFromFields - Processing rooms array:', rooms);
-  console.log('extractRoomsFromFields - Processing fields array:', fields);
+  console.log('extractRoomsFromFields - Processing AI-extracted rooms:', rooms);
   
   let extractedRooms: Record<string, StandardizedRoom> = {};
   let extractedRoomsList: string[] = [];
   
-  // Process room data from the rooms array (new AI format)
+  // Process room data from the AI (primary and only method now)
   if (rooms.length > 0) {
     const result = processRoomsFromAIFormat(rooms);
     extractedRooms = result.extractedRooms;
     extractedRoomsList = result.extractedRoomsList;
+    
+    console.log('extractRoomsFromFields - AI extracted rooms successfully:', {
+      roomCount: Object.keys(extractedRooms).length,
+      roomIds: extractedRoomsList
+    });
+  } else {
+    console.warn('extractRoomsFromFields - No rooms found in AI extraction. This may indicate an issue with the AI prompt or transcript.');
   }
   
-  // If no rooms were found in the rooms array, fall back to the old way of finding rooms
-  if (extractedRoomsList.length === 0) {
-    console.log('extractRoomsFromFields - No rooms found in rooms array, falling back to fields parsing');
-    
-    const result = processRoomsFromFields(fields);
-    extractedRooms = result.extractedRooms;
-    extractedRoomsList = result.extractedRoomsList;
-    
-    // Apply general surfaces to the fallback rooms
-    applySurfacesToRooms(extractedRooms, extractedRoomsList, fields);
-  }
-  
-  console.log('=== EXTRACT ROOMS FROM FIELDS COMPLETE ===');
+  console.log('=== AI-FIRST ROOM EXTRACTION COMPLETE ===');
   console.log('extractRoomsFromFields - Final extracted rooms:', extractedRooms);
   console.log('extractRoomsFromFields - Final extracted rooms list:', extractedRoomsList);
   console.log('extractRoomsFromFields - Total rooms extracted:', Object.keys(extractedRooms).length);
