@@ -65,14 +65,13 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   ) => {
     console.log('ReviewEditStep - Final completion:', { fields, finalEstimate });
     
-    /** --------------  FIX: widen the type here -------------- **/
+    // Create combined fields with proper typing to allow dynamic properties
     const combinedFields: Record<string, any> = {
       ...estimateStore.projectDetails,
       ...missingInfo,
       ...fields,
       project_metadata: estimateStore.projectMetadata
     };
-    /** ------------------------------------------------------- **/
 
     // Add rooms matrix if interior project
     if (projectType === 'interior') {
