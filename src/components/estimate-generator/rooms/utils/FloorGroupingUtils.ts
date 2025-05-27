@@ -1,5 +1,5 @@
 
-import { StandardizedRoom } from '@/types/room-types';
+import { StandardizedRoom, MatrixRow } from '../types';
 import { roomRows, roomGroups, floorGroups } from '../config/RoomDefinitions';
 
 export type FloorGroupedRooms = {

@@ -1,5 +1,4 @@
-
-import { MatrixRow, MatrixGroup } from "@/types/prompt-templates";
+import { MatrixRow, MatrixGroup } from "../types";
 
 // Define room rows organized by type and floor
 export const roomRows: MatrixRow[] = [
