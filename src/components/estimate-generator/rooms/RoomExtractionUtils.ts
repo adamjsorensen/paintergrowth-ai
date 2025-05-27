@@ -1,15 +1,8 @@
 
 import { StandardizedRoom, ExtractedRoom } from "@/types/room-types";
 import { validateStandardizedRoom } from "./validation/RoomValidationUtils";
-import { processRoomsFromAIFormat } from "./processing/RoomProcessingUtils";
+import { processRoomsFromAIFormat } from "./processing/AIRoomProcessor";
 import { generateLineItemsFromRooms } from "./line-items/LineItemsGenerator";
-
-interface ExtractedField {
-  name: string;
-  value: any;
-  confidence: number;
-  formField: string;
-}
 
 // Process room data from extracted fields using AI-first approach
 export const extractRoomsFromFields = (extractedData: Record<string, any>) => {
