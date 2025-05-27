@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useRef } from 'react';
 import { StandardizedRoom } from '@/types/room-types';
 import { roomRows, roomGroups } from '../../rooms/config/RoomDefinitions';
 import { extractRoomsFromFields } from '../../rooms/RoomExtractionUtils';
@@ -28,6 +29,9 @@ interface UseEstimateStoreProps {
 }
 
 export const useEstimateStore = ({ extractedData, projectType }: UseEstimateStoreProps) => {
+  // Ref to track if room matrix has been initialized to prevent re-initialization
+  const isInitialized = useRef(false);
+  
   // Helper function to initialize room matrix from config
   const initializeRoomMatrix = (): StandardizedRoom[] => {
     console.debug('=== INITIALIZING ROOM MATRIX ===');
@@ -96,37 +100,47 @@ export const useEstimateStore = ({ extractedData, projectType }: UseEstimateStor
     totals: {}
   });
 
-  // Initialize room matrix properly on mount
+  // Initialize room matrix properly on mount - with guards to prevent loops
   useEffect(() => {
-    console.debug('useEstimateStore - Component mounted, initializing room matrix');
+    console.debug('useEstimateStore - Effect triggered', {
+      projectType,
+      isInitialized: isInitialized.current,
+      roomsMatrixLength: estimateStore.roomsMatrix.length,
+      hasExtractedData: Object.keys(extractedData).length > 0
+    });
     
-    if (projectType === 'interior' && estimateStore.roomsMatrix.length === 0) {
-      const initialMatrix = initializeRoomMatrix();
-      console.debug('useEstimateStore - Setting initial room matrix:', initialMatrix);
+    // Guard: Only initialize if it's an interior project, not already initialized, and we don't have rooms
+    if (projectType === 'interior' && !isInitialized.current && estimateStore.roomsMatrix.length === 0) {
+      console.debug('useEstimateStore - Starting room matrix initialization');
       
-      setEstimateStore(prev => ({
-        ...prev,
-        roomsMatrix: initialMatrix
-      }));
-      
-      // Generate initial line items and totals
-      const newLineItems = generateLineItemsFromRooms(initialMatrix);
-      const newTotals = calculateTotals(newLineItems);
-      
-      setEstimateStore(prev => ({
-        ...prev,
-        roomsMatrix: initialMatrix,
-        lineItems: newLineItems,
-        totals: newTotals
-      }));
-      
-      console.debug('useEstimateStore - Room matrix initialized with line items:', { 
-        roomCount: initialMatrix.length, 
-        lineItemCount: newLineItems.length,
-        totals: newTotals 
-      });
+      try {
+        const initialMatrix = initializeRoomMatrix();
+        const newLineItems = generateLineItemsFromRooms(initialMatrix);
+        const newTotals = calculateTotals(newLineItems);
+        
+        // Single atomic update to prevent cascading state changes
+        setEstimateStore(prev => ({
+          ...prev,
+          roomsMatrix: initialMatrix,
+          lineItems: newLineItems,
+          totals: newTotals
+        }));
+        
+        // Mark as initialized to prevent re-initialization
+        isInitialized.current = true;
+        
+        console.debug('useEstimateStore - Room matrix initialized successfully:', { 
+          roomCount: initialMatrix.length, 
+          lineItemCount: newLineItems.length,
+          totals: newTotals 
+        });
+      } catch (error) {
+        console.error('useEstimateStore - Error during room matrix initialization:', error);
+        // Set flag to prevent retrying
+        isInitialized.current = true;
+      }
     }
-  }, [projectType]);
+  }, [projectType, extractedData]); // Simplified dependencies - only re-run if project type or extracted data changes
 
   // Generate line items from rooms matrix
   const generateLineItemsFromRooms = (roomsMatrix: StandardizedRoom[]) => {
