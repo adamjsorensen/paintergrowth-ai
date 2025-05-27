@@ -1,3 +1,4 @@
+
 import { MatrixConfig, MatrixGroup, MatrixRow, MatrixColumn } from "@/types/prompt-templates";
 import { StandardizedRoom, MatrixRoom } from "@/types/room-types";
 
@@ -172,16 +173,22 @@ export const roomNameMapping: Record<string, string> = {
   "great room": "family-room",
   "dining": "dining-room",
   
-  // Bedrooms
+  // Bedrooms - expanded mapping
   "master": "master-bedroom",
+  "primary": "master-bedroom",
   "primary bedroom": "master-bedroom",
   "main bedroom": "master-bedroom",
+  "master bedroom": "master-bedroom",
   "bedroom": "bedroom",
   "guest": "guest-bedroom",
+  "guest bedroom": "guest-bedroom",
   "kids": "kids-bedroom",
   "children": "kids-bedroom",
   "child's room": "kids-bedroom",
   "childs room": "kids-bedroom",
+  "kids bedroom": "kids-bedroom",
+  "children's bedroom": "kids-bedroom",
+  "upstairs": "master-bedroom", // Often refers to primary bedroom
   
   // Wet areas
   "kitchen": "kitchen",
@@ -207,6 +214,7 @@ export const roomNameMapping: Record<string, string> = {
   "stairs": "staircase",
   "stairway": "staircase",
   "stairwell": "staircase",
+  "upstairs hallway": "hallway",
   
   // Additional rooms
   "office": "office",
@@ -224,14 +232,30 @@ export const roomNameMapping: Record<string, string> = {
   "loft": "attic"
 };
 
-// Helper function to match room names from transcript
+// Helper function to match room names from transcript - improved logic
 export const identifyRoomFromText = (text: string) => {
-  text = text.toLowerCase();
+  const lowerText = text.toLowerCase().trim();
   
+  // First, try exact matches
+  if (roomNameMapping[lowerText]) {
+    return roomNameMapping[lowerText];
+  }
+  
+  // Then try partial matches for compound terms
   for (const [key, value] of Object.entries(roomNameMapping)) {
-    if (text.includes(key.toLowerCase())) {
+    if (lowerText.includes(key.toLowerCase())) {
       return value;
     }
+  }
+  
+  // Special handling for "primary" + "bedroom" combinations
+  if (lowerText.includes('primary') && lowerText.includes('bedroom')) {
+    return 'master-bedroom';
+  }
+  
+  // Special handling for "upstairs" + "bedroom" combinations  
+  if (lowerText.includes('upstairs') && lowerText.includes('bedroom')) {
+    return 'master-bedroom';
   }
   
   return null;
