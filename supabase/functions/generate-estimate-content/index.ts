@@ -63,7 +63,7 @@ Return the response as a JSON object with each section as a separate property:
         messages: [
           {
             role: 'system',
-            content: 'You are a professional painting contractor assistant that generates detailed, professional estimate documents. Always respond with valid JSON.'
+            content: 'You are a professional painting contractor assistant that generates detailed, professional estimate documents. IMPORTANT: Return ONLY the JSON object without any markdown formatting, code blocks, or additional text. Do not wrap your response in ```json or ``` blocks.'
           },
           {
             role: 'user',
@@ -80,24 +80,33 @@ Return the response as a JSON object with each section as a separate property:
     }
 
     const data = await response.json();
-    const generatedContent = data.choices[0].message.content;
+    let generatedContent = data.choices[0].message.content;
     
     console.log('Generated content:', generatedContent);
+
+    // Clean up markdown formatting if present
+    if (generatedContent.startsWith('```json')) {
+      generatedContent = generatedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (generatedContent.startsWith('```')) {
+      generatedContent = generatedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
 
     // Parse the JSON response
     let estimateContent;
     try {
       estimateContent = JSON.parse(generatedContent);
     } catch (parseError) {
-      console.error('Error parsing generated content:', parseError);
+      console.error('Failed to parse AI response as JSON:', generatedContent);
+      console.error('Parse error:', parseError);
+      
       // Fallback to basic structure if JSON parsing fails
       estimateContent = {
-        projectOverview: generatedContent.substring(0, 500) + '...',
-        scopeOfWork: 'Professional interior painting services as specified.',
+        projectOverview: 'Professional interior painting services for your project.',
+        scopeOfWork: 'Comprehensive painting services including surface preparation and professional application.',
         materialsAndLabor: 'High-quality paint and materials, professional labor included.',
         timeline: 'Project timeline to be determined based on scope.',
         termsAndConditions: 'Standard painting contract terms apply.',
-        additionalNotes: 'Additional details to be discussed.'
+        additionalNotes: 'Additional details to be discussed during project planning.'
       };
     }
 
