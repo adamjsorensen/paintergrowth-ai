@@ -183,7 +183,7 @@ Return a JSON object with this exact structure:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert at extracting structured information from painting project transcripts. Always return valid JSON that matches the exact schema provided.'
+            content: 'You are an expert at extracting structured information from painting project transcripts. IMPORTANT: Return ONLY the JSON object without any markdown formatting, code blocks, or additional text. Do not wrap your response in ```json or ``` blocks.'
           },
           {
             role: 'user',
