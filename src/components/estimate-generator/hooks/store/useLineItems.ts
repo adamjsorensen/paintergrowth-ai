@@ -9,8 +9,13 @@ export const useLineItems = () => {
     );
   };
 
+  const hasSelectedSurfacesForRoom = (room: StandardizedRoom): boolean => {
+    return room.walls || room.ceiling || room.trim || room.doors > 0 || room.windows > 0 || room.cabinets;
+  };
+
   return {
     generateLineItemsFromRooms,
-    hasSelectedSurfaces
+    hasSelectedSurfaces,
+    hasSelectedSurfacesForRoom
   };
 };

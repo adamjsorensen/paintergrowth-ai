@@ -9,7 +9,7 @@ import { useTotalsCalculation } from './useTotalsCalculation';
 export const useEstimateStore = ({ extractedData, projectType }: UseEstimateStoreProps) => {
   const { projectMetadata } = useProjectMetadata();
   const { roomsMatrix, setRoomsMatrix, initializeRoomMatrix, isInitialized } = useRoomMatrix(extractedData);
-  const { generateLineItemsFromRooms, hasSelectedSurfaces } = useLineItems();
+  const { generateLineItemsFromRooms, hasSelectedSurfaces, hasSelectedSurfacesForRoom } = useLineItems();
   const { calculateTotals } = useTotalsCalculation();
 
   // Central estimate store
@@ -93,6 +93,7 @@ export const useEstimateStore = ({ extractedData, projectType }: UseEstimateStor
   return {
     estimateStore,
     updateEstimate,
-    hasSelectedSurfaces
+    hasSelectedSurfaces,
+    hasSelectedSurfacesForRoom
   };
 };
