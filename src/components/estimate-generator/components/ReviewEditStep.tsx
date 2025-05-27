@@ -10,6 +10,11 @@ import MobileReviewStep from './MobileReviewStep';
 import MobilePricingStep from './MobilePricingStep';
 import RoomMatrixMobile from '../rooms/components/RoomMatrixMobile';
 
+// Import room configuration
+import { roomRows, roomGroups } from '../rooms/config/RoomDefinitions';
+import { StandardizedRoom } from '@/types/room-types';
+import { extractRoomsFromFields } from '../rooms/RoomExtractionUtils';
+
 interface ReviewEditStepProps {
   summary: string;
   transcript: string;
@@ -21,7 +26,7 @@ interface ReviewEditStepProps {
 
 interface EstimateStore {
   projectDetails: Record<string, any>;
-  roomsMatrix: any[];
+  roomsMatrix: StandardizedRoom[];
   lineItems: any[];
   totals: Record<string, any>;
 }
@@ -36,6 +41,51 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('project');
   
+  // Helper function to initialize room matrix from config
+  const initializeRoomMatrix = (): StandardizedRoom[] => {
+    console.debug('=== INITIALIZING ROOM MATRIX ===');
+    
+    // Extract rooms from AI data if available
+    const { extractedRooms } = extractRoomsFromFields(extractedData);
+    console.debug('Extracted rooms from AI:', extractedRooms);
+    
+    // Create standardized room objects for all rooms in config
+    const initialMatrix: StandardizedRoom[] = roomRows.map(roomConfig => {
+      const extractedRoom = extractedRooms[roomConfig.id];
+      
+      if (extractedRoom) {
+        console.debug(`Using extracted data for room: ${roomConfig.id}`, extractedRoom);
+        return {
+          id: roomConfig.id,
+          label: roomConfig.label,
+          walls: extractedRoom.walls,
+          ceiling: extractedRoom.ceiling,
+          trim: extractedRoom.trim,
+          doors: extractedRoom.doors || 0,
+          windows: extractedRoom.windows || 0,
+          cabinets: extractedRoom.cabinets,
+          confidence: extractedRoom.confidence || 1
+        };
+      } else {
+        // Create default room object
+        return {
+          id: roomConfig.id,
+          label: roomConfig.label,
+          walls: false,
+          ceiling: false,
+          trim: false,
+          doors: 0,
+          windows: 0,
+          cabinets: false,
+          confidence: 0
+        };
+      }
+    });
+    
+    console.debug('Initialized room matrix:', initialMatrix);
+    return initialMatrix;
+  };
+
   // Central estimate store
   const [estimateStore, setEstimateStore] = useState<EstimateStore>({
     projectDetails: extractedData,
@@ -50,6 +100,38 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     rooms: true,
     pricing: false
   });
+
+  // Initialize room matrix properly on mount
+  useEffect(() => {
+    console.debug('ReviewEditStep - Component mounted, initializing room matrix');
+    
+    if (projectType === 'interior' && estimateStore.roomsMatrix.length === 0) {
+      const initialMatrix = initializeRoomMatrix();
+      console.debug('ReviewEditStep - Setting initial room matrix:', initialMatrix);
+      
+      setEstimateStore(prev => ({
+        ...prev,
+        roomsMatrix: initialMatrix
+      }));
+      
+      // Generate initial line items and totals
+      const newLineItems = generateLineItemsFromRooms(initialMatrix);
+      const newTotals = calculateTotals(newLineItems);
+      
+      setEstimateStore(prev => ({
+        ...prev,
+        roomsMatrix: initialMatrix,
+        lineItems: newLineItems,
+        totals: newTotals
+      }));
+      
+      console.debug('ReviewEditStep - Room matrix initialized with line items:', { 
+        roomCount: initialMatrix.length, 
+        lineItemCount: newLineItems.length,
+        totals: newTotals 
+      });
+    }
+  }, [projectType]);
 
   console.log('ReviewEditStep - Current estimate store:', estimateStore);
   console.log('ReviewEditStep - Project type:', projectType);
@@ -86,7 +168,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   };
 
   // Generate line items from rooms matrix
-  const generateLineItemsFromRooms = (roomsMatrix: any[]) => {
+  const generateLineItemsFromRooms = (roomsMatrix: StandardizedRoom[]) => {
     console.log('ReviewEditStep - Generating line items from rooms:', roomsMatrix);
     
     const selectedRooms = roomsMatrix.filter(room => hasSelectedSurfaces(room));
@@ -210,7 +292,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   };
 
   // Check if room has selected surfaces
-  const hasSelectedSurfaces = (room: any) => {
+  const hasSelectedSurfaces = (room: StandardizedRoom) => {
     return room.walls || room.ceiling || room.trim || room.doors > 0 || room.windows > 0 || room.cabinets;
   };
 
@@ -235,17 +317,6 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     });
   };
 
-  // Initialize store with existing data
-  useEffect(() => {
-    console.log('ReviewEditStep - Initializing store with extracted data');
-    updateEstimate('projectDetails', extractedData);
-    
-    // Initialize with empty rooms matrix for interior projects
-    if (projectType === 'interior') {
-      updateEstimate('roomsMatrix', []);
-    }
-  }, [extractedData, projectType]);
-
   // Handle project details updates from Tab 1
   const handleProjectDetailsUpdate = (updatedData: Record<string, any>) => {
     console.log('ReviewEditStep - Project details updated:', updatedData);
@@ -253,7 +324,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   };
 
   // Handle room matrix changes from Tab 2
-  const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
+  const handleRoomsMatrixChange = (updatedMatrix: StandardizedRoom[]) => {
     console.log('ReviewEditStep - Rooms matrix updated:', updatedMatrix);
     updateEstimate('roomsMatrix', updatedMatrix);
   };
@@ -291,22 +362,42 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     onComplete(combinedFields, finalEstimateData);
   };
 
-  // Mock handlers for room matrix (will be properly implemented when RoomMatrixMobile is integrated)
+  // Room matrix handlers with proper state management
   const handleCheckboxChange = (roomId: string, columnId: string, checked: boolean) => {
-    console.log('ReviewEditStep - Checkbox change:', { roomId, columnId, checked });
+    console.debug('=== CHECKBOX CHANGE ===');
+    console.debug('ReviewEditStep - Checkbox change:', { roomId, columnId, checked });
+    console.debug('ReviewEditStep - Current matrix before update:', estimateStore.roomsMatrix);
     
-    const updatedMatrix = estimateStore.roomsMatrix.map(room => 
-      room.id === roomId ? { ...room, [columnId]: checked } : room
-    );
+    const updatedMatrix = estimateStore.roomsMatrix.map(room => {
+      if (room.id === roomId) {
+        const updatedRoom = { ...room, [columnId]: checked };
+        console.debug('ReviewEditStep - Updated room:', updatedRoom);
+        return updatedRoom;
+      }
+      return room;
+    });
+    
+    console.debug('ReviewEditStep - Updated matrix:', updatedMatrix);
     handleRoomsMatrixChange(updatedMatrix);
   };
 
   const handleNumberChange = (roomId: string, columnId: string, value: number) => {
-    console.log('ReviewEditStep - Number change:', { roomId, columnId, value });
+    console.debug('=== NUMBER CHANGE ===');
+    console.debug('ReviewEditStep - Number change:', { roomId, columnId, value });
+    console.debug('ReviewEditStep - Current matrix before update:', estimateStore.roomsMatrix);
     
-    const updatedMatrix = estimateStore.roomsMatrix.map(room => 
-      room.id === roomId ? { ...room, [columnId]: value } : room
-    );
+    const validatedValue = typeof value === 'number' && value >= 0 ? Math.floor(value) : 0;
+    
+    const updatedMatrix = estimateStore.roomsMatrix.map(room => {
+      if (room.id === roomId) {
+        const updatedRoom = { ...room, [columnId]: validatedValue };
+        console.debug('ReviewEditStep - Updated room:', updatedRoom);
+        return updatedRoom;
+      }
+      return room;
+    });
+    
+    console.debug('ReviewEditStep - Updated matrix:', updatedMatrix);
     handleRoomsMatrixChange(updatedMatrix);
   };
 
@@ -316,13 +407,18 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   };
 
   const isRoomExtracted = (roomId: string) => {
-    // This will be implemented when room extraction logic is integrated
-    return false;
+    // Check if room was extracted from AI
+    const { extractedRoomsList } = extractRoomsFromFields(extractedData);
+    return extractedRoomsList.includes(roomId);
   };
 
-  // Mock data for room matrix (will be replaced with proper room configuration)
-  const mockVisibleGroups = { living: true, bedrooms: true, kitchen: true };
-  const mockExtractedRoomsList: string[] = [];
+  // Use proper group visibility mapping that matches config
+  const visibleGroups = roomGroups.reduce((acc, group) => {
+    acc[group.id] = true; // All groups visible by default
+    return acc;
+  }, {} as Record<string, boolean>);
+
+  const extractedRoomsList = extractRoomsFromFields(extractedData).extractedRoomsList;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -390,8 +486,8 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                     
                     <RoomMatrixMobile
                       workingMatrix={estimateStore.roomsMatrix}
-                      visibleGroups={mockVisibleGroups}
-                      extractedRoomsList={mockExtractedRoomsList}
+                      visibleGroups={visibleGroups}
+                      extractedRoomsList={extractedRoomsList}
                       onCheckboxChange={handleCheckboxChange}
                       onNumberChange={handleNumberChange}
                       onToggleGroupVisibility={toggleGroupVisibility}
