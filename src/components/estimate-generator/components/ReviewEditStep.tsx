@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -60,6 +59,12 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     updateEstimate('projectDetails', updatedData);
   };
 
+  // Handle project metadata updates
+  const handleProjectMetadataUpdate = (metadata: any) => {
+    console.log('ReviewEditStep - Project metadata updated:', metadata);
+    updateEstimate('projectMetadata', metadata);
+  };
+
   // Handle room matrix changes from Tab 2
   const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
     console.log('ReviewEditStep - Rooms matrix updated:', updatedMatrix);
@@ -81,7 +86,8 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     const combinedFields = {
       ...estimateStore.projectDetails,
       ...missingInfo,
-      ...fields
+      ...fields,
+      project_metadata: estimateStore.projectMetadata
     };
 
     // Add rooms matrix if interior project
@@ -188,7 +194,9 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                   summary={summary}
                   transcript={transcript}
                   extractedData={estimateStore.projectDetails}
+                  projectMetadata={estimateStore.projectMetadata}
                   onComplete={handleProjectDetailsUpdate}
+                  onProjectMetadataChange={handleProjectMetadataUpdate}
                 />
               </div>
             </TabsContent>

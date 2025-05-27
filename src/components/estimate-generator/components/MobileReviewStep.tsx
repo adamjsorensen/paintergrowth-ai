@@ -4,25 +4,55 @@ import { Button } from '@/components/ui/button';
 import EditFieldSheet from './mobile-review/EditFieldSheet';
 import ProjectSummaryCard from './mobile-review/ProjectSummaryCard';
 import ProjectInformationCard from './mobile-review/ProjectInformationCard';
+import ProjectSettingsSection from './mobile-review/ProjectSettingsSection';
 import EmptyReviewState from './mobile-review/EmptyReviewState';
+
+interface ProjectMetadata {
+  trimColor: string;
+  wallColors: number;
+  coats: 'one' | 'two';
+  paintType: string;
+  specialConsiderations: string;
+  salesNotes: string;
+  productionDate: Date | undefined;
+  discountPercent: number;
+}
 
 interface MobileReviewStepProps {
   summary: string;
   transcript: string;
   extractedData: Record<string, any>;
+  projectMetadata?: ProjectMetadata;
   onComplete: (info: Record<string, any>) => void;
+  onProjectMetadataChange?: (metadata: ProjectMetadata) => void;
 }
 
 const MobileReviewStep: React.FC<MobileReviewStepProps> = ({ 
   summary, 
   transcript, 
-  extractedData, 
-  onComplete 
+  extractedData,
+  projectMetadata,
+  onComplete,
+  onProjectMetadataChange
 }) => {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [editingField, setEditingField] = useState<any>(null);
   const [editValue, setEditValue] = useState('');
   const [localExtractedData, setLocalExtractedData] = useState(extractedData);
+
+  // Initialize project metadata with defaults if not provided
+  const [localProjectMetadata, setLocalProjectMetadata] = useState<ProjectMetadata>(
+    projectMetadata || {
+      trimColor: '',
+      wallColors: 1,
+      coats: 'two',
+      paintType: 'Premium Interior Paint',
+      specialConsiderations: '',
+      salesNotes: '',
+      productionDate: undefined,
+      discountPercent: 0
+    }
+  );
 
   const hasData = Object.keys(localExtractedData).length > 0;
 
@@ -50,8 +80,20 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
     }
   };
 
+  const handleProjectMetadataChange = (metadata: ProjectMetadata) => {
+    setLocalProjectMetadata(metadata);
+    if (onProjectMetadataChange) {
+      onProjectMetadataChange(metadata);
+    }
+  };
+
   const handleContinue = () => {
-    onComplete(localExtractedData);
+    // Include project metadata in the completion data
+    const completeData = {
+      ...localExtractedData,
+      project_metadata: localProjectMetadata
+    };
+    onComplete(completeData);
   };
 
   if (!hasData) {
@@ -70,6 +112,11 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
       <ProjectInformationCard 
         extractedData={localExtractedData}
         onFieldEdit={handleFieldEdit}
+      />
+
+      <ProjectSettingsSection
+        projectMetadata={localProjectMetadata}
+        onProjectMetadataChange={handleProjectMetadataChange}
       />
 
       <EditFieldSheet

@@ -1,11 +1,22 @@
-
 import { useState, useEffect } from 'react';
 import { StandardizedRoom } from '@/types/room-types';
 import { roomRows, roomGroups } from '../../rooms/config/RoomDefinitions';
 import { extractRoomsFromFields } from '../../rooms/RoomExtractionUtils';
 
+interface ProjectMetadata {
+  trimColor: string;
+  wallColors: number;
+  coats: 'one' | 'two';
+  paintType: string;
+  specialConsiderations: string;
+  salesNotes: string;
+  productionDate: Date | undefined;
+  discountPercent: number;
+}
+
 interface EstimateStore {
   projectDetails: Record<string, any>;
+  projectMetadata: ProjectMetadata;
   roomsMatrix: StandardizedRoom[];
   lineItems: any[];
   totals: Record<string, any>;
@@ -62,9 +73,24 @@ export const useEstimateStore = ({ extractedData, projectType }: UseEstimateStor
     return initialMatrix;
   };
 
+  // Initialize project metadata with defaults
+  const initializeProjectMetadata = (): ProjectMetadata => {
+    return {
+      trimColor: '',
+      wallColors: 1,
+      coats: 'two',
+      paintType: 'Premium Interior Paint',
+      specialConsiderations: '',
+      salesNotes: '',
+      productionDate: undefined,
+      discountPercent: 0
+    };
+  };
+
   // Central estimate store
   const [estimateStore, setEstimateStore] = useState<EstimateStore>({
     projectDetails: extractedData,
+    projectMetadata: initializeProjectMetadata(),
     roomsMatrix: [],
     lineItems: [],
     totals: {}
