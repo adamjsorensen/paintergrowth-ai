@@ -101,7 +101,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
       project_metadata: estimateStore.projectMetadata
     };
 
-    // Add rooms matrix if interior project
+    // Add rooms matrix if interior project - get it from estimateStore, not from fields
     if (projectType === 'interior') {
       combinedFields.roomsMatrix = estimateStore.roomsMatrix;
     }
