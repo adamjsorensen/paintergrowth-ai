@@ -24,9 +24,9 @@ export const groupRoomsByFloor = (workingMatrix: StandardizedRoom[]): FloorGroup
 
   // Group rooms
   workingMatrix.forEach(room => {
-    // Find room definition to get floor, or use room's floor property directly
+    // Find room definition to get floor
     const roomDef = roomRows.find(r => r.id === room.id);
-    const floor = room.floor || roomDef?.floor || 'main'; // Default to main floor
+    const floor = roomDef?.floor || 'main'; // Default to main floor
     const group = roomDef?.group || 'additional'; // Default to additional
 
     if (!grouped[floor]) {

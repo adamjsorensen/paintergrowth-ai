@@ -1,3 +1,4 @@
+
 /**
  * Canonical room object structure used throughout the application
  */
@@ -12,7 +13,6 @@ export interface StandardizedRoom {
   cabinets: boolean;
   confidence?: number;
   selected?: boolean; // For UI state
-  floor?: 'main' | 'upstairs' | 'basement';
 }
 
 /**
