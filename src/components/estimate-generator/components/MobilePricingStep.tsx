@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import PricingTotalCard from './mobile-pricing/PricingTotalCard';
@@ -13,10 +13,14 @@ interface MobilePricingStepProps {
   missingInfo: Record<string, any>;
   projectType: 'interior' | 'exterior';
   extractedData: Record<string, any>;
+  lineItems?: any[]; // Accept line items from parent
+  totals?: Record<string, any>; // Accept totals from parent
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
+  onPricingUpdate?: (lineItems: any[], totals: Record<string, any>) => void; // Notify parent of changes
 }
 
 interface LineItem {
+  id: string;
   description: string;
   quantity: number;
   rate: number;
@@ -29,16 +33,21 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   missingInfo,
   projectType,
   extractedData,
-  onComplete
+  lineItems: propLineItems = [],
+  totals: propTotals = {},
+  onComplete,
+  onPricingUpdate
 }) => {
-  // Initial mock data - in real app this would come from EstimateReview
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { description: 'Interior wall painting - Living room', quantity: 1, rate: 450.00, amount: 450.00 },
-    { description: 'Interior wall painting - Master bedroom', quantity: 1, rate: 350.00, amount: 350.00 },
-    { description: 'Interior wall painting - Kitchen', quantity: 1, rate: 400.00, amount: 400.00 },
-    { description: 'Trim and baseboards', quantity: 3, rate: 150.00, amount: 450.00 },
-    { description: 'Materials and supplies', quantity: 1, rate: 800.00, amount: 800.00 }
-  ]);
+  // Use prop line items if provided, otherwise use default mock data
+  const [lineItems, setLineItems] = useState<LineItem[]>(
+    propLineItems.length > 0 ? propLineItems : [
+      { id: '1', description: 'Interior wall painting - Living room', quantity: 1, rate: 450.00, amount: 450.00 },
+      { id: '2', description: 'Interior wall painting - Master bedroom', quantity: 1, rate: 350.00, amount: 350.00 },
+      { id: '3', description: 'Interior wall painting - Kitchen', quantity: 1, rate: 400.00, amount: 400.00 },
+      { id: '4', description: 'Trim and baseboards', quantity: 3, rate: 150.00, amount: 450.00 },
+      { id: '5', description: 'Materials and supplies', quantity: 1, rate: 800.00, amount: 800.00 }
+    ]
+  );
 
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -49,6 +58,14 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
 
   const [swipedItemIndex, setSwipedItemIndex] = useState<number | null>(null);
 
+  // Update local line items when props change
+  useEffect(() => {
+    if (propLineItems.length > 0) {
+      console.log('MobilePricingStep - Updating line items from props:', propLineItems);
+      setLineItems(propLineItems);
+    }
+  }, [propLineItems]);
+
   const calculateTotals = (items: LineItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
     const tax = subtotal * 0.08; // 8% tax
@@ -56,26 +73,41 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
     return { subtotal, tax, total };
   };
 
-  const totals = calculateTotals(lineItems);
+  // Use prop totals if provided, otherwise calculate from line items
+  const totals = Object.keys(propTotals).length > 0 ? propTotals : calculateTotals(lineItems);
 
   const handleDeleteItem = (index: number) => {
     const updatedItems = lineItems.filter((_, i) => i !== index);
     setLineItems(updatedItems);
     setSwipedItemIndex(null);
+    
+    // Notify parent of changes
+    if (onPricingUpdate) {
+      const newTotals = calculateTotals(updatedItems);
+      onPricingUpdate(updatedItems, newTotals);
+    }
   };
 
   const handleAddItem = () => {
     if (newItem.room && newItem.quantity > 0 && newItem.rate > 0) {
       const amount = newItem.quantity * newItem.rate;
       const item: LineItem = {
+        id: `item-${Date.now()}`, // Generate unique ID
         description: newItem.room,
         quantity: newItem.quantity,
         rate: newItem.rate,
         amount
       };
-      setLineItems([...lineItems, item]);
+      const updatedItems = [...lineItems, item];
+      setLineItems(updatedItems);
       setNewItem({ room: '', quantity: 1, rate: 0 });
       setIsAddSheetOpen(false);
+      
+      // Notify parent of changes
+      if (onPricingUpdate) {
+        const newTotals = calculateTotals(updatedItems);
+        onPricingUpdate(updatedItems, newTotals);
+      }
     }
   };
 
@@ -95,14 +127,12 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
     const fields = { ...extractedData, ...missingInfo };
     const finalEstimate = {
       lineItems: lineItems,
-      totals: {
-        subtotal: totals.subtotal,
-        tax: totals.tax,
-        total: totals.total
-      }
+      totals: totals
     };
     onComplete(fields, finalEstimate);
   };
+
+  console.log('MobilePricingStep - Current state:', { lineItems, totals, propLineItems, propTotals });
 
   return (
     <div className="px-4 py-6 space-y-6 relative">
@@ -112,9 +142,9 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
       </div>
 
       <PricingTotalCard 
-        subtotal={totals.subtotal}
-        tax={totals.tax}
-        total={totals.total}
+        subtotal={totals.subtotal || 0}
+        tax={totals.tax || 0}
+        total={totals.total || 0}
       />
 
       <ProjectOverviewCard summary={summary} />
