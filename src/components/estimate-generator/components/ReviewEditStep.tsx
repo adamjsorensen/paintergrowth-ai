@@ -39,7 +39,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   const [activeTab, setActiveTab] = useState('project');
   
   // Use custom hooks for state management
-  const { estimateStore, updateEstimate, hasSelectedSurfaces } = useEstimateStore({
+  const { estimateStore, updateEstimate, hasSelectedSurfaces, hasSelectedSurfacesForRoom } = useEstimateStore({
     extractedData,
     projectType
   });
@@ -49,7 +49,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     projectDetails: estimateStore.projectDetails,
     roomsMatrix: estimateStore.roomsMatrix,
     lineItems: estimateStore.lineItems,
-    hasSelectedSurfaces
+    hasSelectedSurfaces: hasSelectedSurfacesForRoom
   });
 
   console.log('ReviewEditStep - Current estimate store:', estimateStore);
