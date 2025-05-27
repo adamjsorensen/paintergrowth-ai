@@ -1,13 +1,11 @@
 
-import React, { useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { DollarSign, Settings, Eye, Plus, Trash2 } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus } from 'lucide-react';
+import PricingTotalCard from './mobile-pricing/PricingTotalCard';
+import ProjectOverviewCard from './mobile-pricing/ProjectOverviewCard';
+import LineItemsAccordion from './mobile-pricing/LineItemsAccordion';
+import AddLineItemSheet from './mobile-pricing/AddLineItemSheet';
 
 interface MobilePricingStepProps {
   transcript: string;
@@ -50,8 +48,6 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   });
 
   const [swipedItemIndex, setSwipedItemIndex] = useState<number | null>(null);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
 
   const calculateTotals = (items: LineItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -61,34 +57,6 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   };
 
   const totals = calculateTotals(lineItems);
-
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent, index: number) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchStartX.current - touchEndX;
-    const deltaY = Math.abs(touchStartY.current - touchEndY);
-
-    // Only trigger swipe if horizontal movement is greater than vertical (avoid scroll conflicts)
-    if (Math.abs(deltaX) > 100 && deltaY < 50) {
-      if (deltaX > 0) {
-        // Left swipe - show delete
-        setSwipedItemIndex(index);
-      } else {
-        // Right swipe - hide delete
-        setSwipedItemIndex(null);
-      }
-    }
-
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
 
   const handleDeleteItem = (index: number) => {
     const updatedItems = lineItems.filter((_, i) => i !== index);
@@ -143,86 +111,20 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
         <p className="text-gray-600 text-sm">Review your project estimate</p>
       </div>
 
-      {/* Total Price Card */}
-      <Card className="border-2 border-blue-200 bg-blue-50">
-        <CardContent className="p-6 text-center">
-          <div className="flex items-center justify-center mb-2">
-            <DollarSign className="h-6 w-6 text-blue-600 mr-1" />
-            <span className="text-sm font-medium text-blue-700">Total Estimate</span>
-          </div>
-          <div className="text-3xl font-bold text-blue-900 mb-1">
-            ${totals.total.toLocaleString()}
-          </div>
-          <div className="text-sm text-blue-700">
-            Subtotal: ${totals.subtotal.toLocaleString()} + Tax: ${totals.tax.toLocaleString()}
-          </div>
-        </CardContent>
-      </Card>
+      <PricingTotalCard 
+        subtotal={totals.subtotal}
+        tax={totals.tax}
+        total={totals.total}
+      />
 
-      {/* Project Overview */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Eye className="h-4 w-4 text-gray-600" />
-            Project Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
-        </CardContent>
-      </Card>
+      <ProjectOverviewCard summary={summary} />
 
-      {/* Line Items Accordion */}
-      <Accordion type="single" collapsible className="relative">
-        <AccordionItem value="line-items">
-          <AccordionTrigger className="min-h-[56px] text-base font-medium px-4 bg-gray-50 rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Adjust Estimate Details
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="bg-gray-50 px-4 pb-4 rounded-b-lg">
-            <div className="space-y-3 pt-3">
-              {lineItems.map((item, index) => (
-                <div key={index} className="relative">
-                  <div
-                    className="bg-white p-3 rounded-lg border transition-transform duration-200"
-                    style={{
-                      transform: swipedItemIndex === index ? 'translateX(-80px)' : 'translateX(0)'
-                    }}
-                    onTouchStart={(e) => handleTouchStart(e, index)}
-                    onTouchEnd={(e) => handleTouchEnd(e, index)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm text-gray-900">{item.description}</div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          Qty: {item.quantity} × ${item.rate.toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="font-medium text-sm">
-                        ${item.amount.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Delete Button (revealed on swipe) */}
-                  {swipedItemIndex === index && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 min-h-[56px] min-w-[72px]"
-                      onClick={() => handleDeleteItem(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <LineItemsAccordion
+        lineItems={lineItems}
+        onDeleteItem={handleDeleteItem}
+        swipedItemIndex={swipedItemIndex}
+        onSwipedItemChange={setSwipedItemIndex}
+      />
 
       {/* Floating Add Button */}
       <Button
@@ -234,76 +136,14 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
         <Plus className="h-6 w-6" />
       </Button>
 
-      {/* Add Item Sheet */}
-      <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
-        <SheetContent side="bottom" className="h-[70vh]">
-          <SheetHeader>
-            <SheetTitle>Add New Item</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-4 mt-6">
-            <div>
-              <Label htmlFor="room-select" className="text-sm font-medium">Room / Task</Label>
-              <Select value={newItem.room} onValueChange={(value) => setNewItem({...newItem, room: value})}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select room or task" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roomOptions.map((room) => (
-                    <SelectItem key={room} value={room}>{room}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="quantity" className="text-sm font-medium">Quantity</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  value={newItem.quantity}
-                  onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label htmlFor="rate" className="text-sm font-medium">Rate ($)</Label>
-                <Input
-                  id="rate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newItem.rate}
-                  onChange={(e) => setNewItem({...newItem, rate: parseFloat(e.target.value) || 0})}
-                  className="mt-2"
-                />
-              </div>
-            </div>
-
-            <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded">
-              Total: ${((newItem.quantity || 0) * (newItem.rate || 0)).toLocaleString()}
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddSheetOpen(false)}
-                className="flex-1 min-h-[56px]"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddItem}
-                disabled={!newItem.room || newItem.quantity <= 0 || newItem.rate <= 0}
-                className="flex-1 min-h-[56px]"
-              >
-                Add Item
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <AddLineItemSheet
+        isOpen={isAddSheetOpen}
+        onOpenChange={setIsAddSheetOpen}
+        newItem={newItem}
+        onNewItemChange={setNewItem}
+        onAddItem={handleAddItem}
+        roomOptions={roomOptions}
+      />
 
       {/* Continue Button */}
       <div className="pt-4 pb-20">
