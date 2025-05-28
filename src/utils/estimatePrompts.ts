@@ -24,6 +24,23 @@ export interface EstimatePromptTemplateInsert {
   active: boolean;
 }
 
+// Data injection interface for dynamic prompt building
+export interface PromptDataInjection {
+  // For scope extraction
+  roomsListForPrompt?: string;
+  transcript?: string;
+  
+  // For estimate content generation
+  projectType?: string;
+  estimateData?: string;
+  lineItems?: string;
+  totals?: string;
+  
+  // For suggestion engine
+  projectData?: string;
+  currentEstimate?: string;
+}
+
 export const getActivePrompt = async (purpose: PromptPurpose): Promise<EstimatePromptTemplate | null> => {
   const { data, error } = await supabase
     .from('estimate_prompt_templates')
@@ -38,6 +55,36 @@ export const getActivePrompt = async (purpose: PromptPurpose): Promise<EstimateP
   }
 
   return data;
+};
+
+export const getActivePromptWithDataInjection = async (
+  purpose: PromptPurpose, 
+  injectionData?: PromptDataInjection
+): Promise<{ prompt: string; model: string; temperature: number } | null> => {
+  const template = await getActivePrompt(purpose);
+  
+  if (!template) {
+    console.error(`No active prompt found for purpose: ${purpose}`);
+    return null;
+  }
+
+  let processedPrompt = template.prompt_text;
+
+  // Inject dynamic data if provided
+  if (injectionData) {
+    Object.entries(injectionData).forEach(([key, value]) => {
+      const placeholder = `{${key}}`;
+      if (value !== undefined && processedPrompt.includes(placeholder)) {
+        processedPrompt = processedPrompt.replace(new RegExp(placeholder, 'g'), value);
+      }
+    });
+  }
+
+  return {
+    prompt: processedPrompt,
+    model: template.model,
+    temperature: template.temperature
+  };
 };
 
 export const getAllPrompts = async (): Promise<EstimatePromptTemplate[]> => {
@@ -139,4 +186,18 @@ export const duplicatePrompt = async (id: string): Promise<EstimatePromptTemplat
   };
 
   return await createPrompt(duplicateData);
+};
+
+// Validation helper to check if prompt contains required placeholders
+export const validatePromptPlaceholders = (purpose: PromptPurpose, promptText: string): string[] => {
+  const requiredPlaceholders: Record<PromptPurpose, string[]> = {
+    scope: ['{roomsListForPrompt}', '{transcript}'],
+    pdf_summary: ['{projectType}', '{estimateData}', '{lineItems}', '{totals}'],
+    suggestion: ['{projectData}', '{currentEstimate}']
+  };
+
+  const required = requiredPlaceholders[purpose] || [];
+  const missing = required.filter(placeholder => !promptText.includes(placeholder));
+  
+  return missing;
 };
