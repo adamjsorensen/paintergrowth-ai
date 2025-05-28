@@ -1,6 +1,4 @@
-// …imports unchanged…
 
-// ----------------  FILE: ReviewEditStep.tsx  ----------------
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,7 +53,41 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   // Only log once when component mounts, not on every render
   console.log('ReviewEditStep initialized with:', { projectType, estimateStoreReady: !!estimateStore });
 
-  /* ---------- project / rooms / pricing handlers unchanged ---------- */
+  // Handle project info completion (from MobileReviewStep)
+  const handleProjectComplete = (info: Record<string, any>) => {
+    console.log('ReviewEditStep - Project info completed:', info);
+    
+    // Update estimate store with project info
+    updateEstimate('projectDetails', info);
+    
+    // Switch to rooms tab for interior projects, pricing for exterior
+    if (projectType === 'interior') {
+      setActiveTab('rooms');
+    } else {
+      setActiveTab('pricing');
+    }
+  };
+
+  // Handle room matrix changes
+  const handleCheckboxChange = (roomId: string, columnId: string, checked: boolean) => {
+    const updatedMatrix = estimateStore.roomsMatrix.map(room => {
+      if (room.id === roomId) {
+        return { ...room, [columnId]: checked };
+      }
+      return room;
+    });
+    updateEstimate('roomsMatrix', updatedMatrix);
+  };
+
+  const handleNumberChange = (roomId: string, columnId: string, value: number) => {
+    const updatedMatrix = estimateStore.roomsMatrix.map(room => {
+      if (room.id === roomId) {
+        return { ...room, [columnId]: value };
+      }
+      return room;
+    });
+    updateEstimate('roomsMatrix', updatedMatrix);
+  };
 
   // Handle final completion
   const handlePricingComplete = (
@@ -86,8 +118,6 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     onComplete(combinedFields, finalEstimateData);
   };
 
-  /* ---------- rest of component unchanged ---------- */
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
@@ -116,22 +146,34 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             extractedData={extractedData}
             missingInfo={missingInfo}
             projectType={projectType}
-            onComplete={handlePricingComplete}
+            onComplete={handleProjectComplete}
           />
         </TabsContent>
         <TabsContent value="rooms" className="space-y-2 p-4">
           <RoomsTabContent
             projectType={projectType}
+            roomsMatrix={estimateStore.roomsMatrix}
             extractedData={extractedData}
-            onComplete={handlePricingComplete}
+            hasSelectedSurfaces={hasSelectedSurfacesForRoom}
+            onCheckboxChange={handleCheckboxChange}
+            onNumberChange={handleNumberChange}
+            onSetActiveTab={setActiveTab}
           />
         </TabsContent>
         <TabsContent value="pricing" className="space-y-2 p-4">
           <MobilePricingStep
+            transcript={transcript}
+            summary={summary}
             projectType={projectType}
             extractedData={extractedData}
             missingInfo={missingInfo}
+            lineItems={estimateStore.lineItems}
+            totals={estimateStore.totals}
             onComplete={handlePricingComplete}
+            onPricingUpdate={(lineItems, totals) => {
+              updateEstimate('lineItems', lineItems);
+              updateEstimate('totals', totals);
+            }}
           />
         </TabsContent>
       </Tabs>

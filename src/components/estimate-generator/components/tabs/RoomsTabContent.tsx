@@ -79,6 +79,16 @@ const RoomsTabContent: React.FC<RoomsTabContentProps> = ({
         isRoomExtracted={isRoomExtracted}
         hasSelectedSurfaces={hasSelectedSurfaces}
       />
+      
+      <div className="mt-6">
+        <Button
+          onClick={() => onSetActiveTab('pricing')}
+          className="w-full"
+          disabled={!roomsMatrix.some(room => hasSelectedSurfaces(room))}
+        >
+          Continue to Pricing
+        </Button>
+      </div>
     </>
   );
 };
