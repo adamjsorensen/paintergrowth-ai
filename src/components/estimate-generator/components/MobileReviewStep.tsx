@@ -22,6 +22,8 @@ interface MobileReviewStepProps {
   summary: string;
   transcript: string;
   extractedData: Record<string, any>;
+  missingInfo?: Record<string, any>; // Made optional since it might not always be provided
+  projectType?: 'interior' | 'exterior'; // Made optional for backward compatibility
   projectMetadata?: ProjectMetadata;
   onComplete: (info: Record<string, any>) => void;
   onProjectMetadataChange?: (metadata: ProjectMetadata) => void;
@@ -31,6 +33,8 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
   summary, 
   transcript, 
   extractedData,
+  missingInfo = {},
+  projectType,
   projectMetadata,
   onComplete,
   onProjectMetadataChange
@@ -91,6 +95,7 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
     // Include project metadata in the completion data
     const completeData = {
       ...localExtractedData,
+      ...missingInfo, // Include missing info if provided
       project_metadata: localProjectMetadata
     };
     onComplete(completeData);
@@ -134,7 +139,7 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
           className="w-full min-h-[56px] text-lg font-medium"
           size="lg"
         >
-          Continue to Pricing
+          Continue to {projectType === 'interior' ? 'Rooms' : 'Pricing'}
         </Button>
       </div>
     </div>

@@ -118,6 +118,16 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     onComplete(combinedFields, finalEstimateData);
   };
 
+  // Create wrapper function for desktop MobileReviewStep to handle signature mismatch
+  const handleDesktopComplete = (info: Record<string, any>) => {
+    // For desktop, we just pass empty estimate data since it goes through full flow
+    const emptyEstimate = {
+      lineItems: [],
+      totals: {}
+    };
+    onComplete(info, emptyEstimate);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
@@ -186,7 +196,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
           extractedData={extractedData}
           missingInfo={missingInfo}
           projectType={projectType}
-          onComplete={onComplete}
+          onComplete={handleDesktopComplete}
         />
       </div>
     </div>
