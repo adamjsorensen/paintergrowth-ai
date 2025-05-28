@@ -79,6 +79,17 @@ IMPORTANT ROOM EXTRACTION RULES:
 - Set surfaces based on what's explicitly mentioned for each room
 - Use null for doors/windows if not specified
 
+PROJECT SETTINGS EXTRACTION:
+Look for these project details:
+- Start dates, timelines, production schedules ("start July 29th", "begin work on", "schedule for")
+- Trim color specifications ("white trim", "semi-gloss white", "trim color")
+- Number of wall colors mentioned
+- Paint coats ("one coat", "two coats", "double coat")
+- Paint type/brand ("Sherwin Williams", "Benjamin Moore", "premium paint")
+- Special considerations ("move furniture", "protect floors", "working around")
+- Sales notes ("customer wants", "budget concerns", "preferences")
+- Discount mentions ("discount", "reduced price", "%")
+
 Extract this information from the transcript:
 
 TRANSCRIPT: "${transcript}"
@@ -167,7 +178,17 @@ Return a JSON object with this exact structure:
       },
       "confidence": 0.0-1.0
     }
-  ]
+  ],
+  "projectMetadata": {
+    "trimColor": "extracted trim color or empty string",
+    "wallColors": number of different wall colors mentioned or 1,
+    "coats": "one" or "two" based on what's mentioned,
+    "paintType": "extracted paint type/brand or 'Premium Interior Paint'",
+    "specialConsiderations": "extracted special requirements or empty string",
+    "salesNotes": "extracted customer preferences/notes or empty string",
+    "productionDate": "extracted start date in YYYY-MM-DD format or null",
+    "discountPercent": number percentage if discount mentioned or 0
+  }
 }`
 
     console.log('Calling OpenAI with prompt for transcript:', transcript.substring(0, 200) + '...')
@@ -226,7 +247,8 @@ Return a JSON object with this exact structure:
       JSON.stringify({ 
         error: error.message,
         fields: [],
-        rooms: []
+        rooms: [],
+        projectMetadata: {}
       }),
       {
         status: 500,

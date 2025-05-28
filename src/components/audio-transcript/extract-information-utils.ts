@@ -96,6 +96,53 @@ export function processExtractedData(extractedData: Record<string, any>): Record
     processedData.rooms = [];
   }
   
+  // Process project metadata for date conversion
+  if (processedData.projectMetadata) {
+    console.log('processExtractedData - Processing project metadata:', processedData.projectMetadata);
+    
+    // Convert productionDate string to Date object if present
+    if (processedData.projectMetadata.productionDate && typeof processedData.projectMetadata.productionDate === 'string') {
+      try {
+        const dateStr = processedData.projectMetadata.productionDate;
+        // Handle various date formats
+        let parsedDate = null;
+        
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // YYYY-MM-DD format
+          parsedDate = new Date(dateStr);
+        } else {
+          // Try to parse other formats
+          parsedDate = new Date(dateStr);
+        }
+        
+        if (!isNaN(parsedDate.getTime())) {
+          processedData.projectMetadata.productionDate = parsedDate;
+          console.log('processExtractedData - Converted production date:', parsedDate);
+        } else {
+          console.warn('processExtractedData - Invalid date format:', dateStr);
+          processedData.projectMetadata.productionDate = undefined;
+        }
+      } catch (error) {
+        console.error('processExtractedData - Error parsing production date:', error);
+        processedData.projectMetadata.productionDate = undefined;
+      }
+    }
+    
+    // Ensure numeric fields are numbers
+    if (processedData.projectMetadata.wallColors && typeof processedData.projectMetadata.wallColors === 'string') {
+      processedData.projectMetadata.wallColors = parseInt(processedData.projectMetadata.wallColors, 10) || 1;
+    }
+    
+    if (processedData.projectMetadata.discountPercent && typeof processedData.projectMetadata.discountPercent === 'string') {
+      processedData.projectMetadata.discountPercent = parseFloat(processedData.projectMetadata.discountPercent) || 0;
+    }
+    
+    // Ensure coats is either 'one' or 'two'
+    if (processedData.projectMetadata.coats && !['one', 'two'].includes(processedData.projectMetadata.coats)) {
+      processedData.projectMetadata.coats = 'two'; // Default to two coats
+    }
+  }
+  
   // Log the final processed data
   console.log("processExtractedData - Final processed data:", JSON.stringify(processedData, null, 2));
   

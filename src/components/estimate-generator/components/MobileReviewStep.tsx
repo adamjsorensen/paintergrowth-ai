@@ -44,18 +44,27 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
   const [editValue, setEditValue] = useState('');
   const [localExtractedData, setLocalExtractedData] = useState(extractedData);
 
-  // Initialize project metadata with defaults if not provided
+  // Initialize project metadata with extracted data if available, otherwise use defaults
+  const initializeProjectMetadata = (): ProjectMetadata => {
+    // Check if extractedData has projectMetadata from the transcript extraction
+    const extractedMetadata = extractedData.projectMetadata || {};
+    
+    console.log('MobileReviewStep - Initializing project metadata with extracted data:', extractedMetadata);
+    
+    return {
+      trimColor: extractedMetadata.trimColor || '',
+      wallColors: extractedMetadata.wallColors || 1,
+      coats: extractedMetadata.coats || 'two',
+      paintType: extractedMetadata.paintType || 'Premium Interior Paint',
+      specialConsiderations: extractedMetadata.specialConsiderations || '',
+      salesNotes: extractedMetadata.salesNotes || '',
+      productionDate: extractedMetadata.productionDate || undefined,
+      discountPercent: extractedMetadata.discountPercent || 0
+    };
+  };
+
   const [localProjectMetadata, setLocalProjectMetadata] = useState<ProjectMetadata>(
-    projectMetadata || {
-      trimColor: '',
-      wallColors: 1,
-      coats: 'two',
-      paintType: 'Premium Interior Paint',
-      specialConsiderations: '',
-      salesNotes: '',
-      productionDate: undefined,
-      discountPercent: 0
-    }
+    projectMetadata || initializeProjectMetadata()
   );
 
   const hasData = Object.keys(localExtractedData).length > 0;
@@ -85,6 +94,7 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
   };
 
   const handleProjectMetadataChange = (metadata: ProjectMetadata) => {
+    console.log('MobileReviewStep - Project metadata updated:', metadata);
     setLocalProjectMetadata(metadata);
     if (onProjectMetadataChange) {
       onProjectMetadataChange(metadata);
@@ -98,6 +108,7 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
       ...missingInfo, // Include missing info if provided
       project_metadata: localProjectMetadata
     };
+    console.log('MobileReviewStep - Completing with data:', completeData);
     onComplete(completeData);
   };
 
