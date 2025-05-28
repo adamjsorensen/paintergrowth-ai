@@ -7,8 +7,8 @@ import { Settings, Trash2 } from 'lucide-react';
 interface LineItem {
   description: string;
   quantity: number;
-  rate: number;
-  amount: number;
+  unitPrice: number;
+  total: number;
 }
 
 interface LineItemsAccordionProps {
@@ -80,11 +80,11 @@ const LineItemsAccordion: React.FC<LineItemsAccordionProps> = ({
                     <div className="flex-1">
                       <div className="font-medium text-sm text-gray-900">{item.description}</div>
                       <div className="text-xs text-gray-600 mt-1">
-                        Qty: {item.quantity} × ${item.rate.toLocaleString()}
+                        Qty: {item.quantity ?? 0} × ${(item.unitPrice ?? 0).toLocaleString()}
                       </div>
                     </div>
                     <div className="font-medium text-sm">
-                      ${item.amount.toLocaleString()}
+                      ${(item.total ?? 0).toLocaleString()}
                     </div>
                   </div>
                 </div>
