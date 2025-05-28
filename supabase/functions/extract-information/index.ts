@@ -70,6 +70,28 @@ const getScopeExtractionPrompt = async (transcript: string) => {
   };
 };
 
+// Clean content to remove markdown formatting
+const cleanJsonContent = (content: string): string => {
+  // Remove markdown code blocks
+  let cleaned = content.trim();
+  
+  // Remove ```json prefix
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '');
+  }
+  // Remove ``` prefix (in case json isn't specified)
+  else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '');
+  }
+  
+  // Remove ``` suffix
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.replace(/\s*```$/, '');
+  }
+  
+  return cleaned.trim();
+};
+
 // Call OpenAI with the processed prompt
 const callOpenAI = async (prompt: string, model: string, temperature: number, openAIApiKey: string) => {
   console.log('Calling OpenAI with model:', model, 'temperature:', temperature);
@@ -85,7 +107,7 @@ const callOpenAI = async (prompt: string, model: string, temperature: number, op
       messages: [
         {
           role: 'system',
-          content: 'You are an expert information extraction system. Return only valid JSON responses.'
+          content: 'You are an expert information extraction system. IMPORTANT: Return ONLY valid JSON responses without any markdown formatting, code blocks, or additional text. Do not wrap your response in ```json or ``` blocks.'
         },
         {
           role: 'user',
@@ -102,12 +124,20 @@ const callOpenAI = async (prompt: string, model: string, temperature: number, op
   }
 
   const data = await response.json();
-  const content = data.choices[0].message.content;
+  let content = data.choices[0].message.content;
+  
+  console.log('Raw OpenAI response:', content);
+  
+  // Clean the content to remove any markdown formatting
+  content = cleanJsonContent(content);
+  
+  console.log('Cleaned content:', content);
   
   try {
     return JSON.parse(content);
   } catch (parseError) {
-    console.error('Failed to parse OpenAI response as JSON:', content);
+    console.error('Failed to parse OpenAI response as JSON after cleaning:', content);
+    console.error('Parse error:', parseError);
     throw new Error('Invalid JSON response from AI');
   }
 };
