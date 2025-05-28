@@ -160,36 +160,37 @@ const RoomMatrixMobile: React.FC<RoomMatrixMobileProps> = ({
                                       </button>
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-2 gap-y-2 items-center">
                                       {interiorRoomsMatrixConfig.columns.map(column => (
-                                        <div key={column.id} className="flex items-center justify-between">
+                                        <React.Fragment key={column.id}>
                                           <span className="text-sm text-gray-600">{column.label}:</span>
-                                          
-                                          {column.type === "checkbox" ? (
-                                            <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
-                                              <Checkbox
-                                                checked={Boolean(room[column.id as keyof StandardizedRoom])}
-                                                onCheckedChange={checked => 
-                                                  onCheckboxChange(room.id, column.id, Boolean(checked))
-                                                }
-                                                className="h-5 w-5"
-                                              />
-                                            </div>
-                                          ) : column.type === "number" ? (
-                                            <div className="w-20">
-                                              <Input
-                                                type="number"
-                                                min={0}
-                                                step={1}
-                                                value={room[column.id as keyof StandardizedRoom] as number}
-                                                onChange={e => 
-                                                  onNumberChange(room.id, column.id, parseInt(e.target.value) || 0)
-                                                }
-                                                className="text-center h-11 text-sm"
-                                              />
-                                            </div>
-                                          ) : null}
-                                        </div>
+                                          <div className="justify-self-end">
+                                            {column.type === "checkbox" ? (
+                                              <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+                                                <Checkbox
+                                                  checked={Boolean(room[column.id as keyof StandardizedRoom])}
+                                                  onCheckedChange={checked => 
+                                                    onCheckboxChange(room.id, column.id, Boolean(checked))
+                                                  }
+                                                  className="h-5 w-5"
+                                                />
+                                              </div>
+                                            ) : column.type === "number" ? (
+                                              <div className="w-20">
+                                                <Input
+                                                  type="number"
+                                                  min={0}
+                                                  step={1}
+                                                  value={room[column.id as keyof StandardizedRoom] as number}
+                                                  onChange={e => 
+                                                    onNumberChange(room.id, column.id, parseInt(e.target.value) || 0)
+                                                  }
+                                                  className="text-center h-11 text-sm"
+                                                />
+                                              </div>
+                                            ) : null}
+                                          </div>
+                                        </React.Fragment>
                                       ))}
                                     </div>
                                   </CardContent>
