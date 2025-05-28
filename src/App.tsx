@@ -165,6 +165,11 @@ const App = () => (
                   <BoilerplateManager />
                 </AdminRoute>
               } />
+              <Route path="/admin/estimate-prompts" element={
+                <AdminRoute>
+                  <EstimatePrompts />
+                </AdminRoute>
+              } />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
