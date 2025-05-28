@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -23,8 +22,8 @@ interface LineItem {
   id: string;
   description: string;
   quantity: number;
-  rate: number;
-  amount: number;
+  unitPrice: number;
+  total: number;
 }
 
 const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
@@ -41,11 +40,11 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   // Use prop line items if provided, otherwise use default mock data
   const [lineItems, setLineItems] = useState<LineItem[]>(
     propLineItems.length > 0 ? propLineItems : [
-      { id: '1', description: 'Interior wall painting - Living room', quantity: 1, rate: 450.00, amount: 450.00 },
-      { id: '2', description: 'Interior wall painting - Master bedroom', quantity: 1, rate: 350.00, amount: 350.00 },
-      { id: '3', description: 'Interior wall painting - Kitchen', quantity: 1, rate: 400.00, amount: 400.00 },
-      { id: '4', description: 'Trim and baseboards', quantity: 3, rate: 150.00, amount: 450.00 },
-      { id: '5', description: 'Materials and supplies', quantity: 1, rate: 800.00, amount: 800.00 }
+      { id: '1', description: 'Interior wall painting - Living room', quantity: 1, unitPrice: 450.00, total: 450.00 },
+      { id: '2', description: 'Interior wall painting - Master bedroom', quantity: 1, unitPrice: 350.00, total: 350.00 },
+      { id: '3', description: 'Interior wall painting - Kitchen', quantity: 1, unitPrice: 400.00, total: 400.00 },
+      { id: '4', description: 'Trim and baseboards', quantity: 3, unitPrice: 150.00, total: 450.00 },
+      { id: '5', description: 'Materials and supplies', quantity: 1, unitPrice: 800.00, total: 800.00 }
     ]
   );
 
@@ -67,7 +66,7 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   }, [propLineItems]);
 
   const calculateTotals = (items: LineItem[]) => {
-    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const tax = subtotal * 0.08; // 8% tax
     const total = subtotal + tax;
     return { subtotal, tax, total };
@@ -95,8 +94,8 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
         id: `item-${Date.now()}`, // Generate unique ID
         description: newItem.room,
         quantity: newItem.quantity,
-        rate: newItem.rate,
-        amount
+        unitPrice: newItem.rate,
+        total: amount
       };
       const updatedItems = [...lineItems, item];
       setLineItems(updatedItems);
