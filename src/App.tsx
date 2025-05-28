@@ -29,6 +29,7 @@ import ProposalPDFSettings from "./pages/admin/ProposalPDFSettings";
 import BoilerplateManager from "./pages/admin/BoilerplateManager";
 import Onboarding from "./pages/Onboarding";
 import EstimateGenerator from "./pages/EstimateGenerator";
+import EstimatePrompts from "./pages/admin/EstimatePrompts";
 
 // Wrapper component to handle redirect with params
 const RedirectToPrint = () => {

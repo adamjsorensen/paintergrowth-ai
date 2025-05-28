@@ -153,6 +153,42 @@ export type Database = {
         }
         Relationships: []
       }
+      estimate_prompt_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          model: string
+          name: string
+          prompt_text: string
+          purpose: Database["public"]["Enums"]["prompt_purpose"]
+          temperature: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          model?: string
+          name: string
+          prompt_text: string
+          purpose: Database["public"]["Enums"]["prompt_purpose"]
+          temperature?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          model?: string
+          name?: string
+          prompt_text?: string
+          purpose?: Database["public"]["Enums"]["prompt_purpose"]
+          temperature?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       generation_logs: {
         Row: {
           ai_response: string | null
@@ -574,6 +610,7 @@ export type Database = {
         | "matrix-selector"
         | "tax-calculator"
       modal_step_type: "style" | "scope" | "main"
+      prompt_purpose: "scope" | "suggestion" | "pdf_summary"
       section_type:
         | "client"
         | "estimator"
@@ -720,6 +757,7 @@ export const Constants = {
         "tax-calculator",
       ],
       modal_step_type: ["style", "scope", "main"],
+      prompt_purpose: ["scope", "suggestion", "pdf_summary"],
       section_type: [
         "client",
         "estimator",

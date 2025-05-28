@@ -41,6 +41,12 @@ const AdminHub = () => {
       description: "Manage proposal boilerplate content and placeholders",
       icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
       link: "/admin/boilerplate"
+    },
+    {
+      title: "Estimate Prompts",
+      description: "Manage AI prompts used in estimate generation",
+      icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
+      link: "/admin/estimate-prompts"
     }
   ];
 

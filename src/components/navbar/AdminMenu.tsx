@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,12 @@ export const AdminMenu = () => {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/admin/logs/activity" className="w-full">Activity Logs</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/admin/boilerplate" className="w-full">Boilerplate Manager</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/admin/estimate-prompts" className="w-full">Estimate Prompts</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
