@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +30,7 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [supportedMimeType, setSupportedMimeType] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -40,6 +40,43 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
   
   const { toast } = useToast();
+
+  // Detect supported audio format
+  useEffect(() => {
+    const detectSupportedFormat = () => {
+      const formats = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/ogg',
+        'audio/wav'
+      ];
+      
+      for (const format of formats) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(format)) {
+          console.log('Detected supported audio format:', format);
+          setSupportedMimeType(format);
+          return;
+        }
+      }
+      
+      // Fallback
+      console.warn('No explicitly supported format found, using default');
+      setSupportedMimeType('audio/webm');
+    };
+    
+    detectSupportedFormat();
+  }, []);
+
+  // Get file extension from MIME type
+  const getFileExtension = (mimeType: string): string => {
+    if (mimeType.includes('webm')) return '.webm';
+    if (mimeType.includes('mp4')) return '.mp4';
+    if (mimeType.includes('ogg')) return '.ogg';
+    if (mimeType.includes('wav')) return '.wav';
+    return '.webm'; // default fallback
+  };
 
   // Clean up on unmount
   useEffect(() => {
@@ -63,13 +100,17 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       recordingSegmentsRef.current = [];
       audioChunksRef.current = [];
       
-      // Create media recorder
-      const mediaRecorder = new MediaRecorder(stream);
+      // Create media recorder with detected format
+      const options = supportedMimeType ? { mimeType: supportedMimeType } : {};
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
+      
+      console.log('MediaRecorder created with mimeType:', mediaRecorder.mimeType);
       
       // Set up event handlers
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log('Audio chunk received, size:', event.data.size);
           audioChunksRef.current.push(event.data);
         }
       };
@@ -77,7 +118,9 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       mediaRecorder.onstop = () => {
         // Create blob from current chunks and add to segments
         if (audioChunksRef.current.length > 0) {
-          const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const actualMimeType = mediaRecorder.mimeType || supportedMimeType || 'audio/webm';
+          const segmentBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+          console.log('Created segment blob, size:', segmentBlob.size, 'type:', actualMimeType);
           recordingSegmentsRef.current.push(segmentBlob);
           audioChunksRef.current = [];
         }
@@ -129,13 +172,15 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
     if (streamRef.current && isPaused) {
       try {
         // Create new media recorder for the resumed segment
-        const mediaRecorder = new MediaRecorder(streamRef.current);
+        const options = supportedMimeType ? { mimeType: supportedMimeType } : {};
+        const mediaRecorder = new MediaRecorder(streamRef.current, options);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
         
         // Set up event handlers
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
+            console.log('Audio chunk received on resume, size:', event.data.size);
             audioChunksRef.current.push(event.data);
           }
         };
@@ -143,7 +188,9 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
         mediaRecorder.onstop = () => {
           // Create blob from current chunks and add to segments
           if (audioChunksRef.current.length > 0) {
-            const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+            const actualMimeType = mediaRecorder.mimeType || supportedMimeType || 'audio/webm';
+            const segmentBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+            console.log('Created resumed segment blob, size:', segmentBlob.size, 'type:', actualMimeType);
             recordingSegmentsRef.current.push(segmentBlob);
             audioChunksRef.current = [];
           }
@@ -192,10 +239,13 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       
-      // Wait a moment for the final segment to be processed, then merge
+      // Wait longer for mobile devices to process segments
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const timeout = isMobile ? 500 : 100;
+      
       setTimeout(() => {
         mergeSegments();
-      }, 100);
+      }, timeout);
       
       toast({
         title: "Recording stopped",
@@ -206,12 +256,54 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
   
   // Merge all recording segments into single blob
   const mergeSegments = () => {
-    if (recordingSegmentsRef.current.length > 0) {
-      const mergedBlob = new Blob(recordingSegmentsRef.current, { type: 'audio/wav' });
-      const audioFile = new File([mergedBlob], "recording.wav", { type: 'audio/wav' });
-      setAudioFile(audioFile);
-      console.log('Merged', recordingSegmentsRef.current.length, 'segments into final audio blob');
+    console.log('Merging', recordingSegmentsRef.current.length, 'segments');
+    
+    if (recordingSegmentsRef.current.length === 0) {
+      console.error('No segments to merge');
+      toast({
+        title: "Recording error",
+        description: "No audio data recorded. Please try again.",
+        variant: "destructive",
+      });
+      return;
     }
+    
+    // Validate that segments have data
+    const validSegments = recordingSegmentsRef.current.filter(segment => segment.size > 0);
+    if (validSegments.length === 0) {
+      console.error('All segments are empty');
+      toast({
+        title: "Recording error", 
+        description: "No valid audio data recorded. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('Valid segments:', validSegments.length, 'Total size:', validSegments.reduce((sum, s) => sum + s.size, 0));
+    
+    // Use the MIME type from the first valid segment or fallback
+    const firstSegment = validSegments[0];
+    const mimeType = firstSegment.type || supportedMimeType || 'audio/webm';
+    const extension = getFileExtension(mimeType);
+    
+    // Merge all valid segments
+    const mergedBlob = new Blob(validSegments, { type: mimeType });
+    console.log('Merged blob created, size:', mergedBlob.size, 'type:', mimeType);
+    
+    if (mergedBlob.size === 0) {
+      console.error('Merged blob is empty');
+      toast({
+        title: "Recording error",
+        description: "Failed to create audio file. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const audioFile = new File([mergedBlob], `recording${extension}`, { type: mimeType });
+    setAudioFile(audioFile);
+    console.log('Final audio file created:', audioFile.name, 'size:', audioFile.size, 'type:', audioFile.type);
   };
 
   // Format seconds to MM:SS
@@ -602,11 +694,11 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <FileAudio className="w-5 h-5 mr-2 text-primary" />
-                    <span className="font-medium">Recording.wav</span>
+                    <span className="font-medium">{audioFile.name}</span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-sm text-muted-foreground mr-2">
-                      {formatTime(recordingTime)}
+                      {formatTime(recordingTime)} - {(audioFile.size / (1024 * 1024)).toFixed(2)} MB
                     </span>
                     <Button 
                       variant="ghost" 

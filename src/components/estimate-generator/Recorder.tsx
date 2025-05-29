@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [supportedMimeType, setSupportedMimeType] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -24,6 +26,34 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
   const streamRef = useRef<MediaStream | null>(null);
   
   const MAX_RECORDING_TIME = 120; // 2 minutes in seconds
+
+  // Detect supported audio format
+  useEffect(() => {
+    const detectSupportedFormat = () => {
+      const formats = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/ogg',
+        'audio/wav'
+      ];
+      
+      for (const format of formats) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(format)) {
+          console.log('Detected supported audio format:', format);
+          setSupportedMimeType(format);
+          return;
+        }
+      }
+      
+      // Fallback
+      console.warn('No explicitly supported format found, using default');
+      setSupportedMimeType('audio/webm');
+    };
+    
+    detectSupportedFormat();
+  }, []);
   
   // Clean up on unmount
   useEffect(() => {
@@ -50,13 +80,17 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
       recordingSegmentsRef.current = [];
       audioChunksRef.current = [];
       
-      // Create media recorder
-      const mediaRecorder = new MediaRecorder(stream);
+      // Create media recorder with detected format
+      const options = supportedMimeType ? { mimeType: supportedMimeType } : {};
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
+      
+      console.log('MediaRecorder created with mimeType:', mediaRecorder.mimeType);
       
       // Set up event handlers
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log('Audio chunk received, size:', event.data.size);
           audioChunksRef.current.push(event.data);
         }
       };
@@ -64,7 +98,9 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
       mediaRecorder.onstop = () => {
         // Create blob from current chunks and add to segments
         if (audioChunksRef.current.length > 0) {
-          const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const actualMimeType = mediaRecorder.mimeType || supportedMimeType || 'audio/webm';
+          const segmentBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+          console.log('Created segment blob, size:', segmentBlob.size, 'type:', actualMimeType);
           recordingSegmentsRef.current.push(segmentBlob);
           audioChunksRef.current = [];
         }
@@ -119,13 +155,15 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
     if (streamRef.current && isPaused) {
       try {
         // Create new media recorder for the resumed segment
-        const mediaRecorder = new MediaRecorder(streamRef.current);
+        const options = supportedMimeType ? { mimeType: supportedMimeType } : {};
+        const mediaRecorder = new MediaRecorder(streamRef.current, options);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
         
         // Set up event handlers
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
+            console.log('Audio chunk received on resume, size:', event.data.size);
             audioChunksRef.current.push(event.data);
           }
         };
@@ -133,7 +171,9 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
         mediaRecorder.onstop = () => {
           // Create blob from current chunks and add to segments
           if (audioChunksRef.current.length > 0) {
-            const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+            const actualMimeType = mediaRecorder.mimeType || supportedMimeType || 'audio/webm';
+            const segmentBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+            console.log('Created resumed segment blob, size:', segmentBlob.size, 'type:', actualMimeType);
             recordingSegmentsRef.current.push(segmentBlob);
             audioChunksRef.current = [];
           }
@@ -173,20 +213,52 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       
-      // Wait a moment for the final segment to be processed, then merge
+      // Wait longer for mobile devices to process segments
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const timeout = isMobile ? 500 : 100;
+      
       setTimeout(() => {
         mergeSegments();
-      }, 100);
+      }, timeout);
     }
   };
   
   // Merge all recording segments into single blob
   const mergeSegments = () => {
-    if (recordingSegmentsRef.current.length > 0) {
-      const mergedBlob = new Blob(recordingSegmentsRef.current, { type: 'audio/wav' });
-      setAudioBlob(mergedBlob);
-      console.log('Merged', recordingSegmentsRef.current.length, 'segments into final audio blob');
+    console.log('Merging', recordingSegmentsRef.current.length, 'segments');
+    
+    if (recordingSegmentsRef.current.length === 0) {
+      console.error('No segments to merge');
+      setRecordingError('No audio data recorded. Please try again.');
+      return;
     }
+    
+    // Validate that segments have data
+    const validSegments = recordingSegmentsRef.current.filter(segment => segment.size > 0);
+    if (validSegments.length === 0) {
+      console.error('All segments are empty');
+      setRecordingError('No valid audio data recorded. Please try again.');
+      return;
+    }
+    
+    console.log('Valid segments:', validSegments.length, 'Total size:', validSegments.reduce((sum, s) => sum + s.size, 0));
+    
+    // Use the MIME type from the first valid segment or fallback
+    const firstSegment = validSegments[0];
+    const mimeType = firstSegment.type || supportedMimeType || 'audio/webm';
+    
+    // Merge all valid segments
+    const mergedBlob = new Blob(validSegments, { type: mimeType });
+    console.log('Merged blob created, size:', mergedBlob.size, 'type:', mimeType);
+    
+    if (mergedBlob.size === 0) {
+      console.error('Merged blob is empty');
+      setRecordingError('Failed to create audio file. Please try again.');
+      return;
+    }
+    
+    setAudioBlob(mergedBlob);
+    console.log('Final audio blob created, size:', mergedBlob.size, 'type:', mergedBlob.type);
   };
   
   // Format time as MM:SS
@@ -344,7 +416,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
             <div className="text-center">
               <h3 className="text-xl font-medium mb-2">Recording Complete</h3>
               <p className="text-gray-500 mb-4">
-                {formatTime(recordingTime)} of audio recorded
+                {formatTime(recordingTime)} of audio recorded ({(audioBlob.size / (1024 * 1024)).toFixed(2)} MB)
               </p>
               
               <div className="flex gap-4 mt-4">
