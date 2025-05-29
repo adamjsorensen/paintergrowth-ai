@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +58,25 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       return;
     }
     
+    // Validate audio file format and size
+    if (!audioFile.type.startsWith('audio/')) {
+      toast({
+        title: "Invalid file format",
+        description: "Please provide a valid audio file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (audioFile.size === 0) {
+      toast({
+        title: "Empty audio file",
+        description: "The audio file appears to be empty. Please try recording again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsTranscribing(true);
     setTranscriptionProgress(0);
     setUploadError(null);
@@ -87,8 +105,14 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
         });
       }, 500);
       
+      console.log(`Sending for transcription: ${audioFile.name} (${audioFile.type}, ${audioFile.size} bytes)`);
+      
       const { data, error } = await supabase.functions.invoke('transcribe-audio', {
-        body: { audioBase64: base64Data }
+        body: { 
+          audioBase64: base64Data,
+          mimeType: audioFile.type,
+          fileName: audioFile.name
+        }
       });
       
       clearInterval(progressInterval);

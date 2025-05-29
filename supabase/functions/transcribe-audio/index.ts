@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -13,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { audioBase64 } = await req.json();
+    const { audioBase64, mimeType, fileName } = await req.json();
     
     if (!audioBase64) {
       return new Response(
@@ -31,22 +32,47 @@ serve(async (req) => {
       );
     }
 
+    // Use the provided MIME type or fallback to webm
+    const actualMimeType = mimeType || 'audio/webm';
+    
+    // Get file extension based on MIME type
+    const getFileExtension = (type: string): string => {
+      if (type.includes('webm')) return '.webm';
+      if (type.includes('mp4')) return '.mp4';
+      if (type.includes('ogg')) return '.ogg';
+      if (type.includes('wav')) return '.wav';
+      return '.webm'; // default fallback
+    };
+    
+    const extension = getFileExtension(actualMimeType);
+    const audioFileName = fileName || `audio${extension}`;
+
     // Log request details for debugging
     console.log(`Transcribing audio: ${audioBase64.substring(0, 50)}... (${audioBase64.length} bytes)`);
+    console.log(`MIME type: ${actualMimeType}, File name: ${audioFileName}`);
 
     try {
       // Convert base64 to binary
       const binaryData = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
       
-      // Create a blob from the binary data
-      const blob = new Blob([binaryData], { type: 'audio/wav' });
+      // Validate audio file size (should be > 0)
+      if (binaryData.length === 0) {
+        throw new Error('Audio file is empty');
+      }
+      
+      console.log(`Audio file size: ${binaryData.length} bytes`);
+      
+      // Create a blob from the binary data with the correct MIME type
+      const blob = new Blob([binaryData], { type: actualMimeType });
       
       // Create a FormData object
       const formData = new FormData();
-      formData.append('file', blob, 'audio.wav');
+      formData.append('file', blob, audioFileName);
       formData.append('model', 'whisper-1');
       formData.append('language', 'en'); // Specify English language for better accuracy
       formData.append('response_format', 'json'); // Ensure JSON response
+      formData.append('temperature', '0'); // More deterministic results
+      formData.append('prompt', 'This is a construction job site walkthrough or client conversation about painting, renovation, or home improvement work.');
       
       // Call OpenAI Whisper API with retry logic
       let response;
@@ -93,7 +119,7 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      console.log("Transcription successful");
+      console.log("Transcription successful, text length:", data.text?.length || 0);
       
       return new Response(
         JSON.stringify(data),
