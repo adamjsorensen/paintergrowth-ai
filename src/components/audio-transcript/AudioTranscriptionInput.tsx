@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Upload, FileAudio, Loader2, Check, X, AlertCircle } from "lucide-react";
+import { Mic, Upload, FileAudio, Loader2, Check, X, AlertCircle, Pause, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +19,7 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>("upload");
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -33,6 +34,7 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingSegmentsRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
@@ -56,10 +58,15 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
+      // Reset segments and chunks for new recording
+      recordingSegmentsRef.current = [];
       audioChunksRef.current = [];
       
+      // Create media recorder
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      // Set up event handlers
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -67,19 +74,21 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       };
       
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const audioFile = new File([audioBlob], "recording.wav", { type: 'audio/wav' });
-        setAudioFile(audioFile);
-        
-        // Stop all tracks in the stream
-        stream.getTracks().forEach(track => track.stop());
+        // Create blob from current chunks and add to segments
+        if (audioChunksRef.current.length > 0) {
+          const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          recordingSegmentsRef.current.push(segmentBlob);
+          audioChunksRef.current = [];
+        }
       };
       
+      // Start recording
       mediaRecorder.start();
       setIsRecording(true);
+      setIsPaused(false);
       setRecordingTime(0);
       
-      // Start timer to track recording duration
+      // Start timer
       recordingTimerRef.current = window.setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
@@ -98,11 +107,68 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
     }
   };
 
+  // Pause recording
+  const pauseRecording = () => {
+    if (mediaRecorderRef.current && isRecording && !isPaused) {
+      mediaRecorderRef.current.stop();
+      setIsPaused(true);
+      
+      // Keep timer running but pause recording
+      console.log('Recording paused at', recordingTime, 'seconds');
+    }
+  };
+  
+  // Resume recording
+  const resumeRecording = async () => {
+    if (streamRef.current && isPaused) {
+      try {
+        // Create new media recorder for the resumed segment
+        const mediaRecorder = new MediaRecorder(streamRef.current);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        
+        // Set up event handlers
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => {
+          // Create blob from current chunks and add to segments
+          if (audioChunksRef.current.length > 0) {
+            const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+            recordingSegmentsRef.current.push(segmentBlob);
+            audioChunksRef.current = [];
+          }
+        };
+        
+        // Start the new segment
+        mediaRecorder.start();
+        setIsPaused(false);
+        
+        console.log('Recording resumed at', recordingTime, 'seconds');
+        
+      } catch (error) {
+        console.error('Error resuming recording:', error);
+        toast({
+          title: "Resume failed",
+          description: "Could not resume recording. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   // Stop recording audio
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current && (isRecording || isPaused)) {
+      if (!isPaused) {
+        mediaRecorderRef.current.stop();
+      }
+      
       setIsRecording(false);
+      setIsPaused(false);
       
       // Clear the recording timer
       if (recordingTimerRef.current) {
@@ -110,10 +176,30 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
         recordingTimerRef.current = null;
       }
       
+      // Stop stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      // Wait a moment for the final segment to be processed, then merge
+      setTimeout(() => {
+        mergeSegments();
+      }, 100);
+      
       toast({
         title: "Recording stopped",
         description: `Recorded ${formatTime(recordingTime)}`,
       });
+    }
+  };
+  
+  // Merge all recording segments into single blob
+  const mergeSegments = () => {
+    if (recordingSegmentsRef.current.length > 0) {
+      const mergedBlob = new Blob(recordingSegmentsRef.current, { type: 'audio/wav' });
+      const audioFile = new File([mergedBlob], "recording.wav", { type: 'audio/wav' });
+      setAudioFile(audioFile);
+      console.log('Merged', recordingSegmentsRef.current.length, 'segments into final audio blob');
     }
   };
 
@@ -435,30 +521,72 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
           
           <TabsContent value="record" className="space-y-4 py-4">
             <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
-              <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${isRecording ? 'bg-red-100 animate-pulse' : 'bg-muted'}`}>
-                <Mic className={`w-12 h-12 ${isRecording ? 'text-red-500' : 'text-muted-foreground'}`} />
+              <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${
+                isRecording && !isPaused
+                  ? 'bg-red-100 animate-pulse' 
+                  : isPaused
+                    ? 'bg-yellow-100'
+                    : 'bg-muted'
+              }`}>
+                <Mic className={`w-12 h-12 ${
+                  isRecording && !isPaused
+                    ? 'text-red-500' 
+                    : isPaused
+                      ? 'text-yellow-500'
+                      : 'text-muted-foreground'
+                }`} />
               </div>
               
-              {isRecording ? (
+              {(isRecording || isPaused) ? (
                 <div className="text-center mb-4">
                   <div className="text-2xl font-bold">{formatTime(recordingTime)}</div>
-                  <p className="text-sm text-muted-foreground">Recording in progress...</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isPaused ? 'Recording paused...' : 'Recording in progress...'}
+                  </p>
+                  
+                  <div className="flex gap-3 mt-4">
+                    {!isPaused ? (
+                      <Button 
+                        variant="outline"
+                        onClick={pauseRecording}
+                      >
+                        <Pause className="mr-2 h-4 w-4" />
+                        Pause
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline"
+                        onClick={resumeRecording}
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        Resume
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="destructive" 
+                      onClick={stopRecording}
+                    >
+                      Stop Recording
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <h3 className="text-lg font-medium mb-4">Record Audio</h3>
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-4">Record Audio</h3>
+                  <Button 
+                    variant="default"
+                    size="lg"
+                    className="w-full max-w-xs"
+                    onClick={startRecording}
+                  >
+                    Start Recording
+                  </Button>
+                </div>
               )}
-              
-              <Button 
-                variant={isRecording ? "destructive" : "default"}
-                size="lg"
-                className="w-full max-w-xs"
-                onClick={isRecording ? stopRecording : startRecording}
-              >
-                {isRecording ? "Stop Recording" : "Start Recording"}
-              </Button>
             </div>
             
-            {audioFile && !isRecording && (
+            {audioFile && !isRecording && !isPaused && (
               <div className="bg-muted/30 p-4 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
