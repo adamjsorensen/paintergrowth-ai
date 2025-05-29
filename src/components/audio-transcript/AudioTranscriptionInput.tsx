@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,7 +114,12 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
       mediaRecorderRef.current.stop();
       setIsPaused(true);
       
-      // Keep timer running but pause recording
+      // Stop the timer when pausing
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
       console.log('Recording paused at', recordingTime, 'seconds');
     }
   };
@@ -146,6 +152,11 @@ const AudioTranscriptionInput: React.FC<AudioTranscriptionInputProps> = ({
         // Start the new segment
         mediaRecorder.start();
         setIsPaused(false);
+        
+        // Restart the timer from current time
+        recordingTimerRef.current = window.setInterval(() => {
+          setRecordingTime(prev => prev + 1);
+        }, 1000);
         
         console.log('Recording resumed at', recordingTime, 'seconds');
         
