@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, AlertTriangle } from 'lucide-react';
+import { Mic, Square, AlertTriangle, Pause, Play } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 
@@ -11,6 +11,7 @@ interface RecorderProps {
 
 const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -18,6 +19,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingSegmentsRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
@@ -44,10 +46,13 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
+      // Reset segments and chunks for new recording
+      recordingSegmentsRef.current = [];
+      audioChunksRef.current = [];
+      
       // Create media recorder
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
       
       // Set up event handlers
       mediaRecorder.ondataavailable = (event) => {
@@ -57,16 +62,18 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
       };
       
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        setAudioBlob(audioBlob);
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        // Create blob from current chunks and add to segments
+        if (audioChunksRef.current.length > 0) {
+          const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          recordingSegmentsRef.current.push(segmentBlob);
+          audioChunksRef.current = [];
+        }
       };
       
       // Start recording
       mediaRecorder.start();
       setIsRecording(true);
+      setIsPaused(false);
       setRecordingTime(0);
       
       // Start timer
@@ -96,17 +103,89 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
     }
   };
   
+  // Pause recording
+  const pauseRecording = () => {
+    if (mediaRecorderRef.current && isRecording && !isPaused) {
+      mediaRecorderRef.current.stop();
+      setIsPaused(true);
+      
+      // Keep timer running but pause recording
+      console.log('Recording paused at', recordingTime, 'seconds');
+    }
+  };
+  
+  // Resume recording
+  const resumeRecording = async () => {
+    if (streamRef.current && isPaused) {
+      try {
+        // Create new media recorder for the resumed segment
+        const mediaRecorder = new MediaRecorder(streamRef.current);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        
+        // Set up event handlers
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => {
+          // Create blob from current chunks and add to segments
+          if (audioChunksRef.current.length > 0) {
+            const segmentBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+            recordingSegmentsRef.current.push(segmentBlob);
+            audioChunksRef.current = [];
+          }
+        };
+        
+        // Start the new segment
+        mediaRecorder.start();
+        setIsPaused(false);
+        
+        console.log('Recording resumed at', recordingTime, 'seconds');
+        
+      } catch (error) {
+        console.error('Error resuming recording:', error);
+        setRecordingError(`Could not resume recording: ${error.message}`);
+      }
+    }
+  };
+  
   // Stop recording
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current && (isRecording || isPaused)) {
+      if (!isPaused) {
+        mediaRecorderRef.current.stop();
+      }
+      
       setIsRecording(false);
+      setIsPaused(false);
       
       // Clear timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      
+      // Stop stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      // Wait a moment for the final segment to be processed, then merge
+      setTimeout(() => {
+        mergeSegments();
+      }, 100);
+    }
+  };
+  
+  // Merge all recording segments into single blob
+  const mergeSegments = () => {
+    if (recordingSegmentsRef.current.length > 0) {
+      const mergedBlob = new Blob(recordingSegmentsRef.current, { type: 'audio/wav' });
+      setAudioBlob(mergedBlob);
+      console.log('Merged', recordingSegmentsRef.current.length, 'segments into final audio blob');
     }
   };
   
@@ -150,43 +229,59 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
       <Card className="border-2 border-dashed">
         <CardContent className="pt-6 pb-8 flex flex-col items-center justify-center">
           <div className={`relative w-40 h-40 rounded-full flex items-center justify-center mb-6 ${
-            isRecording 
+            isRecording && !isPaused
               ? 'bg-red-100 animate-pulse' 
-              : audioBlob 
-                ? 'bg-green-100' 
-                : 'bg-blue-100'
+              : isPaused
+                ? 'bg-yellow-100'
+                : audioBlob 
+                  ? 'bg-green-100' 
+                  : 'bg-blue-100'
           }`}>
             <div className={`absolute inset-0 rounded-full ${
-              isRecording ? 'animate-ping bg-red-400 opacity-25' : 'opacity-0'
+              isRecording && !isPaused ? 'animate-ping bg-red-400 opacity-25' : 'opacity-0'
             }`}></div>
             
             <Button 
               className={`w-32 h-32 rounded-full ${
-                isRecording 
+                isRecording && !isPaused
                   ? 'bg-red-500 hover:bg-red-600' 
-                  : audioBlob 
-                    ? 'bg-green-500 hover:bg-green-600' 
-                    : 'bg-blue-600 hover:bg-blue-700'
+                  : isPaused
+                    ? 'bg-yellow-500 hover:bg-yellow-600'
+                    : audioBlob 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-blue-600 hover:bg-blue-700'
               }`}
-              onClick={isRecording ? stopRecording : startRecording}
+              onClick={
+                !isRecording && !audioBlob 
+                  ? startRecording 
+                  : isPaused 
+                    ? resumeRecording
+                    : isRecording
+                      ? pauseRecording
+                      : undefined
+              }
               disabled={permissionDenied || !!audioBlob}
             >
-              {isRecording ? (
-                <Square className="h-12 w-12" />
+              {!isRecording && !audioBlob ? (
+                <Mic className="h-12 w-12" />
+              ) : isPaused ? (
+                <Play className="h-12 w-12" />
+              ) : isRecording ? (
+                <Pause className="h-12 w-12" />
               ) : audioBlob ? (
                 <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-              ) : (
-                <Mic className="h-12 w-12" />
-              )}
+              ) : null}
             </Button>
           </div>
           
-          {isRecording && (
+          {(isRecording || isPaused) && (
             <div className="text-center mb-4">
               <div className="text-3xl font-bold mb-2">{formatTime(recordingTime)}</div>
-              <p className="text-sm text-gray-500">Recording in progress...</p>
+              <p className="text-sm text-gray-500">
+                {isPaused ? 'Recording paused...' : 'Recording in progress...'}
+              </p>
               
               <div className="w-full mt-4">
                 <Progress value={progressPercentage} className="h-2" />
@@ -195,17 +290,37 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
                 </p>
               </div>
               
-              <Button 
-                variant="destructive" 
-                className="mt-4"
-                onClick={stopRecording}
-              >
-                Stop Recording
-              </Button>
+              <div className="flex gap-3 mt-4">
+                {!isPaused ? (
+                  <Button 
+                    variant="outline"
+                    onClick={pauseRecording}
+                  >
+                    <Pause className="mr-2 h-4 w-4" />
+                    Pause
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline"
+                    onClick={resumeRecording}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Resume
+                  </Button>
+                )}
+                
+                <Button 
+                  variant="destructive" 
+                  onClick={stopRecording}
+                >
+                  <Square className="mr-2 h-4 w-4" />
+                  Stop Recording
+                </Button>
+              </div>
             </div>
           )}
           
-          {!isRecording && !audioBlob && (
+          {!isRecording && !isPaused && !audioBlob && (
             <div className="text-center">
               <h3 className="text-xl font-medium mb-2">Record Audio</h3>
               <p className="text-gray-500 mb-4">
@@ -225,7 +340,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
             </div>
           )}
           
-          {!isRecording && audioBlob && (
+          {!isRecording && !isPaused && audioBlob && (
             <div className="text-center">
               <h3 className="text-xl font-medium mb-2">Recording Complete</h3>
               <p className="text-gray-500 mb-4">
@@ -236,6 +351,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
                 <Button variant="outline" onClick={() => {
                   setAudioBlob(null);
                   setRecordingTime(0);
+                  recordingSegmentsRef.current = [];
                 }}>
                   Record Again
                 </Button>
@@ -255,6 +371,7 @@ const Recorder: React.FC<RecorderProps> = ({ onComplete }) => {
           <li>Mention room names, surfaces to be painted, and any special requirements</li>
           <li>Include approximate square footage if known</li>
           <li>Describe the current condition of the surfaces</li>
+          <li>Use pause/resume if you need to think or check details</li>
         </ul>
       </div>
     </div>
