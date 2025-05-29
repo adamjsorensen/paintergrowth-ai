@@ -1,19 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RefreshCcw } from 'lucide-react';
 import StepIndicator from '@/components/estimate-generator/components/StepIndicator';
 import MobileStepIndicator from '@/components/estimate-generator/components/MobileStepIndicator';
 import StepRenderer from '@/components/estimate-generator/components/StepRenderer';
+import StartOverDialog from '@/components/estimate-generator/components/StartOverDialog';
 import { useEstimateFlow } from '@/components/estimate-generator/hooks/useEstimateFlow';
 import { ESTIMATE_STEPS } from '@/components/estimate-generator/constants/EstimateSteps';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const EstimateGenerator = () => {
-  const { state, handlers, setCurrentStep } = useEstimateFlow();
+  const { state, handlers, setCurrentStep, restartWorkflow } = useEstimateFlow();
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   // Adjust step logic for mobile flow (skip step 3 since it's combined with step 2)
   const getMaxStep = () => isMobile ? 3 : 4;
@@ -55,13 +57,35 @@ const EstimateGenerator = () => {
     }
   };
 
+  const handleStartOver = () => {
+    setShowStartOverDialog(true);
+  };
+
+  const confirmStartOver = () => {
+    restartWorkflow();
+    setShowStartOverDialog(false);
+  };
+
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Mobile Header - only show for steps that need it */}
         {state.currentStep !== 2 && (
           <div className="bg-white border-b border-gray-200 px-4 py-4">
-            <h1 className="text-lg font-semibold text-center">Estimate Generator</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-lg font-semibold">Estimate Generator</h1>
+              {state.currentStep > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartOver}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <RefreshCcw className="h-4 w-4 mr-1" />
+                  Start Over
+                </Button>
+              )}
+            </div>
             <MobileStepIndicator steps={ESTIMATE_STEPS} currentStep={state.currentStep} />
           </div>
         )}
@@ -101,6 +125,12 @@ const EstimateGenerator = () => {
             </div>
           </div>
         )}
+
+        <StartOverDialog
+          isOpen={showStartOverDialog}
+          onClose={() => setShowStartOverDialog(false)}
+          onConfirm={confirmStartOver}
+        />
       </div>
     );
   }
@@ -110,10 +140,25 @@ const EstimateGenerator = () => {
       <div className="container max-w-4xl mx-auto">
         <Card className="border-none shadow-md">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">Create an Estimate with Voice</CardTitle>
-            <CardDescription>
-              Record audio, upload files, or paste a transcript to generate an estimate
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <CardTitle className="text-2xl font-bold">Create an Estimate with Voice</CardTitle>
+                <CardDescription>
+                  Record audio, upload files, or paste a transcript to generate an estimate
+                </CardDescription>
+              </div>
+              {state.currentStep > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStartOver}
+                  className="ml-4 text-gray-600 hover:text-gray-900"
+                >
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Start Over
+                </Button>
+              )}
+            </div>
             
             <StepIndicator steps={ESTIMATE_STEPS} currentStep={state.currentStep} />
           </CardHeader>
@@ -141,6 +186,12 @@ const EstimateGenerator = () => {
             </CardFooter>
           )}
         </Card>
+
+        <StartOverDialog
+          isOpen={showStartOverDialog}
+          onClose={() => setShowStartOverDialog(false)}
+          onConfirm={confirmStartOver}
+        />
       </div>
     </PageLayout>
   );
