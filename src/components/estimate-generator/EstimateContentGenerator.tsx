@@ -47,7 +47,8 @@ const EstimateContentGenerator: React.FC<EstimateContentGeneratorProps> = ({
           estimateData,
           projectType,
           lineItems,
-          totals
+          totals,
+          purpose: 'pdf_summary'
         }
       });
 
@@ -55,12 +56,12 @@ const EstimateContentGenerator: React.FC<EstimateContentGeneratorProps> = ({
         throw new Error(functionError.message);
       }
 
-      if (!data || !data.content) {
+      if (!data) {
         throw new Error('No content generated');
       }
 
-      console.log('Content generated:', data.content);
-      setGeneratedContent(data.content);
+      console.log('Content generated:', data);
+      setGeneratedContent(data);
       
       toast({
         title: "Content Generated",

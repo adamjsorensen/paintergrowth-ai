@@ -25,10 +25,11 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { estimateData, projectType, lineItems, totals, purpose = 'content' } = body;
+    const { estimateData, projectType, lineItems, totals, purpose = 'pdf_summary' } = body;
 
     console.log(`Generating estimate content for: {
   projectType: "${projectType}",
+  purpose: "${purpose}",
   totals: ${JSON.stringify(totals)}
 }`);
 
@@ -104,15 +105,23 @@ serve(async (req) => {
       generatedContent = JSON.parse(aiResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      // Return a structured response even if parsing fails
-      generatedContent = {
-        projectOverview: aiResponse.substring(0, 500) + '...',
-        scopeOfWork: 'Generated content could not be parsed properly.',
-        materialsAndLabor: '',
-        timeline: '',
-        termsAndConditions: '',
-        additionalNotes: ''
-      };
+      
+      if (purpose === 'suggestion') {
+        // Return empty suggestions array if parsing fails
+        generatedContent = {
+          suggestions: []
+        };
+      } else {
+        // Return a structured response for content generation even if parsing fails
+        generatedContent = {
+          projectOverview: aiResponse.substring(0, 500) + '...',
+          scopeOfWork: 'Generated content could not be parsed properly.',
+          materialsAndLabor: '',
+          timeline: '',
+          termsAndConditions: '',
+          additionalNotes: ''
+        };
+      }
     }
 
     if (purpose === 'suggestion') {
