@@ -45,6 +45,8 @@ const getInitialState = (): EstimateState => {
     estimateFields: {},
     lineItems: [],
     totals: {},
+    suggestions: {},
+    acceptedSuggestions: [],
     generatedContent: {},
     editedContent: {}
   };
@@ -138,13 +140,22 @@ export const useEstimateFlow = () => {
       }));
     },
 
+    handleSuggestionsComplete: (acceptedSuggestions: string[]) => {
+      console.log('EstimateGenerator - Suggestions completed:', acceptedSuggestions);
+      setState(prev => ({
+        ...prev,
+        acceptedSuggestions,
+        currentStep: 5
+      }));
+    },
+
     handleContentGenerated: (content: Record<string, any>) => {
       console.log('EstimateGenerator - Content generated:', content);
       setState(prev => ({
         ...prev,
         generatedContent: content,
         editedContent: content,
-        currentStep: 5
+        currentStep: 6
       }));
     },
 
@@ -153,7 +164,7 @@ export const useEstimateFlow = () => {
       setState(prev => ({
         ...prev,
         editedContent,
-        currentStep: 6
+        currentStep: 7
       }));
     },
 
@@ -168,6 +179,8 @@ export const useEstimateFlow = () => {
         estimateFields: state.estimateFields,
         lineItems: state.lineItems,
         totals: state.totals,
+        suggestions: state.suggestions,
+        acceptedSuggestions: state.acceptedSuggestions,
         generatedContent: state.generatedContent,
         editedContent: state.editedContent
       };
@@ -184,11 +197,11 @@ export const useEstimateFlow = () => {
     },
 
     handleBackToContentGeneration: () => {
-      setState(prev => ({ ...prev, currentStep: 4 }));
+      setState(prev => ({ ...prev, currentStep: 5 }));
     },
 
     handleBackToContentEditor: () => {
-      setState(prev => ({ ...prev, currentStep: 5 }));
+      setState(prev => ({ ...prev, currentStep: 6 }));
     }
   };
 
@@ -216,6 +229,8 @@ export const useEstimateFlow = () => {
       estimateFields: {},
       lineItems: [],
       totals: {},
+      suggestions: {},
+      acceptedSuggestions: [],
       generatedContent: {},
       editedContent: {}
     });

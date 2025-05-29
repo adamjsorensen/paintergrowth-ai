@@ -18,7 +18,7 @@ const EstimateGenerator = () => {
   const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   // Adjust step logic for mobile flow (skip step 3 since it's combined with step 2)
-  const getMaxStep = () => isMobile ? 3 : 4;
+  const getMaxStep = () => isMobile ? 4 : 5;
   const canGoBack = state.currentStep > 0 && state.currentStep < getMaxStep();
   const canGoForward = state.currentStep > 0 && state.currentStep < getMaxStep();
   
@@ -35,6 +35,9 @@ const EstimateGenerator = () => {
       case 3: 
         // Only applies to desktop
         return !isMobile && Object.keys(state.estimateFields).length > 0;
+      case 4:
+        // Suggestions step - always allow to continue (suggestions are optional)
+        return true;
       default: return true;
     }
   };
@@ -42,7 +45,7 @@ const EstimateGenerator = () => {
   const handleContinue = () => {
     // Skip step 3 on mobile since it's combined with step 2
     if (isMobile && state.currentStep === 2) {
-      setCurrentStep(4); // Jump to content generation
+      setCurrentStep(4); // Jump to suggestions
     } else {
       setCurrentStep(Math.min(ESTIMATE_STEPS.length - 1, state.currentStep + 1));
     }
@@ -167,7 +170,7 @@ const EstimateGenerator = () => {
             <StepRenderer state={state} handlers={handlers} />
           </CardContent>
           
-          {state.currentStep > 0 && state.currentStep < 4 && (
+          {state.currentStep > 0 && state.currentStep < 5 && (
             <CardFooter className="flex justify-between border-t pt-6">
               <Button 
                 variant="outline" 

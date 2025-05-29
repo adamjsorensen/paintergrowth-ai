@@ -5,6 +5,7 @@ import MobileProjectTypeSelector from './MobileProjectTypeSelector';
 import ReviewEditStep from './ReviewEditStep';
 import MobileReviewStep from './MobileReviewStep';
 import MobilePricingStep from './MobilePricingStep';
+import EstimateSuggestionEngine from './EstimateSuggestionEngine';
 import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
 import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
 import EstimateReview from '@/components/estimate-generator/EstimateReview';
@@ -40,6 +41,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
     handleInformationExtracted,
     handleMissingInfoComplete,
     handleEstimateComplete,
+    handleSuggestionsComplete,
     handleContentGenerated,
     handleContentEdited,
     handlePDFComplete,
@@ -96,6 +98,16 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
       );
     case 4:
       return (
+        <EstimateSuggestionEngine
+          estimateData={{ ...extractedData, ...missingInfo }}
+          projectType={projectType}
+          lineItems={lineItems}
+          totals={totals}
+          onComplete={handleSuggestionsComplete}
+        />
+      );
+    case 5:
+      return (
         <EstimateContentGenerator
           estimateData={{ ...extractedData, ...missingInfo }}
           projectType={projectType}
@@ -104,7 +116,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
           onComplete={handleContentGenerated}
         />
       );
-    case 5:
+    case 6:
       return (
         <EstimateContentEditor
           content={generatedContent}
@@ -112,7 +124,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
           onBack={handleBackToContentGeneration}
         />
       );
-    case 6:
+    case 7:
       return (
         <EstimatePDFGenerator
           estimateData={{ ...extractedData, ...missingInfo }}

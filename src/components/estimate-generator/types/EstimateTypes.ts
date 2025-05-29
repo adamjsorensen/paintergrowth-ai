@@ -14,6 +14,8 @@ export interface EstimateState {
   estimateFields: Record<string, any>;
   lineItems: any[];
   totals: Record<string, any>;
+  suggestions: Record<string, any>;
+  acceptedSuggestions: string[];
   generatedContent: Record<string, any>;
   editedContent: Record<string, any>;
 }
@@ -23,6 +25,7 @@ export interface EstimateHandlers {
   handleInformationExtracted: (data: Record<string, any>) => void;
   handleMissingInfoComplete: (info: Record<string, any>) => void;
   handleEstimateComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
+  handleSuggestionsComplete: (acceptedSuggestions: string[]) => void;
   handleContentGenerated: (content: Record<string, any>) => void;
   handleContentEdited: (editedContent: Record<string, any>) => void;
   handlePDFComplete: () => void;
