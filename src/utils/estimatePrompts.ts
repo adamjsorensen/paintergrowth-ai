@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type PromptPurpose = 'scope' | 'suggestion' | 'pdf_summary';
@@ -193,7 +192,7 @@ export const validatePromptPlaceholders = (purpose: PromptPurpose, promptText: s
   const requiredPlaceholders: Record<PromptPurpose, string[]> = {
     scope: ['{roomsListForPrompt}', '{transcript}'],
     pdf_summary: ['{projectType}', '{estimateData}', '{lineItems}', '{totals}'],
-    suggestion: ['{projectData}', '{currentEstimate}']
+    suggestion: ['{projectType}', '{estimateData}', '{lineItems}', '{totals}', '{roomsMatrix}', '{clientNotes}']
   };
 
   const required = requiredPlaceholders[purpose] || [];

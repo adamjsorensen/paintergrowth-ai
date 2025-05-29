@@ -25,7 +25,7 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { estimateData, projectType, lineItems, totals, purpose = 'pdf_summary' } = body;
+    const { estimateData, projectType, lineItems, totals, purpose = 'pdf_summary', roomsMatrix, clientNotes } = body;
 
     console.log(`Generating estimate content for: {
   projectType: "${projectType}",
@@ -52,12 +52,14 @@ serve(async (req) => {
 
     console.log(`Using prompt from database with model: ${promptTemplate.model} temperature: ${promptTemplate.temperature}`);
 
-    // Build the prompt with the estimate data
+    // Build enhanced prompt data for suggestions
     const promptData = {
       projectType,
       estimateData: JSON.stringify(estimateData, null, 2),
       lineItems: JSON.stringify(lineItems, null, 2),
-      totals: JSON.stringify(totals, null, 2)
+      totals: JSON.stringify(totals, null, 2),
+      roomsMatrix: roomsMatrix ? JSON.stringify(roomsMatrix, null, 2) : 'Not provided',
+      clientNotes: clientNotes || 'No additional client notes provided'
     };
 
     let fullPrompt = promptTemplate.prompt_text;
@@ -113,11 +115,9 @@ serve(async (req) => {
       console.error('Raw AI response:', aiResponse);
       
       if (purpose === 'suggestion') {
-        // Create contextual fallback suggestions based on project type and available data
-        const fallbackSuggestions = createFallbackSuggestions(projectType, estimateData, totals);
-        generatedContent = {
-          suggestions: fallbackSuggestions
-        };
+        // Create enhanced fallback suggestions with the new structure
+        const fallbackSuggestions = createEnhancedFallbackSuggestions(projectType, estimateData, totals, lineItems);
+        generatedContent = fallbackSuggestions;
       } else {
         // Return a structured response for content generation even if parsing fails
         generatedContent = {
@@ -151,65 +151,87 @@ serve(async (req) => {
   }
 });
 
-// Helper function to create contextual fallback suggestions
-function createFallbackSuggestions(projectType: string, estimateData: any, totals: any) {
-  const suggestions = [];
+// Enhanced helper function to create contextual fallback suggestions with new structure
+function createEnhancedFallbackSuggestions(projectType: string, estimateData: any, totals: any, lineItems: any) {
+  const suggestions = {
+    upsellRecommendations: [],
+    missingScope: [],
+    riskMitigation: []
+  };
   
   if (projectType === 'interior') {
-    suggestions.push({
-      id: 'premium-prep',
-      category: 'quality',
-      title: 'Premium Surface Preparation',
-      description: 'Upgrade to comprehensive surface preparation including detailed sanding, patching, and premium primer application for superior paint adhesion and longevity.',
-      impact: 'high',
-      estimatedValue: 450
+    suggestions.upsellRecommendations.push(
+      {
+        id: 'premium-prep',
+        title: 'Premium Surface Preparation',
+        description: 'Upgrade to comprehensive surface preparation including detailed sanding, patching, and premium primer application for superior paint adhesion and longevity.',
+        estimatedPrice: 450,
+        reasoning: 'Enhanced surface prep significantly improves paint durability and finish quality, especially important for high-traffic interior areas.'
+      },
+      {
+        id: 'paint-upgrade',
+        title: 'High-End Paint Selection',
+        description: 'Consider premium paint brands with superior coverage, durability, and color retention. Especially beneficial for high-traffic areas.',
+        estimatedPrice: 300,
+        reasoning: 'Premium paints offer better coverage, require fewer coats, and provide longer-lasting results, making them cost-effective over time.'
+      }
+    );
+    
+    suggestions.missingScope.push({
+      id: 'ceiling-check',
+      item: 'Ceiling Assessment',
+      description: 'Project mentions rooms but ceiling painting requirements not clearly specified.',
+      impact: 'medium'
     });
     
-    suggestions.push({
-      id: 'paint-upgrade',
-      category: 'upsell',
-      title: 'High-End Paint Selection',
-      description: 'Consider premium paint brands with superior coverage, durability, and color retention. Especially beneficial for high-traffic areas.',
-      impact: 'medium',
-      estimatedValue: 300
-    });
-    
-    suggestions.push({
-      id: 'trim-detail',
-      category: 'upsell',
-      title: 'Detailed Trim Work',
-      description: 'Add precision trim painting with brush work for crisp, clean lines that enhance the overall finish quality.',
-      impact: 'medium',
-      estimatedValue: 250
+    suggestions.riskMitigation.push({
+      id: 'furniture-protection',
+      risk: 'Furniture and Flooring Damage',
+      description: 'Interior painting projects risk damage to client belongings and flooring.',
+      solution: 'Include comprehensive protection protocols with plastic sheeting, drop cloths, and furniture moving services.',
+      impact: 'high'
     });
   } else {
-    suggestions.push({
-      id: 'weather-protection',
-      category: 'quality',
-      title: 'Weather-Resistant Coating',
-      description: 'Upgrade to premium weather-resistant paint formulations designed to withstand harsh outdoor conditions and UV exposure.',
-      impact: 'high',
-      estimatedValue: 500
+    suggestions.upsellRecommendations.push(
+      {
+        id: 'weather-protection',
+        title: 'Weather-Resistant Coating',
+        description: 'Upgrade to premium weather-resistant paint formulations designed to withstand harsh outdoor conditions and UV exposure.',
+        estimatedPrice: 500,
+        reasoning: 'Weather-resistant coatings provide superior protection against elements, extending paint life and reducing maintenance needs.'
+      },
+      {
+        id: 'power-washing',
+        title: 'Professional Power Washing',
+        description: 'Include thorough power washing service to ensure optimal paint adhesion and remove all dirt, mildew, and chalking.',
+        estimatedPrice: 350,
+        reasoning: 'Proper surface preparation through power washing is critical for exterior paint longevity and warranty compliance.'
+      }
+    );
+    
+    suggestions.missingScope.push({
+      id: 'trim-detail',
+      item: 'Trim and Accent Details',
+      description: 'Exterior projects often overlook window trim, shutters, and architectural details that may need attention.',
+      impact: 'medium'
     });
     
-    suggestions.push({
-      id: 'power-washing',
-      category: 'preparation',
-      title: 'Professional Power Washing',
-      description: 'Include thorough power washing service to ensure optimal paint adhesion and remove all dirt, mildew, and chalking.',
-      impact: 'high',
-      estimatedValue: 350
+    suggestions.riskMitigation.push({
+      id: 'weather-delays',
+      risk: 'Weather-Related Delays',
+      description: 'Exterior painting is highly dependent on weather conditions, which can cause significant project delays.',
+      solution: 'Build weather contingency into timeline and establish clear communication protocols for weather-related schedule changes.',
+      impact: 'high'
     });
   }
   
-  // Add a maintenance suggestion
-  suggestions.push({
-    id: 'maintenance-plan',
-    category: 'service',
-    title: 'Annual Touch-Up Service',
-    description: 'Schedule annual inspection and touch-up service to maintain the paint finish and extend its lifespan.',
-    impact: 'low',
-    estimatedValue: 150
+  // Add a general risk mitigation item
+  suggestions.riskMitigation.push({
+    id: 'scope-changes',
+    risk: 'Mid-Project Scope Changes',
+    description: 'Clients often request additional work or changes once the project begins.',
+    solution: 'Establish clear change order procedures and pricing structure upfront, with written approval required for any scope modifications.',
+    impact: 'medium'
   });
   
   return suggestions;

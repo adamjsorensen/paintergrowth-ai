@@ -4,7 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Lightbulb, DollarSign, AlertTriangle, Plus, Wrench } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, Lightbulb, DollarSign, AlertTriangle, Plus, Edit2, Check, X, Target, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,13 +18,33 @@ interface EstimateSuggestionEngineProps {
   onComplete: (acceptedSuggestions: string[]) => void;
 }
 
-interface Suggestion {
+interface UpsellRecommendation {
   id: string;
-  category: 'pricing' | 'upsell' | 'risk' | 'quality' | 'timeline' | 'preparation' | 'service';
   title: string;
   description: string;
+  estimatedPrice: number;
+  reasoning: string;
+}
+
+interface MissingScopeItem {
+  id: string;
+  item: string;
+  description: string;
   impact: 'low' | 'medium' | 'high';
-  estimatedValue?: number;
+}
+
+interface RiskMitigationItem {
+  id: string;
+  risk: string;
+  description: string;
+  solution: string;
+  impact: 'low' | 'medium' | 'high';
+}
+
+interface SuggestionResponse {
+  upsellRecommendations: UpsellRecommendation[];
+  missingScope: MissingScopeItem[];
+  riskMitigation: RiskMitigationItem[];
 }
 
 const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
@@ -32,10 +54,23 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
   totals,
   onComplete
 }) => {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<SuggestionResponse>({
+    upsellRecommendations: [],
+    missingScope: [],
+    riskMitigation: []
+  });
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<UpsellRecommendation>>({});
+  const [showCustomUpsell, setShowCustomUpsell] = useState(false);
+  const [customUpsell, setCustomUpsell] = useState<Partial<UpsellRecommendation>>({
+    title: '',
+    description: '',
+    estimatedPrice: 0,
+    reasoning: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,7 +82,7 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
       setIsLoading(true);
       setError(null);
 
-      // Enhance the data context for better suggestions
+      // Enhanced data context for better suggestions
       const enhancedEstimateData = {
         ...estimateData,
         projectType,
@@ -62,6 +97,8 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
         projectType,
         lineItems,
         totals,
+        roomsMatrix: estimateData.roomsMatrix || [],
+        clientNotes: estimateData.clientNotes || '',
         purpose: 'suggestion'
       };
 
@@ -75,11 +112,18 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
         throw new Error(error.message || 'Failed to generate suggestions');
       }
 
-      if (data?.suggestions && Array.isArray(data.suggestions)) {
-        setSuggestions(data.suggestions);
+      if (data && typeof data === 'object') {
+        setSuggestions({
+          upsellRecommendations: data.upsellRecommendations || [],
+          missingScope: data.missingScope || [],
+          riskMitigation: data.riskMitigation || []
+        });
       } else {
-        // This shouldn't happen now with improved fallbacks
-        setSuggestions([]);
+        setSuggestions({
+          upsellRecommendations: [],
+          missingScope: [],
+          riskMitigation: []
+        });
       }
     } catch (err) {
       console.error('Error generating suggestions:', err);
@@ -102,41 +146,66 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
     );
   };
 
+  const startEditing = (upsell: UpsellRecommendation) => {
+    setEditingId(upsell.id);
+    setEditForm({ ...upsell });
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editForm.title || !editForm.description || !editForm.estimatedPrice) return;
+    
+    setSuggestions(prev => ({
+      ...prev,
+      upsellRecommendations: prev.upsellRecommendations.map(item =>
+        item.id === editingId ? { ...item, ...editForm } as UpsellRecommendation : item
+      )
+    }));
+    
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const addCustomUpsell = () => {
+    if (!customUpsell.title || !customUpsell.description || !customUpsell.estimatedPrice) return;
+    
+    const newUpsell: UpsellRecommendation = {
+      id: `custom-${Date.now()}`,
+      title: customUpsell.title,
+      description: customUpsell.description,
+      estimatedPrice: customUpsell.estimatedPrice,
+      reasoning: customUpsell.reasoning || 'Custom upsell opportunity'
+    };
+    
+    setSuggestions(prev => ({
+      ...prev,
+      upsellRecommendations: [...prev.upsellRecommendations, newUpsell]
+    }));
+    
+    setCustomUpsell({ title: '', description: '', estimatedPrice: 0, reasoning: '' });
+    setShowCustomUpsell(false);
+    
+    toast({
+      title: "Custom upsell added",
+      description: "Your custom upsell has been added to the recommendations.",
+    });
+  };
+
   const handleContinue = () => {
     console.log('Continuing with selected suggestions:', selectedSuggestions);
     onComplete(selectedSuggestions);
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'pricing': return <DollarSign className="h-4 w-4" />;
-      case 'upsell': return <Plus className="h-4 w-4" />;
-      case 'risk': return <AlertTriangle className="h-4 w-4" />;
-      case 'preparation': return <Wrench className="h-4 w-4" />;
-      case 'service': return <Lightbulb className="h-4 w-4" />;
-      default: return <Lightbulb className="h-4 w-4" />;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'pricing': return 'bg-green-100 text-green-800';
-      case 'upsell': return 'bg-blue-100 text-blue-800';
-      case 'risk': return 'bg-red-100 text-red-800';
-      case 'quality': return 'bg-purple-100 text-purple-800';
-      case 'timeline': return 'bg-orange-100 text-orange-800';
-      case 'preparation': return 'bg-yellow-100 text-yellow-800';
-      case 'service': return 'bg-indigo-100 text-indigo-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'border-red-200 bg-red-50';
-      case 'medium': return 'border-yellow-200 bg-yellow-50';
-      case 'low': return 'border-green-200 bg-green-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'low': return 'text-green-600 bg-green-50 border-green-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
@@ -164,7 +233,7 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
     );
   }
 
-  if (error || suggestions.length === 0) {
+  if (error) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -173,14 +242,12 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
             Suggestions & Add-ons
           </CardTitle>
           <CardDescription>
-            {error ? 'Unable to generate suggestions at this time.' : 'No additional suggestions for this estimate.'}
+            Unable to generate suggestions at this time.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">
-              {error ? 'We encountered an issue generating suggestions.' : 'Your estimate looks comprehensive!'}
-            </p>
+            <p className="text-gray-600 mb-4">We encountered an issue generating suggestions.</p>
             <Button onClick={handleContinue} className="bg-blue-600 hover:bg-blue-700">
               Continue to Content Generation
             </Button>
@@ -190,69 +257,211 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
     );
   }
 
-  const totalEstimatedValue = suggestions
-    .filter(s => selectedSuggestions.includes(s.id) && s.estimatedValue)
-    .reduce((sum, s) => sum + (s.estimatedValue || 0), 0);
+  const totalUpsellValue = suggestions.upsellRecommendations
+    .filter(s => selectedSuggestions.includes(s.id))
+    .reduce((sum, s) => sum + s.estimatedPrice, 0);
 
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5" />
-          Intelligent Suggestions & Add-ons
+          Intelligent Suggestions & Analysis
         </CardTitle>
         <CardDescription>
-          Review AI-generated suggestions to enhance your estimate. Select any that apply to your project.
+          AI-generated recommendations to enhance your estimate based on project analysis.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {suggestions.map((suggestion) => (
-          <div
-            key={suggestion.id}
-            className={`border rounded-lg p-4 transition-all ${
-              selectedSuggestions.includes(suggestion.id)
-                ? 'border-blue-300 bg-blue-50'
-                : getImpactColor(suggestion.impact)
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id={suggestion.id}
-                checked={selectedSuggestions.includes(suggestion.id)}
-                onCheckedChange={() => toggleSuggestion(suggestion.id)}
-                className="mt-1"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className={getCategoryColor(suggestion.category)}>
-                    {getCategoryIcon(suggestion.category)}
-                    <span className="ml-1 capitalize">{suggestion.category}</span>
-                  </Badge>
-                  <Badge variant="outline" className="capitalize">
-                    {suggestion.impact} Impact
-                  </Badge>
-                  {suggestion.estimatedValue && (
-                    <Badge variant="secondary">
-                      +${suggestion.estimatedValue}
-                    </Badge>
-                  )}
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-1">
-                  {suggestion.title}
-                </h4>
-                <p className="text-gray-600 text-sm">
-                  {suggestion.description}
-                </p>
-              </div>
-            </div>
+      <CardContent className="space-y-8">
+        {/* Upsell Recommendations Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign className="h-5 w-5 text-green-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Upsell Opportunities</h3>
+            <Badge variant="secondary">{suggestions.upsellRecommendations.length}</Badge>
           </div>
-        ))}
+          
+          <div className="space-y-3">
+            {suggestions.upsellRecommendations.map((upsell) => (
+              <div key={upsell.id} className={`border rounded-lg p-4 transition-all ${
+                selectedSuggestions.includes(upsell.id) ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id={upsell.id}
+                    checked={selectedSuggestions.includes(upsell.id)}
+                    onCheckedChange={() => toggleSuggestion(upsell.id)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    {editingId === upsell.id ? (
+                      <div className="space-y-3">
+                        <Input
+                          value={editForm.title || ''}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                          placeholder="Service title"
+                        />
+                        <Textarea
+                          value={editForm.description || ''}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Service description"
+                          rows={2}
+                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">Price: $</span>
+                          <Input
+                            type="number"
+                            value={editForm.estimatedPrice || 0}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, estimatedPrice: parseInt(e.target.value) || 0 }))}
+                            className="w-24"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={saveEdit}>
+                            <Check className="h-4 w-4 mr-1" />
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEdit}>
+                            <X className="h-4 w-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{upsell.title}</h4>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-green-600">
+                              +${upsell.estimatedPrice}
+                            </Badge>
+                            <Button size="sm" variant="ghost" onClick={() => startEditing(upsell)}>
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-gray-600 text-sm mb-2">{upsell.description}</p>
+                        <p className="text-xs text-gray-500 italic">{upsell.reasoning}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {showCustomUpsell ? (
+              <div className="border rounded-lg p-4 border-blue-200 bg-blue-50">
+                <div className="space-y-3">
+                  <Input
+                    value={customUpsell.title || ''}
+                    onChange={(e) => setCustomUpsell(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Custom service title"
+                  />
+                  <Textarea
+                    value={customUpsell.description || ''}
+                    onChange={(e) => setCustomUpsell(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Service description"
+                    rows={2}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Price: $</span>
+                    <Input
+                      type="number"
+                      value={customUpsell.estimatedPrice || 0}
+                      onChange={(e) => setCustomUpsell(prev => ({ ...prev, estimatedPrice: parseInt(e.target.value) || 0 }))}
+                      className="w-24"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={addCustomUpsell}>
+                      <Check className="h-4 w-4 mr-1" />
+                      Add Upsell
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowCustomUpsell(false)}>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCustomUpsell(true)}
+                className="w-full border-dashed"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Custom Upsell
+              </Button>
+            )}
+          </div>
+        </div>
 
-        {selectedSuggestions.length > 0 && totalEstimatedValue > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+        {/* Missing Scope Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="h-5 w-5 text-orange-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Missing Scope Items</h3>
+            <Badge variant="secondary">{suggestions.missingScope.length}</Badge>
+          </div>
+          
+          {suggestions.missingScope.length > 0 ? (
+            <div className="space-y-3">
+              {suggestions.missingScope.map((item) => (
+                <div key={item.id} className="border rounded-lg p-4 border-orange-200 bg-orange-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{item.item}</h4>
+                      <p className="text-gray-600 text-sm">{item.description}</p>
+                    </div>
+                    <Badge className={getImpactColor(item.impact)}>
+                      {item.impact} impact
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm italic">No missing scope items identified.</p>
+          )}
+        </div>
+
+        {/* Risk Mitigation Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-5 w-5 text-red-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Risk Mitigation</h3>
+            <Badge variant="secondary">{suggestions.riskMitigation.length}</Badge>
+          </div>
+          
+          {suggestions.riskMitigation.length > 0 ? (
+            <div className="space-y-3">
+              {suggestions.riskMitigation.map((risk) => (
+                <div key={risk.id} className="border rounded-lg p-4 border-red-200 bg-red-50">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">{risk.risk}</h4>
+                    <Badge className={getImpactColor(risk.impact)}>
+                      {risk.impact} impact
+                    </Badge>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-2">{risk.description}</p>
+                  <div className="bg-white rounded p-2 border border-red-100">
+                    <p className="text-sm"><strong>Solution:</strong> {risk.solution}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm italic">No specific risks identified for this project.</p>
+          )}
+        </div>
+
+        {/* Summary and Continue */}
+        {selectedSuggestions.length > 0 && totalUpsellValue > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <span className="font-medium text-blue-900">
-                Total Additional Value: ${totalEstimatedValue}
+                Total Additional Value: ${totalUpsellValue}
               </span>
               <span className="text-sm text-blue-700">
                 {selectedSuggestions.length} suggestion{selectedSuggestions.length > 1 ? 's' : ''} selected
@@ -266,7 +475,7 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
             Clear All
           </Button>
           <Button onClick={handleContinue} className="bg-blue-600 hover:bg-blue-700">
-            Continue with {selectedSuggestions.length} Suggestion{selectedSuggestions.length !== 1 ? 's' : ''}
+            Continue with Analysis
           </Button>
         </div>
       </CardContent>

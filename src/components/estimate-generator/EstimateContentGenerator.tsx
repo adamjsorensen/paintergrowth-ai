@@ -48,6 +48,8 @@ const EstimateContentGenerator: React.FC<EstimateContentGeneratorProps> = ({
           projectType,
           lineItems,
           totals,
+          roomsMatrix: estimateData.roomsMatrix || [],
+          clientNotes: estimateData.clientNotes || '',
           purpose: 'pdf_summary'
         }
       });
