@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Lightbulb, DollarSign, AlertTriangle, Plus } from 'lucide-react';
+import { Loader2, Lightbulb, DollarSign, AlertTriangle, Plus, Wrench } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -18,7 +18,7 @@ interface EstimateSuggestionEngineProps {
 
 interface Suggestion {
   id: string;
-  category: 'pricing' | 'upsell' | 'risk' | 'quality' | 'timeline';
+  category: 'pricing' | 'upsell' | 'risk' | 'quality' | 'timeline' | 'preparation' | 'service';
   title: string;
   description: string;
   impact: 'low' | 'medium' | 'high';
@@ -47,15 +47,25 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
       setIsLoading(true);
       setError(null);
 
+      // Enhance the data context for better suggestions
+      const enhancedEstimateData = {
+        ...estimateData,
+        projectType,
+        hasRooms: lineItems.length > 0,
+        totalValue: totals.grandTotal || totals.total || 0,
+        lineItemCount: lineItems.length,
+        averageRoomSize: lineItems.length > 0 ? 'medium' : 'unknown'
+      };
+
       const requestData = {
-        estimateData,
+        estimateData: enhancedEstimateData,
         projectType,
         lineItems,
         totals,
         purpose: 'suggestion'
       };
 
-      console.log('Generating suggestions with data:', requestData);
+      console.log('Generating suggestions with enhanced data:', requestData);
 
       const { data, error } = await supabase.functions.invoke('generate-estimate-content', {
         body: requestData
@@ -68,25 +78,8 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
       if (data?.suggestions && Array.isArray(data.suggestions)) {
         setSuggestions(data.suggestions);
       } else {
-        // Fallback suggestions if API doesn't return proper format
-        setSuggestions([
-          {
-            id: 'prep-upgrade',
-            category: 'quality',
-            title: 'Premium Surface Preparation',
-            description: 'Consider upgrading to premium prep work including detailed sanding and primer application for better paint adhesion and longevity.',
-            impact: 'medium',
-            estimatedValue: 350
-          },
-          {
-            id: 'paint-quality',
-            category: 'upsell',
-            title: 'High-End Paint Selection',
-            description: 'Upgrade to premium paint brands with superior coverage and durability, especially for high-traffic areas.',
-            impact: 'high',
-            estimatedValue: 200
-          }
-        ]);
+        // This shouldn't happen now with improved fallbacks
+        setSuggestions([]);
       }
     } catch (err) {
       console.error('Error generating suggestions:', err);
@@ -119,6 +112,8 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
       case 'pricing': return <DollarSign className="h-4 w-4" />;
       case 'upsell': return <Plus className="h-4 w-4" />;
       case 'risk': return <AlertTriangle className="h-4 w-4" />;
+      case 'preparation': return <Wrench className="h-4 w-4" />;
+      case 'service': return <Lightbulb className="h-4 w-4" />;
       default: return <Lightbulb className="h-4 w-4" />;
     }
   };
@@ -130,6 +125,8 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
       case 'risk': return 'bg-red-100 text-red-800';
       case 'quality': return 'bg-purple-100 text-purple-800';
       case 'timeline': return 'bg-orange-100 text-orange-800';
+      case 'preparation': return 'bg-yellow-100 text-yellow-800';
+      case 'service': return 'bg-indigo-100 text-indigo-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
