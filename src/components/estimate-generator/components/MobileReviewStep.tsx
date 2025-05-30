@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import EditFieldSheet from './mobile-review/EditFieldSheet';
@@ -27,6 +26,7 @@ interface MobileReviewStepProps {
   projectMetadata?: ProjectMetadata;
   onComplete: (info: Record<string, any>) => void;
   onProjectMetadataChange?: (metadata: ProjectMetadata) => void;
+  onStartOver?: () => void;
 }
 
 const MobileReviewStep: React.FC<MobileReviewStepProps> = ({ 
@@ -37,7 +37,8 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
   projectType,
   projectMetadata,
   onComplete,
-  onProjectMetadataChange
+  onProjectMetadataChange,
+  onStartOver
 }) => {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [editingField, setEditingField] = useState<any>(null);

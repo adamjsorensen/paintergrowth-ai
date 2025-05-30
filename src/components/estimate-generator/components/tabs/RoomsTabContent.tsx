@@ -15,6 +15,7 @@ interface RoomsTabContentProps {
   onCheckboxChange: (roomId: string, columnId: string, checked: boolean) => void;
   onNumberChange: (roomId: string, columnId: string, value: number) => void;
   onSetActiveTab: (tab: string) => void;
+  onStartOver?: () => void;
 }
 
 const RoomsTabContent: React.FC<RoomsTabContentProps> = ({

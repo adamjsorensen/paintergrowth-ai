@@ -19,6 +19,7 @@ interface StepRendererProps {
   state: EstimateState;
   handlers: EstimateHandlers;
   onGoBackToRooms?: () => void;
+  onStartOver?: () => void;
 }
 
 const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers, onGoBackToRooms }) => {
