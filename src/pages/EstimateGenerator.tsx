@@ -69,6 +69,15 @@ const EstimateGenerator = () => {
     setShowStartOverDialog(false);
   };
 
+  // Handler for going back to rooms matrix (step 2 on mobile, step 3 on desktop)
+  const handleGoBackToRooms = () => {
+    if (isMobile) {
+      setCurrentStep(2); // Go to ReviewEditStep which contains the rooms matrix
+    } else {
+      setCurrentStep(3); // Go to EstimateReview which contains the rooms matrix
+    }
+  };
+
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -95,7 +104,11 @@ const EstimateGenerator = () => {
 
         {/* Mobile Content */}
         <div className="flex-1">
-          <StepRenderer state={state} handlers={handlers} />
+          <StepRenderer 
+            state={state} 
+            handlers={handlers} 
+            onGoBackToRooms={handleGoBackToRooms}
+          />
         </div>
 
         {/* Mobile Footer Navigation - hide for ReviewEditStep since it has its own navigation */}
@@ -167,7 +180,11 @@ const EstimateGenerator = () => {
           </CardHeader>
           
           <CardContent className="pt-6">
-            <StepRenderer state={state} handlers={handlers} />
+            <StepRenderer 
+              state={state} 
+              handlers={handlers} 
+              onGoBackToRooms={handleGoBackToRooms}
+            />
           </CardContent>
           
           {state.currentStep > 0 && state.currentStep < 5 && (

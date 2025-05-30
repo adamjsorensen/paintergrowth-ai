@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ interface EstimateSuggestionEngineProps {
   lineItems: any[];
   totals: Record<string, any>;
   onComplete: (acceptedSuggestions: string[]) => void;
+  onGoBackToRooms?: () => void;
 }
 
 interface UpsellRecommendation {
@@ -52,7 +52,8 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
   projectType,
   lineItems,
   totals,
-  onComplete
+  onComplete,
+  onGoBackToRooms
 }) => {
   const [suggestions, setSuggestions] = useState<SuggestionResponse>({
     upsellRecommendations: [],
@@ -414,9 +415,22 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
                       <h4 className="font-semibold text-gray-900 mb-1">{item.item}</h4>
                       <p className="text-gray-600 text-sm">{item.description}</p>
                     </div>
-                    <Badge className={getImpactColor(item.impact)}>
-                      {item.impact} impact
-                    </Badge>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Badge className={getImpactColor(item.impact)}>
+                        {item.impact} impact
+                      </Badge>
+                      {onGoBackToRooms && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={onGoBackToRooms}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                          Go Back and Edit
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

@@ -18,9 +18,10 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 interface StepRendererProps {
   state: EstimateState;
   handlers: EstimateHandlers;
+  onGoBackToRooms?: () => void;
 }
 
-const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
+const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers, onGoBackToRooms }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   
   const {
@@ -104,6 +105,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
           lineItems={lineItems}
           totals={totals}
           onComplete={handleSuggestionsComplete}
+          onGoBackToRooms={onGoBackToRooms}
         />
       );
     case 5:
@@ -140,4 +142,3 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
 };
 
 export default StepRenderer;
-
