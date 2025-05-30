@@ -108,6 +108,7 @@ const EstimateGenerator = () => {
             state={state} 
             handlers={handlers} 
             onGoBackToRooms={handleGoBackToRooms}
+            onStartOver={handleStartOver}
           />
         </div>
 

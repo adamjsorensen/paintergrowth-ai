@@ -31,6 +31,7 @@ interface ReviewEditStepProps {
   missingInfo: Record<string, any>;
   projectType: 'interior' | 'exterior';
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
+  onStartOver?: () => void;
 }
 
 const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
@@ -39,7 +40,8 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   extractedData,
   missingInfo,
   projectType,
-  onComplete
+  onComplete,
+  onStartOver
 }) => {
   const [activeTab, setActiveTab] = useState('project');
   
@@ -181,6 +183,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             missingInfo={missingInfo}
             projectType={projectType}
             onComplete={handleProjectComplete}
+            onStartOver={onStartOver}
           />
         </TabsContent>
         <TabsContent value="rooms" className="space-y-2 p-4">
@@ -192,6 +195,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             onCheckboxChange={handleCheckboxChange}
             onNumberChange={handleNumberChange}
             onSetActiveTab={setActiveTab}
+            onStartOver={onStartOver}
           />
         </TabsContent>
         <TabsContent value="pricing" className="space-y-2 p-4">
@@ -206,6 +210,7 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             taxRate={taxRate}
             onComplete={handlePricingComplete}
             onPricingUpdate={handlePricingUpdate}
+            onStartOver={onStartOver}
           />
         </TabsContent>
       </Tabs>

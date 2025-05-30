@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
+import { RefreshCcw } from 'lucide-react';
 import PricingTotalCard from './mobile-pricing/PricingTotalCard';
 
 interface DiscountSettings {
@@ -25,6 +27,7 @@ interface MobilePricingStepProps {
   taxRate?: number;
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
   onPricingUpdate?: (subtotal: number, discount: DiscountSettings, taxRate: number) => void;
+  onStartOver?: () => void;
 }
 
 const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
@@ -37,7 +40,8 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   discount: propDiscount = { enabled: false, type: 'percentage', value: 0, notes: '' },
   taxRate: propTaxRate = 7.5,
   onComplete,
-  onPricingUpdate
+  onPricingUpdate,
+  onStartOver
 }) => {
   const [subtotal, setSubtotal] = useState(propSubtotal);
   const [discount, setDiscount] = useState<DiscountSettings>(propDiscount);
@@ -142,9 +146,22 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
 
   return (
     <div className="px-4 py-6 space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold mb-2">Estimate Summary</h2>
-        <p className="text-gray-600 text-sm">Review and adjust your project estimate</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="text-center flex-1">
+          <h2 className="text-xl font-semibold mb-2">Estimate Summary</h2>
+          <p className="text-gray-600 text-sm">Review and adjust your project estimate</p>
+        </div>
+        {onStartOver && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onStartOver}
+            className="text-gray-600 hover:text-gray-900 ml-2"
+          >
+            <RefreshCcw className="h-4 w-4 mr-1" />
+            Start Over
+          </Button>
+        )}
       </div>
 
       <PricingTotalCard 
