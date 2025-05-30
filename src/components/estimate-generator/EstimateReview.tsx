@@ -18,13 +18,11 @@ interface EstimateReviewProps {
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
 }
 
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  total: number;
+interface DiscountSettings {
+  enabled: boolean;
+  type: 'fixed' | 'percentage';
+  value: number;
+  notes: string;
 }
 
 const EstimateReview: React.FC<EstimateReviewProps> = ({ 
@@ -48,20 +46,36 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     extractedRoomsList
   } = useEstimateProcessing(transcript, summary, missingInfo, projectType, extractedData);
 
-  const [subtotal, setSubtotal] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [total, setTotal] = useState(0);
+  const [subtotal, setSubtotal] = useState(() => {
+    // Initialize subtotal from existing line items if any
+    return lineItems.reduce((sum, item) => sum + (item.total || 0), 0);
+  });
+  
+  const [discount, setDiscount] = useState<DiscountSettings>({
+    enabled: false,
+    type: 'percentage',
+    value: 0,
+    notes: ''
+  });
+  
   const [taxRate, setTaxRate] = useState(7.5);
 
-  // Calculate totals based on line items
-  const calculateTotals = (items: LineItem[]) => {
-    const calculatedSubtotal = items.reduce((sum, item) => sum + item.total, 0);
-    setSubtotal(calculatedSubtotal);
+  // Calculate discount amount
+  const calculateDiscountAmount = () => {
+    if (!discount.enabled) return 0;
     
-    const calculatedTax = calculatedSubtotal * (taxRate / 100);
-    setTax(calculatedTax);
-    setTotal(calculatedSubtotal + calculatedTax);
+    if (discount.type === 'fixed') {
+      return Math.min(discount.value, subtotal);
+    } else {
+      return subtotal * (discount.value / 100);
+    }
   };
+
+  // Calculate totals
+  const discountAmount = calculateDiscountAmount();
+  const postDiscountSubtotal = subtotal - discountAmount;
+  const tax = postDiscountSubtotal * (taxRate / 100);
+  const total = postDiscountSubtotal + tax;
 
   // Handle room matrix changes with standardized room objects
   const handleRoomsMatrixChange = (updatedMatrix: any[]) => {
@@ -120,19 +134,18 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     console.log('EstimateReview - Generated new line items from updated matrix:', newLineItems);
     
     setLineItems(newLineItems);
-    calculateTotals(newLineItems);
+    
+    // Update subtotal based on new line items
+    const newSubtotal = newLineItems.reduce((sum, item) => sum + (item.total || 0), 0);
+    setSubtotal(newSubtotal);
     
     console.log('=== ROOM MATRIX CHANGE COMPLETE ===');
   };
 
   // Handle tax rate change
   const handleTaxRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newRate = parseFloat(e.target.value);
+    const newRate = parseFloat(e.target.value) || 0;
     setTaxRate(newRate);
-    
-    const newTax = subtotal * (newRate / 100);
-    setTax(newTax);
-    setTotal(subtotal + newTax);
   };
 
   // Complete the estimate
@@ -143,8 +156,9 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       clientPhone: estimateFields.find(f => f.formField === 'clientPhone')?.value || '',
       projectAddress: estimateFields.find(f => f.formField === 'projectAddress')?.value || '',
       jobType: projectType,
-      lineItems,
       subtotal,
+      discount,
+      discountAmount,
       taxRate,
       tax,
       total,
@@ -164,12 +178,13 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     onComplete(fieldsObject, finalEstimate);
   };
 
-  // Initialize totals when lineItems change
+  // Update subtotal when lineItems change (from room matrix)
   React.useEffect(() => {
     if (lineItems.length > 0) {
-      calculateTotals(lineItems);
+      const calculatedSubtotal = lineItems.reduce((sum, item) => sum + (item.total || 0), 0);
+      setSubtotal(calculatedSubtotal);
     }
-  }, [lineItems, taxRate]);
+  }, [lineItems]);
 
   return (
     <div className="space-y-6">
@@ -191,14 +206,14 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           )}
           
           <EstimateDetailsTable
-            lineItems={lineItems}
-            setLineItems={setLineItems}
             subtotal={subtotal}
+            onSubtotalChange={setSubtotal}
+            discount={discount}
+            onDiscountChange={setDiscount}
             tax={tax}
             total={total}
             taxRate={taxRate}
             onTaxRateChange={handleTaxRateChange}
-            onCalculateTotals={calculateTotals}
           />
           
           <div className="flex justify-end">
