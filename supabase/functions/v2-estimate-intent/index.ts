@@ -1,8 +1,125 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { PDFContentSchema, UpsellItem, ColorApproval } from "../generate-estimate-content/pdfSchema.ts";
-import { getBoilerplateTexts } from "../generate-estimate-content/boilerplateCache.ts";
+import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
+
+// Schema definitions
+const UpsellItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  price: z.number(),
+  selected: z.boolean().default(false)
+});
+
+const ColorApprovalSchema = z.object({
+  room: z.string(),
+  colorName: z.string(),
+  approved: z.boolean().default(false),
+  signatureRequired: z.boolean().default(true)
+});
+
+const PDFContentSchema = z.object({
+  coverPage: z.object({
+    title: z.string(),
+    clientName: z.string(),
+    projectAddress: z.string(),
+    estimateDate: z.string(),
+    estimateNumber: z.string(),
+    validUntil: z.string()
+  }),
+  introductionLetter: z.object({
+    greeting: z.string(),
+    projectOverview: z.string(),
+    whyChooseUs: z.array(z.string()),
+    nextSteps: z.string(),
+    closing: z.string()
+  }),
+  scopeOfWork: z.object({
+    preparation: z.array(z.string()),
+    painting: z.array(z.string()),
+    cleanup: z.array(z.string()),
+    timeline: z.string()
+  }),
+  pricingSummary: z.object({
+    subtotal: z.number(),
+    tax: z.number(),
+    discount: z.number().optional(),
+    total: z.number(),
+    paymentTerms: z.string()
+  }),
+  upsells: z.array(UpsellItemSchema),
+  colorApprovals: z.array(ColorApprovalSchema),
+  termsAndConditions: z.object({
+    warranty: z.string(),
+    materials: z.string(),
+    scheduling: z.string(),
+    changes: z.string()
+  }),
+  companyInfo: z.object({
+    businessName: z.string(),
+    contactInfo: z.string(),
+    license: z.string(),
+    insurance: z.string()
+  })
+});
+
+type PDFContent = z.infer<typeof PDFContentSchema>;
+type UpsellItem = z.infer<typeof UpsellItemSchema>;
+type ColorApproval = z.infer<typeof ColorApprovalSchema>;
+
+// Boilerplate cache
+interface BoilerplateCache {
+  terms_conditions?: string;
+  warranty?: string;
+  lastUpdated: number;
+}
+
+let cache: BoilerplateCache = { lastUpdated: 0 };
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getBoilerplateTexts(supabaseClient: any): Promise<{ terms_conditions: string; warranty: string }> {
+  const now = Date.now();
+  
+  // Return cached data if still valid
+  if (cache.terms_conditions && cache.warranty && (now - cache.lastUpdated) < CACHE_TTL) {
+    return {
+      terms_conditions: cache.terms_conditions,
+      warranty: cache.warranty
+    };
+  }
+
+  // Fetch fresh data
+  const { data: boilerplateData, error } = await supabaseClient
+    .from('boilerplate_texts')
+    .select('type, content')
+    .in('type', ['terms_conditions', 'warranty'])
+    .eq('locale', 'en-US');
+
+  if (error) {
+    console.error('Error fetching boilerplate texts:', error);
+    // Return cached data if available, otherwise defaults
+    return {
+      terms_conditions: cache.terms_conditions || 'Standard terms and conditions apply.',
+      warranty: cache.warranty || '1-year warranty on workmanship.'
+    };
+  }
+
+  // Update cache
+  const termsData = boilerplateData.find(item => item.type === 'terms_conditions');
+  const warrantyData = boilerplateData.find(item => item.type === 'warranty');
+  
+  cache = {
+    terms_conditions: termsData?.content || 'Standard terms and conditions apply.',
+    warranty: warrantyData?.content || '1-year warranty on workmanship.',
+    lastUpdated: now
+  };
+
+  return {
+    terms_conditions: cache.terms_conditions,
+    warranty: cache.warranty
+  };
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
