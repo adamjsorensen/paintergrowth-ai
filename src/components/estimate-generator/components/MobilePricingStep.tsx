@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
 import PricingTotalCard from './mobile-pricing/PricingTotalCard';
-import ProjectOverviewCard from './mobile-pricing/ProjectOverviewCard';
 
 interface DiscountSettings {
   enabled: boolean;
@@ -154,8 +152,6 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
         tax={tax}
         total={total}
       />
-
-      <ProjectOverviewCard summary={summary} />
 
       {/* Estimate Details Card */}
       <Card>
