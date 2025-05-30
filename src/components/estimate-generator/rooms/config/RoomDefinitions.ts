@@ -1,3 +1,4 @@
+
 import { MatrixRow, MatrixGroup } from "../types";
 import { roomTemplates, transitionalRooms, floorGroups, createRoomInstance } from "./RoomTemplates";
 
@@ -34,9 +35,5 @@ export const roomGroups: MatrixGroup[] = floorGroups.map(group => ({
     .map(row => row.id)
 }));
 
-// Keep floor groups for backward compatibility
-export const floorGroups2 = [
-  { id: "main", label: "Main Floor" },
-  { id: "upper", label: "Upper Floor" },
-  { id: "basement", label: "Basement" }
-];
+// Re-export floorGroups from RoomTemplates for backward compatibility
+export { floorGroups } from "./RoomTemplates";
