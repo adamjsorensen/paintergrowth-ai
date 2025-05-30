@@ -610,7 +610,7 @@ export type Database = {
         | "matrix-selector"
         | "tax-calculator"
       modal_step_type: "style" | "scope" | "main"
-      prompt_purpose: "scope" | "suggestion" | "pdf_summary"
+      prompt_purpose: "scope" | "suggestion" | "pdf_summary" | "pdf_generation"
       section_type:
         | "client"
         | "estimator"
@@ -757,7 +757,7 @@ export const Constants = {
         "tax-calculator",
       ],
       modal_step_type: ["style", "scope", "main"],
-      prompt_purpose: ["scope", "suggestion", "pdf_summary"],
+      prompt_purpose: ["scope", "suggestion", "pdf_summary", "pdf_generation"],
       section_type: [
         "client",
         "estimator",

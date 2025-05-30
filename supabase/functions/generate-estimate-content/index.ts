@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -25,14 +24,21 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { estimateData, projectType, lineItems, totals, purpose = 'pdf_summary', roomsMatrix, clientNotes } = body;
+    const { 
+      estimateData, 
+      projectType, 
+      lineItems, 
+      totals, 
+      purpose = 'pdf_summary', 
+      roomsMatrix, 
+      clientNotes,
+      companyProfile,
+      clientInfo,
+      taxRate,
+      addOns
+    } = body;
 
-    console.log(`Generating estimate content for: {
-  projectType: "${projectType}",
-  purpose: "${purpose}",
-  totals: ${JSON.stringify(totals)},
-  lineItems: ${JSON.stringify(lineItems)}
-}`);
+    console.log(`Generating content for purpose: ${purpose}`);
 
     // Get the appropriate prompt template based on purpose
     const { data: promptTemplate, error: promptError } = await supabaseClient
@@ -50,23 +56,26 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Using prompt from database with model: ${promptTemplate.model} temperature: ${promptTemplate.temperature}`);
+    console.log(`Using prompt template: ${promptTemplate.name} with model: ${promptTemplate.model}`);
 
-    // Build enhanced prompt data for suggestions
-    const promptData = {
-      projectType,
+    // Enhanced data preparation for PDF generation
+    const enhancedData = {
       estimateData: JSON.stringify(estimateData, null, 2),
+      projectType,
       lineItems: JSON.stringify(lineItems, null, 2),
       totals: JSON.stringify(totals, null, 2),
       roomsMatrix: roomsMatrix ? JSON.stringify(roomsMatrix, null, 2) : 'Not provided',
-      clientNotes: clientNotes || 'No additional client notes provided'
+      clientNotes: clientNotes || 'No additional client notes provided',
+      companyProfile: companyProfile ? JSON.stringify(companyProfile, null, 2) : 'Company profile not provided',
+      clientInfo: clientInfo ? JSON.stringify(clientInfo, null, 2) : 'Client information not provided',
+      taxRate: taxRate || '0%',
+      addOns: addOns ? JSON.stringify(addOns, null, 2) : 'No add-ons provided'
     };
 
     let fullPrompt = promptTemplate.prompt_text;
     
-    // Replace placeholders in the prompt - handle both {{}} and {} formats
-    Object.entries(promptData).forEach(([key, value]) => {
-      fullPrompt = fullPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value || '');
+    // Replace placeholders in the prompt
+    Object.entries(enhancedData).forEach(([key, value]) => {
       fullPrompt = fullPrompt.replace(new RegExp(`{${key}}`, 'g'), value || '');
     });
 
@@ -114,8 +123,11 @@ serve(async (req) => {
       console.error('Failed to parse AI response as JSON:', parseError);
       console.error('Raw AI response:', aiResponse);
       
-      if (purpose === 'suggestion') {
-        // Create enhanced fallback suggestions with the new structure
+      if (purpose === 'pdf_generation') {
+        // Create structured fallback for PDF generation
+        generatedContent = createPdfFallback(projectType, estimateData, totals, lineItems, companyProfile, clientInfo);
+      } else if (purpose === 'suggestion') {
+        // Keep existing fallback for suggestions
         const fallbackSuggestions = createEnhancedFallbackSuggestions(projectType, estimateData, totals, lineItems);
         generatedContent = fallbackSuggestions;
       } else {
@@ -131,11 +143,7 @@ serve(async (req) => {
       }
     }
 
-    if (purpose === 'suggestion') {
-      console.log('Generated suggestions:', generatedContent);
-    } else {
-      console.log('Generated content:', generatedContent);
-    }
+    console.log(`Generated ${purpose} content successfully`);
 
     return new Response(
       JSON.stringify(generatedContent),
@@ -151,7 +159,69 @@ serve(async (req) => {
   }
 });
 
-// Enhanced helper function to create contextual fallback suggestions with new structure
+// Fallback function for PDF generation
+function createPdfFallback(projectType: string, estimateData: any, totals: any, lineItems: any, companyProfile: any, clientInfo: any) {
+  const currentDate = new Date();
+  const estimateNumber = `EST-${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`;
+  
+  return {
+    coverPage: {
+      title: "Professional Painting Estimate",
+      clientName: clientInfo?.name || estimateData?.clientName || "Valued Client",
+      projectAddress: clientInfo?.address || estimateData?.address || "Project Address",
+      estimateDate: currentDate.toLocaleDateString('en-US'),
+      estimateNumber: estimateNumber,
+      validUntil: new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
+    },
+    projectOverview: {
+      description: `This estimate covers a comprehensive ${projectType} painting project with professional preparation, premium materials, and expert application.`,
+      projectType: projectType,
+      totalRooms: lineItems?.length || 0,
+      keyFeatures: ["Professional surface preparation", "Premium paint application", "Quality assurance inspection"]
+    },
+    scopeOfWork: {
+      preparation: ["Surface cleaning and preparation", "Primer application where needed", "Protection of surrounding areas"],
+      painting: lineItems?.map((item: any) => item.description) || ["Interior/exterior painting as specified"],
+      cleanup: ["Daily cleanup", "Final walkthrough", "Debris removal"],
+      timeline: "Project completion within agreed timeframe"
+    },
+    lineItems: {
+      items: lineItems || [],
+      subtotal: totals?.subtotal || totals?.total || 0,
+      notes: "All materials and labor included"
+    },
+    addOns: {
+      available: [],
+      recommended: ["Premium paint upgrade", "Additional surface preparation", "Trim and accent work"],
+      pricing: "Available upon request"
+    },
+    pricing: {
+      subtotal: totals?.subtotal || totals?.total || 0,
+      tax: totals?.tax || 0,
+      total: totals?.grandTotal || totals?.total || 0,
+      paymentTerms: "50% deposit required, balance due upon completion"
+    },
+    termsAndConditions: {
+      warranty: "1-year warranty on workmanship covering defects in application",
+      materials: "Premium quality paints and materials from trusted suppliers",
+      scheduling: "Work scheduled according to agreed timeline with weather considerations",
+      changes: "Any changes to scope require written approval and may affect pricing"
+    },
+    companyInfo: {
+      businessName: companyProfile?.business_name || companyProfile?.businessName || "Professional Painting Services",
+      contactInfo: `Phone: ${companyProfile?.phone || "Contact for phone"} | Email: ${companyProfile?.email || "Contact for email"}`,
+      license: companyProfile?.license || "Licensed and insured",
+      insurance: "Fully insured for your protection"
+    },
+    signatures: {
+      contractorSignature: "_____________________ Date: _______",
+      clientSignature: "_____________________ Date: _______",
+      acceptanceText: "By signing below, client accepts this estimate and authorizes work to begin."
+    }
+  };
+}
+
+// Keep existing enhanced fallback suggestions function
 function createEnhancedFallbackSuggestions(projectType: string, estimateData: any, totals: any, lineItems: any) {
   const suggestions = {
     upsellRecommendations: [],
@@ -225,7 +295,6 @@ function createEnhancedFallbackSuggestions(projectType: string, estimateData: an
     });
   }
   
-  // Add a general risk mitigation item
   suggestions.riskMitigation.push({
     id: 'scope-changes',
     risk: 'Mid-Project Scope Changes',
