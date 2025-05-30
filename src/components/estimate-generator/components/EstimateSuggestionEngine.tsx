@@ -187,6 +187,9 @@ const EstimateSuggestionEngine: React.FC<EstimateSuggestionEngineProps> = ({
       upsellRecommendations: [...prev.upsellRecommendations, newUpsell]
     }));
     
+    // Auto-select the new upsell
+    setSelectedSuggestions(prev => [...prev, newUpsell.id]);
+    
     setCustomUpsell({ title: '', description: '', estimatedPrice: 0, reasoning: '' });
     setShowCustomUpsell(false);
     
