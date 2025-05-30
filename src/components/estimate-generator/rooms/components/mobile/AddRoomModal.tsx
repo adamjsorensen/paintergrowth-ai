@@ -58,7 +58,12 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     const newRoom: StandardizedRoom = {
       id: roomId,
       label: roomLabel,
-      ...selectedSurfaces,
+      walls: Boolean(selectedSurfaces.walls),
+      ceiling: Boolean(selectedSurfaces.ceiling),
+      trim: Boolean(selectedSurfaces.trim),
+      doors: Number(selectedSurfaces.doors) || 0,
+      windows: Number(selectedSurfaces.windows) || 0,
+      cabinets: Boolean(selectedSurfaces.cabinets),
       confidence: 1.0
     };
 
