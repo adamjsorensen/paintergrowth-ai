@@ -1,10 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent } from '@/components/ui/card';
 import PricingTotalCard from './mobile-pricing/PricingTotalCard';
 import ProjectOverviewCard from './mobile-pricing/ProjectOverviewCard';
-import LineItemsAccordion from './mobile-pricing/LineItemsAccordion';
-import AddLineItemSheet from './mobile-pricing/AddLineItemSheet';
+
+interface DiscountSettings {
+  enabled: boolean;
+  type: 'fixed' | 'percentage';
+  value: number;
+  notes: string;
+}
 
 interface MobilePricingStepProps {
   transcript: string;
@@ -12,18 +22,11 @@ interface MobilePricingStepProps {
   missingInfo: Record<string, any>;
   projectType: 'interior' | 'exterior';
   extractedData: Record<string, any>;
-  lineItems?: any[]; // Accept line items from parent
-  totals?: Record<string, any>; // Accept totals from parent
+  subtotal?: number;
+  discount?: DiscountSettings;
+  taxRate?: number;
   onComplete: (fields: Record<string, any>, finalEstimate: Record<string, any>) => void;
-  onPricingUpdate?: (lineItems: any[], totals: Record<string, any>) => void; // Notify parent of changes
-}
-
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
+  onPricingUpdate?: (subtotal: number, discount: DiscountSettings, taxRate: number) => void;
 }
 
 const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
@@ -32,147 +35,250 @@ const MobilePricingStep: React.FC<MobilePricingStepProps> = ({
   missingInfo,
   projectType,
   extractedData,
-  lineItems: propLineItems = [],
-  totals: propTotals = {},
+  subtotal: propSubtotal = 2450.00,
+  discount: propDiscount = { enabled: false, type: 'percentage', value: 0, notes: '' },
+  taxRate: propTaxRate = 7.5,
   onComplete,
   onPricingUpdate
 }) => {
-  // Use prop line items if provided, otherwise use default mock data
-  const [lineItems, setLineItems] = useState<LineItem[]>(
-    propLineItems.length > 0 ? propLineItems : [
-      { id: '1', description: 'Interior wall painting - Living room', quantity: 1, unitPrice: 450.00, total: 450.00 },
-      { id: '2', description: 'Interior wall painting - Master bedroom', quantity: 1, unitPrice: 350.00, total: 350.00 },
-      { id: '3', description: 'Interior wall painting - Kitchen', quantity: 1, unitPrice: 400.00, total: 400.00 },
-      { id: '4', description: 'Trim and baseboards', quantity: 3, unitPrice: 150.00, total: 450.00 },
-      { id: '5', description: 'Materials and supplies', quantity: 1, unitPrice: 800.00, total: 800.00 }
-    ]
-  );
+  const [subtotal, setSubtotal] = useState(propSubtotal);
+  const [discount, setDiscount] = useState<DiscountSettings>(propDiscount);
+  const [taxRate, setTaxRate] = useState(propTaxRate);
 
-  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
-  const [newItem, setNewItem] = useState({
-    room: '',
-    quantity: 1,
-    rate: 0
-  });
-
-  const [swipedItemIndex, setSwipedItemIndex] = useState<number | null>(null);
-
-  // Update local line items when props change
+  // Update local state when props change
   useEffect(() => {
-    if (propLineItems.length > 0) {
-      console.log('MobilePricingStep - Updating line items from props:', propLineItems);
-      setLineItems(propLineItems);
-    }
-  }, [propLineItems]);
+    setSubtotal(propSubtotal);
+  }, [propSubtotal]);
 
-  const calculateTotals = (items: LineItem[]) => {
-    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * 0.08; // 8% tax
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
-  };
+  useEffect(() => {
+    setDiscount(propDiscount);
+  }, [propDiscount]);
 
-  // Use prop totals if provided, otherwise calculate from line items
-  const totals = Object.keys(propTotals).length > 0 ? propTotals : calculateTotals(lineItems);
+  useEffect(() => {
+    setTaxRate(propTaxRate);
+  }, [propTaxRate]);
 
-  const handleDeleteItem = (index: number) => {
-    const updatedItems = lineItems.filter((_, i) => i !== index);
-    setLineItems(updatedItems);
-    setSwipedItemIndex(null);
-    
-    // Notify parent of changes
-    if (onPricingUpdate) {
-      const newTotals = calculateTotals(updatedItems);
-      onPricingUpdate(updatedItems, newTotals);
-    }
-  };
-
-  const handleAddItem = () => {
-    if (newItem.room && newItem.quantity > 0 && newItem.rate > 0) {
-      const amount = newItem.quantity * newItem.rate;
-      const item: LineItem = {
-        id: `item-${Date.now()}`, // Generate unique ID
-        description: newItem.room,
-        quantity: newItem.quantity,
-        unitPrice: newItem.rate,
-        total: amount
-      };
-      const updatedItems = [...lineItems, item];
-      setLineItems(updatedItems);
-      setNewItem({ room: '', quantity: 1, rate: 0 });
-      setIsAddSheetOpen(false);
-      
-      // Notify parent of changes
+  const handleSubtotalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    if (value >= 0) {
+      setSubtotal(value);
       if (onPricingUpdate) {
-        const newTotals = calculateTotals(updatedItems);
-        onPricingUpdate(updatedItems, newTotals);
+        onPricingUpdate(value, discount, taxRate);
       }
     }
   };
 
-  const roomOptions = [
-    'Living Room Painting',
-    'Master Bedroom Painting', 
-    'Kitchen Painting',
-    'Bathroom Painting',
-    'Trim and Baseboards',
-    'Ceiling Painting',
-    'Materials and Supplies',
-    'Labor - Prep Work',
-    'Custom Task'
-  ];
+  const handleDiscountToggle = (enabled: boolean) => {
+    const newDiscount = { ...discount, enabled };
+    setDiscount(newDiscount);
+    if (onPricingUpdate) {
+      onPricingUpdate(subtotal, newDiscount, taxRate);
+    }
+  };
+
+  const handleDiscountTypeChange = (type: 'fixed' | 'percentage') => {
+    const newDiscount = { ...discount, type };
+    setDiscount(newDiscount);
+    if (onPricingUpdate) {
+      onPricingUpdate(subtotal, newDiscount, taxRate);
+    }
+  };
+
+  const handleDiscountValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = parseFloat(e.target.value) || 0;
+    
+    // Validation
+    if (value < 0) value = 0;
+    if (discount.type === 'percentage' && value > 100) value = 100;
+    
+    const newDiscount = { ...discount, value };
+    setDiscount(newDiscount);
+    if (onPricingUpdate) {
+      onPricingUpdate(subtotal, newDiscount, taxRate);
+    }
+  };
+
+  const handleDiscountNotesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDiscount = { ...discount, notes: e.target.value };
+    setDiscount(newDiscount);
+    if (onPricingUpdate) {
+      onPricingUpdate(subtotal, newDiscount, taxRate);
+    }
+  };
+
+  const handleTaxRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setTaxRate(value);
+    if (onPricingUpdate) {
+      onPricingUpdate(subtotal, discount, value);
+    }
+  };
+
+  const calculateDiscountAmount = () => {
+    if (!discount.enabled) return 0;
+    
+    if (discount.type === 'fixed') {
+      return Math.min(discount.value, subtotal);
+    } else {
+      return subtotal * (discount.value / 100);
+    }
+  };
+
+  const discountAmount = calculateDiscountAmount();
+  const postDiscountSubtotal = subtotal - discountAmount;
+  const tax = postDiscountSubtotal * (taxRate / 100);
+  const total = postDiscountSubtotal + tax;
 
   const handleContinue = () => {
     const fields = { ...extractedData, ...missingInfo };
     const finalEstimate = {
-      lineItems: lineItems,
-      totals: totals
+      subtotal,
+      discount,
+      discountAmount,
+      taxRate,
+      tax,
+      total
     };
     onComplete(fields, finalEstimate);
   };
 
-  console.log('MobilePricingStep - Current state:', { lineItems, totals, propLineItems, propTotals });
-
   return (
-    <div className="px-4 py-6 space-y-6 relative">
+    <div className="px-4 py-6 space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-xl font-semibold mb-2">Estimate Summary</h2>
-        <p className="text-gray-600 text-sm">Review your project estimate</p>
+        <p className="text-gray-600 text-sm">Review and adjust your project estimate</p>
       </div>
 
       <PricingTotalCard 
-        subtotal={totals.subtotal || 0}
-        tax={totals.tax || 0}
-        total={totals.total || 0}
+        subtotal={subtotal}
+        tax={tax}
+        total={total}
       />
 
       <ProjectOverviewCard summary={summary} />
 
-      <LineItemsAccordion
-        lineItems={lineItems}
-        onDeleteItem={handleDeleteItem}
-        swipedItemIndex={swipedItemIndex}
-        onSwipedItemChange={setSwipedItemIndex}
-      />
+      {/* Estimate Details Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="text-lg font-medium mb-6">Estimate Details</h3>
+          
+          {/* Subtotal Input */}
+          <div className="space-y-4 mb-6">
+            <div>
+              <Label htmlFor="subtotal" className="text-base font-medium mb-3 block">
+                Project Subtotal
+              </Label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">$</span>
+                <Input
+                  id="subtotal"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={subtotal}
+                  onChange={handleSubtotalChange}
+                  className="pl-8 text-lg font-medium min-h-[56px]"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
 
-      {/* Floating Add Button */}
-      <Button
-        variant="secondary"
-        size="icon"
-        className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-lg z-10"
-        onClick={() => setIsAddSheetOpen(true)}
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
+          {/* Discount Section */}
+          <div className="space-y-4 mb-6 p-4 border rounded-lg bg-gray-50">
+            <div className="flex items-center space-x-3">
+              <Switch
+                id="discount-toggle"
+                checked={discount.enabled}
+                onCheckedChange={handleDiscountToggle}
+              />
+              <Label htmlFor="discount-toggle" className="text-base font-medium">
+                Apply Discount
+              </Label>
+            </div>
 
-      <AddLineItemSheet
-        isOpen={isAddSheetOpen}
-        onOpenChange={setIsAddSheetOpen}
-        newItem={newItem}
-        onNewItemChange={setNewItem}
-        onAddItem={handleAddItem}
-        roomOptions={roomOptions}
-      />
+            {discount.enabled && (
+              <div className="space-y-4">
+                {/* Discount Type */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Discount Type</Label>
+                  <RadioGroup
+                    value={discount.type}
+                    onValueChange={handleDiscountTypeChange}
+                    className="grid grid-cols-2 gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="fixed" id="fixed" />
+                      <Label htmlFor="fixed" className="text-base">$ Fixed Amount</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="percentage" id="percentage" />
+                      <Label htmlFor="percentage" className="text-base">% Percentage</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {/* Discount Value */}
+                <div className="space-y-3">
+                  <Label htmlFor="discount-value" className="text-base font-medium">
+                    Discount Value
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
+                      {discount.type === 'fixed' ? '$' : '%'}
+                    </span>
+                    <Input
+                      id="discount-value"
+                      type="number"
+                      min="0"
+                      max={discount.type === 'percentage' ? 100 : undefined}
+                      step={discount.type === 'fixed' ? '0.01' : '0.1'}
+                      value={discount.value}
+                      onChange={handleDiscountValueChange}
+                      className="pl-8 text-lg min-h-[56px]"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Discount Notes */}
+                <div className="space-y-3">
+                  <Label htmlFor="discount-notes" className="text-base font-medium">
+                    Discount Notes (Optional)
+                  </Label>
+                  <Input
+                    id="discount-notes"
+                    type="text"
+                    value={discount.notes}
+                    onChange={handleDiscountNotesChange}
+                    placeholder="e.g., 10% off for repeat customers"
+                    className="text-base min-h-[56px]"
+                    maxLength={100}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tax Rate */}
+          <div className="space-y-3 mb-6">
+            <Label htmlFor="tax-rate" className="text-base font-medium">
+              Tax Rate (%)
+            </Label>
+            <Input
+              id="tax-rate"
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value={taxRate}
+              onChange={handleTaxRateChange}
+              className="text-lg min-h-[56px]"
+              placeholder="7.5"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Continue Button */}
       <div className="pt-4 pb-20">
