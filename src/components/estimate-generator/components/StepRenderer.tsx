@@ -131,9 +131,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
           projectType={projectType}
           lineItems={lineItems}
           totals={totals}
-          content={editedContent}
           onComplete={handlePDFComplete}
-          onBack={handleBackToContentEditor}
         />
       );
     default:
@@ -142,3 +140,4 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers }) => {
 };
 
 export default StepRenderer;
+
