@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,6 @@ import { Download, FileText, Loader2 } from 'lucide-react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } from '@supabase/auth-helpers-react';
 
 interface BlueprintData {
   coverPage: {
@@ -82,7 +80,17 @@ const EstimatePDFGenerator: React.FC<EstimatePDFGeneratorProps> = ({
   onComplete
 }) => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  
+  // Get user from supabase auth
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+  
   const { data: companyProfile } = useCompanyProfile(user?.id);
   const [isGenerating, setIsGenerating] = useState(false);
   const [blueprintData, setBlueprintData] = useState<BlueprintData | null>(null);
@@ -455,4 +463,3 @@ const EstimatePDFGenerator: React.FC<EstimatePDFGeneratorProps> = ({
 };
 
 export default EstimatePDFGenerator;
-

@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +15,8 @@ interface EstimatePromptTableProps {
 const purposeLabels: Record<PromptPurpose, string> = {
   scope: "Scope Extractor",
   suggestion: "Suggestion Engine",
-  pdf_summary: "PDF Summary"
+  pdf_summary: "PDF Summary",
+  pdf_generation: "PDF Generation"
 };
 
 export const EstimatePromptTable = ({ 

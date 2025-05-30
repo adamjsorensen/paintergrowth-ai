@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,8 @@ interface EstimatePromptFormProps {
 const purposeLabels: Record<PromptPurpose, string> = {
   scope: "Scope Extractor",
   suggestion: "Suggestion Engine", 
-  pdf_summary: "PDF Summary"
+  pdf_summary: "PDF Summary",
+  pdf_generation: "PDF Generation"
 };
 
 export const EstimatePromptForm = ({ prompt, onSuccess, onCancel }: EstimatePromptFormProps) => {
