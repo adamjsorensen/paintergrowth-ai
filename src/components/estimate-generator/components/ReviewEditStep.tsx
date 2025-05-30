@@ -17,6 +17,13 @@ import { useTabValidation } from './hooks/useTabValidation';
 // Import room configuration
 import { extractRoomsFromFields } from '../rooms/RoomExtractionUtils';
 
+interface DiscountSettings {
+  enabled: boolean;
+  type: 'fixed' | 'percentage';
+  value: number;
+  notes: string;
+}
+
 interface ReviewEditStepProps {
   summary: string;
   transcript: string;
@@ -35,6 +42,16 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   onComplete
 }) => {
   const [activeTab, setActiveTab] = useState('project');
+  
+  // Add pricing state for the simplified mobile pricing step
+  const [subtotal, setSubtotal] = useState(2450.00);
+  const [discount, setDiscount] = useState<DiscountSettings>({
+    enabled: false,
+    type: 'percentage',
+    value: 0,
+    notes: ''
+  });
+  const [taxRate, setTaxRate] = useState(7.5);
   
   // Use custom hooks for state management
   const { estimateStore, updateEstimate, hasSelectedSurfaces, hasSelectedSurfacesForRoom } = useEstimateStore({
@@ -87,6 +104,13 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
       return room;
     });
     updateEstimate('roomsMatrix', updatedMatrix);
+  };
+
+  // Handle pricing updates from the mobile pricing step
+  const handlePricingUpdate = (newSubtotal: number, newDiscount: DiscountSettings, newTaxRate: number) => {
+    setSubtotal(newSubtotal);
+    setDiscount(newDiscount);
+    setTaxRate(newTaxRate);
   };
 
   // Handle final completion
@@ -177,13 +201,11 @@ const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
             projectType={projectType}
             extractedData={extractedData}
             missingInfo={missingInfo}
-            lineItems={estimateStore.lineItems}
-            totals={estimateStore.totals}
+            subtotal={subtotal}
+            discount={discount}
+            taxRate={taxRate}
             onComplete={handlePricingComplete}
-            onPricingUpdate={(lineItems, totals) => {
-              updateEstimate('lineItems', lineItems);
-              updateEstimate('totals', totals);
-            }}
+            onPricingUpdate={handlePricingUpdate}
           />
         </TabsContent>
       </Tabs>
