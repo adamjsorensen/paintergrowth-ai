@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { interiorRoomsMatrixConfig, roomGroups } from '../../InteriorRoomsConfig';
+import { interiorRoomsMatrixConfig } from '../../InteriorRoomsConfig';
 import { StandardizedRoom } from '@/types/room-types';
+import { roomTemplates, transitionalRooms, createRoomInstance } from '../../config/RoomTemplates';
 
 interface AddRoomModalProps {
   isOpen: boolean;
@@ -22,7 +23,8 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   workingMatrix,
   onAddRoom
 }) => {
-  const [roomType, setRoomType] = useState('');
+  const [selectedFloor, setSelectedFloor] = useState<'main' | 'upper' | 'basement' | 'transitional'>('main');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [customName, setCustomName] = useState('');
   const [selectedSurfaces, setSelectedSurfaces] = useState<Record<string, any>>({
     walls: false,
@@ -33,30 +35,24 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     cabinets: false
   });
 
-  // Show all room types - remove filtering to allow duplicates
-  const availableRoomTypes = interiorRoomsMatrixConfig.rows;
+  // Get available templates for selected floor
+  const getAvailableTemplates = () => {
+    if (selectedFloor === 'transitional') {
+      return transitionalRooms;
+    }
+    return roomTemplates.filter(template => template.floor === selectedFloor);
+  };
 
-  // Generate unique room label and ID for duplicates
-  const generateUniqueRoomData = (baseRoomType: string, baseName: string) => {
+  // Generate next index for the selected category
+  const getNextIndex = (category: string, floor: string) => {
+    const categoryId = category.toLowerCase().replace(/\s+/g, '-');
+    const floorPrefix = floor === 'transitional' ? 'main' : floor;
+    
     const existingRooms = workingMatrix.filter(room => 
-      room.id.startsWith(baseRoomType) || room.label.startsWith(baseName)
+      room.category === category && room.floor === floor
     );
     
-    if (existingRooms.length === 0) {
-      return { id: baseRoomType, label: baseName };
-    }
-    
-    // Find the next available number
-    let counter = 2;
-    while (true) {
-      const newId = `${baseRoomType}_${counter}`;
-      const newLabel = `${baseName} ${counter}`;
-      
-      if (!workingMatrix.some(room => room.id === newId || room.label === newLabel)) {
-        return { id: newId, label: newLabel };
-      }
-      counter++;
-    }
+    return existingRooms.length + 1;
   };
 
   const handleSurfaceChange = (surfaceId: string, value: any) => {
@@ -67,18 +63,20 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   };
 
   const handleAddRoom = () => {
-    if (!roomType) return;
+    if (!selectedCategory) return;
 
-    const roomConfig = interiorRoomsMatrixConfig.rows.find(r => r.id === roomType);
-    if (!roomConfig) return;
+    const template = getAvailableTemplates().find(t => t.category === selectedCategory);
+    if (!template) return;
 
-    // Generate unique ID and label
-    const baseName = customName || roomConfig.label;
-    const { id: roomId, label: roomLabel } = generateUniqueRoomData(roomType, baseName);
+    const nextIndex = getNextIndex(selectedCategory, selectedFloor);
+    const roomInstance = createRoomInstance(template, nextIndex, customName);
 
     const newRoom: StandardizedRoom = {
-      id: roomId,
-      label: roomLabel,
+      id: roomInstance.id,
+      label: roomInstance.label,
+      floor: roomInstance.floor as 'main' | 'upper' | 'basement',
+      category: roomInstance.category,
+      index: roomInstance.index,
       walls: Boolean(selectedSurfaces.walls),
       ceiling: Boolean(selectedSurfaces.ceiling),
       trim: Boolean(selectedSurfaces.trim),
@@ -91,7 +89,8 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     onAddRoom(newRoom);
     
     // Reset form
-    setRoomType('');
+    setSelectedFloor('main');
+    setSelectedCategory('');
     setCustomName('');
     setSelectedSurfaces({
       walls: false,
@@ -105,7 +104,12 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     onClose();
   };
 
-  const selectedRoomConfig = roomType ? interiorRoomsMatrixConfig.rows.find(r => r.id === roomType) : null;
+  const floorOptions = [
+    { value: 'main', label: 'Main Floor' },
+    { value: 'upper', label: 'Upper Floor' },
+    { value: 'basement', label: 'Basement' },
+    { value: 'transitional', label: 'Transitional Spaces' }
+  ];
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -115,27 +119,38 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
         </SheetHeader>
         
         <div className="mt-6 space-y-6">
-          {/* Room Type Selection */}
+          {/* Floor Selection */}
           <div className="space-y-2">
-            <Label htmlFor="room-type">Room Type</Label>
-            <Select value={roomType} onValueChange={setRoomType}>
+            <Label htmlFor="floor-select">Floor</Label>
+            <Select value={selectedFloor} onValueChange={(value: any) => {
+              setSelectedFloor(value);
+              setSelectedCategory(''); // Reset category when floor changes
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a floor" />
+              </SelectTrigger>
+              <SelectContent>
+                {floorOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Room Category Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="category-select">Room Type</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a room type" />
               </SelectTrigger>
               <SelectContent>
-                {roomGroups.map(group => (
-                  <React.Fragment key={group.id}>
-                    <div className="text-xs text-muted-foreground px-2 py-1 font-medium">
-                      {group.label}
-                    </div>
-                    {availableRoomTypes
-                      .filter(room => room.group === group.id)
-                      .map(room => (
-                        <SelectItem key={room.id} value={room.id}>
-                          {room.label}
-                        </SelectItem>
-                      ))}
-                  </React.Fragment>
+                {getAvailableTemplates().map(template => (
+                  <SelectItem key={template.category} value={template.category}>
+                    {template.category}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -148,12 +163,12 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
               id="custom-name"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder={selectedRoomConfig ? `e.g., ${selectedRoomConfig.label} 2` : "Enter custom name"}
+              placeholder={selectedCategory ? `e.g., ${selectedCategory} 2` : "Enter custom name"}
             />
           </div>
 
           {/* Surface Selection */}
-          {roomType && (
+          {selectedCategory && (
             <div className="space-y-4">
               <Label>Surfaces to Include</Label>
               <div className="grid grid-cols-1 gap-4">
@@ -199,7 +214,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
             </Button>
             <Button
               onClick={handleAddRoom}
-              disabled={!roomType}
+              disabled={!selectedCategory}
               className="flex-1"
             >
               Add Room

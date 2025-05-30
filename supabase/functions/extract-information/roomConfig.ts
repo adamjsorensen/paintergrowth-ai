@@ -1,36 +1,28 @@
 
 export const validRooms = [
-  // Living Areas
-  { id: "living-room", label: "Living Room", aliases: ["living", "lounge", "sitting room"] },
-  { id: "family-room", label: "Family Room", aliases: ["family", "great room", "den"] },
-  { id: "dining-room", label: "Dining Room", aliases: ["dining"] },
+  // Main Floor
+  { id: "main-kitchen", label: "Kitchen", aliases: ["kitchen", "cooking area"] },
+  { id: "main-dining-room", label: "Dining Room", aliases: ["dining room", "eating area"] },
+  { id: "main-living-room", label: "Living Room", aliases: ["living room", "main room", "front room"] },
+  { id: "main-powder-room", label: "Powder Room", aliases: ["powder room", "half bath", "guest powder room"] },
+  { id: "main-laundry-room", label: "Laundry Room", aliases: ["laundry room", "utility room"] },
   
-  // Bedrooms
-  { id: "master-bedroom", label: "Master Bedroom", aliases: ["master", "primary", "primary bedroom", "main bedroom", "master bedroom"] },
-  { id: "bedroom", label: "Bedroom", aliases: ["bedroom", "spare bedroom"] },
-  { id: "guest-bedroom", label: "Guest Bedroom", aliases: ["guest", "guest bedroom", "guest room"] },
-  { id: "kids-bedroom", label: "Kids Bedroom", aliases: ["kids", "children", "child's room", "kids bedroom", "children's bedroom"] },
+  // Upper Floor
+  { id: "upper-bedroom", label: "Bedroom", aliases: ["bedroom", "master bedroom", "primary bedroom", "guest bedroom", "kids bedroom"] },
+  { id: "upper-bathroom", label: "Bathroom", aliases: ["bathroom", "full bathroom", "ensuite", "master bath"] },
   
-  // Wet Areas
-  { id: "kitchen", label: "Kitchen", aliases: ["kitchen"] },
-  { id: "bathroom", label: "Bathroom", aliases: ["bathroom", "bath", "full bath"] },
-  { id: "main-bathroom", label: "Main Bathroom", aliases: ["main bathroom", "main bath"] },
-  { id: "ensuite-bathroom", label: "Ensuite Bathroom", aliases: ["ensuite", "en-suite", "master bath", "primary bath"] },
-  { id: "powder-room", label: "Powder Room", aliases: ["powder", "powder room", "half bath", "guest bath"] },
-  { id: "laundry-room", label: "Laundry Room", aliases: ["laundry", "utility", "mud room"] },
+  // Basement
+  { id: "basement-recreation-room", label: "Recreation Room", aliases: ["rec room", "recreation", "game room", "family room"] },
   
   // Transitional Spaces
-  { id: "hallway", label: "Hallway", aliases: ["hall", "hallway", "corridor", "upstairs hallway", "downstairs hallway"] },
-  { id: "entryway", label: "Entryway", aliases: ["entry", "entryway", "entrance"] },
-  { id: "foyer", label: "Foyer", aliases: ["foyer"] },
-  { id: "staircase", label: "Staircase", aliases: ["stairs", "stairway", "stairwell", "staircase"] },
+  { id: "main-hallway", label: "Hallway", aliases: ["hallway", "corridor", "upstairs hallway", "main hallway"] },
+  { id: "main-entryway", label: "Entryway", aliases: ["entryway", "entrance"] },
+  { id: "main-foyer", label: "Foyer", aliases: ["foyer"] },
+  { id: "main-staircase", label: "Staircase", aliases: ["staircase", "stairs", "stairway", "stairwell"] },
   
-  // Additional Rooms
-  { id: "office", label: "Home Office", aliases: ["office", "home office", "study"] },
-  { id: "den", label: "Den", aliases: ["den"] },
-  { id: "basement", label: "Basement", aliases: ["basement", "lower level"] },
-  { id: "recreation-room", label: "Recreation Room", aliases: ["rec room", "recreation", "game room"] },
-  { id: "sunroom", label: "Sunroom", aliases: ["sunroom", "sun porch"] },
-  { id: "garage", label: "Garage", aliases: ["garage"] },
-  { id: "attic", label: "Attic", aliases: ["attic", "loft"] }
+  // Additional rooms that can be added dynamically
+  { id: "main-office", label: "Office", aliases: ["office", "study", "home office"] },
+  { id: "main-den", label: "Den", aliases: ["den"] },
+  { id: "basement-basement", label: "Basement", aliases: ["basement", "lower level"] },
+  { id: "main-garage", label: "Garage", aliases: ["garage", "car garage"] }
 ];

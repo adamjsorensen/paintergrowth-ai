@@ -2,13 +2,23 @@
 // Single source-of-truth for room-related types
 
 /**
+ * Room template interface for floor-based organization
+ */
+export interface RoomTemplate {
+  floor: 'main' | 'upper' | 'basement';
+  category: string;
+  defaultLabel: string;
+  aliases?: string[];
+}
+
+/**
  * Matrix row interface with floor property for room definitions
  */
 export interface MatrixRow {
   id: string;
   label: string;
   group?: string;
-  floor?: 'main' | 'upstairs' | 'basement';
+  floor?: 'main' | 'upper' | 'basement';
 }
 
 /**
@@ -39,6 +49,9 @@ export interface MatrixGroup {
 export interface StandardizedRoom {
   id: string;
   label: string;
+  floor?: 'main' | 'upper' | 'basement';
+  category?: string;
+  index?: number;
   walls: boolean;
   ceiling: boolean;
   trim: boolean;
@@ -47,7 +60,6 @@ export interface StandardizedRoom {
   cabinets: boolean;
   confidence?: number;
   selected?: boolean;
-  floor?: 'main' | 'upstairs' | 'basement';
 }
 
 /**

@@ -1,6 +1,7 @@
 
 import { StandardizedRoom, MatrixRoom } from "@/types/room-types";
 import { roomRows } from "./RoomDefinitions";
+import { roomTemplates, transitionalRooms } from "./RoomTemplates";
 
 // Helper function to initialize matrix values with standardized room objects
 export const initializeRoomsMatrix = (extractedRooms?: Record<string, StandardizedRoom>): MatrixRoom[] => {
@@ -10,9 +11,18 @@ export const initializeRoomsMatrix = (extractedRooms?: Record<string, Standardiz
   
   // Create an entry for each room with default values
   roomRows.forEach(row => {
+    // Find the template for this room
+    const allTemplates = [...roomTemplates, ...transitionalRooms];
+    const template = allTemplates.find(t => 
+      row.id.includes(t.category.toLowerCase().replace(/\s+/g, '-'))
+    );
+
     const matrixRoom: MatrixRoom = {
       id: row.id,
       label: row.label || row.id,
+      floor: row.floor,
+      category: template?.category,
+      index: 1, // Initial rooms are index 1
       walls: false,
       ceiling: false,
       trim: false,
