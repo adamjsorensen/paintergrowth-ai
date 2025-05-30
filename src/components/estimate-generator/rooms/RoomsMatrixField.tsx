@@ -62,6 +62,13 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
   const handleCheckboxChange = createCheckboxHandler(workingMatrix, onChange);
   const handleNumberChange = createNumberHandler(workingMatrix, onChange);
   
+  // Handle adding new room
+  const handleAddRoom = (newRoom: StandardizedRoom) => {
+    console.log('RoomsMatrixField - Adding new room:', newRoom);
+    const updatedMatrix = [...workingMatrix, newRoom];
+    onChange(updatedMatrix);
+  };
+  
   // Check if room is mentioned in extracted text
   const isRoomExtracted = (roomId: string) => {
     const isExtracted = extractedRoomsList.includes(roomId);
@@ -112,10 +119,13 @@ const RoomsMatrixField: React.FC<RoomsMatrixFieldProps> = ({
             hasSelectedSurfaces={hasSelectedSurfaces}
           />
           
-          <AddRoomForm
-            workingMatrix={workingMatrix}
-            onChange={onChange}
-          />
+          {/* Desktop Add Room Form - only show on desktop */}
+          <div className="hidden md:block">
+            <AddRoomForm
+              workingMatrix={workingMatrix}
+              onChange={onChange}
+            />
+          </div>
           
           <RoomMatrixInfo extractedRoomsList={extractedRoomsList} />
         </div>

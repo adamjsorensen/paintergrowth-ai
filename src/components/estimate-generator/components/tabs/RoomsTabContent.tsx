@@ -16,6 +16,7 @@ interface RoomsTabContentProps {
   onNumberChange: (roomId: string, columnId: string, value: number) => void;
   onSetActiveTab: (tab: string) => void;
   onStartOver?: () => void;
+  onRoomMatrixChange?: (matrix: StandardizedRoom[]) => void;
 }
 
 const RoomsTabContent: React.FC<RoomsTabContentProps> = ({
@@ -25,7 +26,8 @@ const RoomsTabContent: React.FC<RoomsTabContentProps> = ({
   hasSelectedSurfaces,
   onCheckboxChange,
   onNumberChange,
-  onSetActiveTab
+  onSetActiveTab,
+  onRoomMatrixChange
 }) => {
   const toggleGroupVisibility = (groupId: string) => {
     console.log('RoomsTabContent - Toggle group visibility:', groupId);
