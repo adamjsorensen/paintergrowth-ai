@@ -33,10 +33,31 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     cabinets: false
   });
 
-  // Get available room types that aren't already in the matrix
-  const availableRoomTypes = interiorRoomsMatrixConfig.rows.filter(
-    row => !workingMatrix.some(room => room.id === row.id)
-  );
+  // Show all room types - remove filtering to allow duplicates
+  const availableRoomTypes = interiorRoomsMatrixConfig.rows;
+
+  // Generate unique room label and ID for duplicates
+  const generateUniqueRoomData = (baseRoomType: string, baseName: string) => {
+    const existingRooms = workingMatrix.filter(room => 
+      room.id.startsWith(baseRoomType) || room.label.startsWith(baseName)
+    );
+    
+    if (existingRooms.length === 0) {
+      return { id: baseRoomType, label: baseName };
+    }
+    
+    // Find the next available number
+    let counter = 2;
+    while (true) {
+      const newId = `${baseRoomType}_${counter}`;
+      const newLabel = `${baseName} ${counter}`;
+      
+      if (!workingMatrix.some(room => room.id === newId || room.label === newLabel)) {
+        return { id: newId, label: newLabel };
+      }
+      counter++;
+    }
+  };
 
   const handleSurfaceChange = (surfaceId: string, value: any) => {
     setSelectedSurfaces(prev => ({
@@ -51,9 +72,9 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     const roomConfig = interiorRoomsMatrixConfig.rows.find(r => r.id === roomType);
     if (!roomConfig) return;
 
-    // Create custom room ID if custom name is provided
-    const roomId = customName ? `${roomType}_${Date.now()}` : roomType;
-    const roomLabel = customName || roomConfig.label;
+    // Generate unique ID and label
+    const baseName = customName || roomConfig.label;
+    const { id: roomId, label: roomLabel } = generateUniqueRoomData(roomType, baseName);
 
     const newRoom: StandardizedRoom = {
       id: roomId,

@@ -1,17 +1,15 @@
 
-import React, { useState, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Plus } from 'lucide-react';
-import { interiorRoomsMatrixConfig, floorGroups } from "../InteriorRoomsConfig";
-import { StandardizedRoom } from "@/types/room-types";
-import { groupRoomsByFloor, countSelectedRoomsByFloor } from "../utils/FloorGroupingUtils";
-import SelectedRoomsSummary from "./mobile/SelectedRoomsSummary";
-import AddRoomModal from "./mobile/AddRoomModal";
+import { StandardizedRoom } from '@/types/room-types';
+import { interiorRoomsMatrixConfig, roomGroups } from '../InteriorRoomsConfig';
+import SelectedRoomsSummary from './mobile/SelectedRoomsSummary';
+import AddRoomModal from './mobile/AddRoomModal';
 
 interface RoomMatrixMobileProps {
   workingMatrix: StandardizedRoom[];
@@ -22,6 +20,7 @@ interface RoomMatrixMobileProps {
   onToggleGroupVisibility: (groupId: string) => void;
   isRoomExtracted: (roomId: string) => boolean;
   hasSelectedSurfaces: (room: StandardizedRoom) => boolean;
+  onRoomMatrixChange?: (matrix: StandardizedRoom[]) => void;
 }
 
 const RoomMatrixMobile: React.FC<RoomMatrixMobileProps> = ({
@@ -32,89 +31,50 @@ const RoomMatrixMobile: React.FC<RoomMatrixMobileProps> = ({
   onNumberChange,
   onToggleGroupVisibility,
   isRoomExtracted,
-  hasSelectedSurfaces
+  hasSelectedSurfaces,
+  onRoomMatrixChange
 }) => {
-  const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
-  const [isSummaryOpen, setIsSummaryOpen] = useState(true);
-  const [visibleFloors, setVisibleFloors] = useState<Record<string, boolean>>({});
-  const roomRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [addRoomModalOpen, setAddRoomModalOpen] = useState(false);
 
-  // Group rooms by floor
-  const floorGroupedRooms = groupRoomsByFloor(workingMatrix);
-  const floorCounts = countSelectedRoomsByFloor(floorGroupedRooms, hasSelectedSurfaces);
-
-  // Toggle floor visibility
-  const toggleFloorVisibility = (floorId: string) => {
-    setVisibleFloors(prev => ({
-      ...prev,
-      [floorId]: !prev[floorId]
-    }));
-  };
-
-  // Handle room chip click - scroll to room and expand floor
-  const handleRoomClick = (roomId: string) => {
-    // Find which floor this room belongs to
-    const targetFloor = floorGroups.find(floor => {
-      return Object.values(floorGroupedRooms[floor.id] || {}).some(rooms => 
-        rooms.some(room => room.id === roomId)
-      );
-    });
-
-    if (targetFloor) {
-      // Expand the floor
-      setVisibleFloors(prev => ({
-        ...prev,
-        [targetFloor.id]: true
-      }));
-
-      // Scroll to room after a short delay to allow accordion to expand
-      setTimeout(() => {
-        const roomElement = roomRefs.current[roomId];
-        if (roomElement) {
-          roomElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-          // Add a highlight effect
-          roomElement.style.background = '#fef3c7';
-          setTimeout(() => {
-            roomElement.style.background = '';
-          }, 2000);
-        }
-      }, 300);
+  // Handle adding a new room to the matrix
+  const handleAddRoom = (newRoom: StandardizedRoom) => {
+    console.log('RoomMatrixMobile - Adding new room:', newRoom);
+    if (onRoomMatrixChange) {
+      const updatedMatrix = [...workingMatrix, newRoom];
+      onRoomMatrixChange(updatedMatrix);
     }
   };
 
-  // Toggle entire room on/off
-  const toggleRoom = (room: StandardizedRoom) => {
-    const isCurrentlySelected = hasSelectedSurfaces(room);
+  // Toggle all surfaces for a room
+  const toggleRoomSurfaces = (roomId: string) => {
+    const room = workingMatrix.find(r => r.id === roomId);
+    if (!room) return;
+
+    const hasAnySurfaceSelected = hasSelectedSurfaces(room);
     
-    // Toggle all surfaces for this room
+    // If any surface is selected, deselect all; otherwise select all
     interiorRoomsMatrixConfig.columns.forEach(column => {
       if (column.type === "checkbox") {
-        onCheckboxChange(room.id, column.id, !isCurrentlySelected);
+        onCheckboxChange(roomId, column.id, !hasAnySurfaceSelected);
       } else if (column.type === "number") {
-        onNumberChange(room.id, column.id, !isCurrentlySelected ? 1 : 0);
+        onNumberChange(roomId, column.id, hasAnySurfaceSelected ? 0 : 1);
       }
     });
   };
 
-  // Handle adding new room
-  const handleAddRoom = (newRoom: StandardizedRoom) => {
-    // This will be handled by the parent component's onChange
-    // For now, we'll just close the modal
-    setIsAddRoomOpen(false);
-  };
+  // Scroll to room and expand its group
+  const scrollToRoom = (roomId: string) => {
+    const room = workingMatrix.find(r => r.id === roomId);
+    if (!room) return;
 
-  // Sort rooms within each group - selected first
-  const sortRoomsInGroup = (rooms: StandardizedRoom[]) => {
-    return [...rooms].sort((a, b) => {
-      const aSelected = hasSelectedSurfaces(a);
-      const bSelected = hasSelectedSurfaces(b);
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-      return 0;
-    });
+    const roomConfig = interiorRoomsMatrixConfig.rows.find(r => r.id === room.id.split('_')[0]);
+    if (roomConfig) {
+      const element = document.getElementById(`room-${roomId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
   };
 
   return (
@@ -124,130 +84,113 @@ const RoomMatrixMobile: React.FC<RoomMatrixMobileProps> = ({
         roomsMatrix={workingMatrix}
         extractedRoomsList={extractedRoomsList}
         hasSelectedSurfaces={hasSelectedSurfaces}
-        onRoomClick={handleRoomClick}
-        isOpen={isSummaryOpen}
-        onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
+        onRoomClick={scrollToRoom}
+        isOpen={summaryOpen}
+        onToggle={() => setSummaryOpen(!summaryOpen)}
       />
 
-      {/* Room Selection by Floor */}
-      <Accordion type="multiple" value={Object.keys(visibleFloors).filter(f => visibleFloors[f])}>
-        {floorGroups.map(floor => {
-          const floorRooms = floorGroupedRooms[floor.id];
-          const floorCount = floorCounts[floor.id];
-          
-          // Skip floors with no rooms
-          if (!floorRooms || Object.values(floorRooms).every(rooms => rooms.length === 0)) {
-            return null;
-          }
+      {/* Room Groups Accordion */}
+      <Accordion type="multiple" className="space-y-2">
+        {roomGroups.map(group => {
+          // Get rooms for this group and sort selected rooms first
+          const groupRooms = workingMatrix.filter(room => {
+            const roomConfig = interiorRoomsMatrixConfig.rows.find(
+              r => r.id === room.id.split('_')[0] // Handle duplicate rooms
+            );
+            return roomConfig?.group === group.id;
+          }).sort((a, b) => {
+            const aSelected = hasSelectedSurfaces(a);
+            const bSelected = hasSelectedSurfaces(b);
+            if (aSelected && !bSelected) return -1;
+            if (!aSelected && bSelected) return 1;
+            return 0;
+          });
+
+          if (groupRooms.length === 0) return null;
 
           return (
-            <AccordionItem key={floor.id} value={floor.id} className="border rounded-lg">
-              <AccordionTrigger 
-                className="px-4 py-3 hover:no-underline"
-                onClick={() => toggleFloorVisibility(floor.id)}
-              >
+            <AccordionItem key={group.id} value={group.id} className="border rounded-lg">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
                 <div className="flex items-center justify-between w-full mr-4">
-                  <h2 className="font-semibold text-lg">{floor.label}</h2>
-                  <Badge variant="outline" className="ml-2">
-                    {floorCount.selected}/{floorCount.total} rooms
+                  <span className="font-medium">{group.label}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {groupRooms.filter(hasSelectedSurfaces).length} / {groupRooms.length}
                   </Badge>
                 </div>
               </AccordionTrigger>
-              
-              <AccordionContent className="px-4 pb-4">
+              <AccordionContent className="px-4 pb-3">
                 <div className="space-y-3">
-                  {Object.entries(floorRooms).map(([groupId, groupRooms]) => {
-                    if (groupRooms.length === 0) return null;
-                    
-                    // Sort rooms - selected first
-                    const sortedRooms = sortRoomsInGroup(groupRooms);
+                  {groupRooms.map(room => {
+                    const isSelected = hasSelectedSurfaces(room);
+                    const isExtracted = isRoomExtracted(room.id);
                     
                     return (
-                      <div key={`${floor.id}-${groupId}`} className="space-y-2">
-                        {sortedRooms.map(room => {
-                          const isSelected = hasSelectedSurfaces(room);
-                          const isExtracted = isRoomExtracted(room.id);
-                          
-                          return (
-                            <div
-                              key={room.id}
-                              ref={el => roomRefs.current[room.id] = el}
-                              className="transition-all duration-200"
+                      <div
+                        key={room.id}
+                        id={`room-${room.id}`}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          isSelected ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => toggleRoomSurfaces(room.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{room.label}</span>
+                            <Badge
+                              variant={isExtracted ? "default" : "secondary"}
+                              className="text-xs"
                             >
-                              <Card 
-                                className={`transition-all ${
-                                  isSelected 
-                                    ? "bg-primary/5 border-primary/20 shadow-sm" 
-                                    : "bg-gray-50/50 border-gray-200"
-                                }`}
-                              >
-                                <CardContent className="p-4">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <button
-                                      onClick={() => toggleRoom(room)}
-                                      className="flex-1 text-left"
-                                    >
-                                      <h4 className={`font-medium text-sm flex items-center gap-2 ${
-                                        isSelected ? "text-primary" : "text-gray-700"
-                                      }`}>
-                                        {room.label}
-                                        {isExtracted && (
-                                          <Badge variant="default" className="text-xs">
-                                            Detected
-                                          </Badge>
-                                        )}
-                                        {isSelected && !isExtracted && (
-                                          <Badge variant="secondary" className="text-xs">
-                                            Added
-                                          </Badge>
-                                        )}
-                                        {isSelected && (
-                                          <Badge variant="outline" className="text-xs">
-                                            Selected
-                                          </Badge>
-                                        )}
-                                      </h4>
-                                    </button>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-2 gap-y-2 items-center">
-                                    {interiorRoomsMatrixConfig.columns.map(column => (
-                                      <React.Fragment key={column.id}>
-                                        <span className="text-sm text-gray-600">{column.label}:</span>
-                                        <div className="justify-self-end">
-                                          {column.type === "checkbox" ? (
-                                            <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
-                                              <Checkbox
-                                                checked={Boolean(room[column.id as keyof StandardizedRoom])}
-                                                onCheckedChange={checked => 
-                                                  onCheckboxChange(room.id, column.id, Boolean(checked))
-                                                }
-                                                className="h-5 w-5"
-                                              />
-                                            </div>
-                                          ) : column.type === "number" ? (
-                                            <div className="w-20">
-                                              <Input
-                                                type="number"
-                                                min={0}
-                                                step={1}
-                                                value={room[column.id as keyof StandardizedRoom] as number}
-                                                onChange={e => 
-                                                  onNumberChange(room.id, column.id, parseInt(e.target.value) || 0)
-                                                }
-                                                className="text-center h-11 text-sm"
-                                              />
-                                            </div>
-                                          ) : null}
-                                        </div>
-                                      </React.Fragment>
-                                    ))}
-                                  </div>
-                                </CardContent>
-                              </Card>
+                              {isExtracted ? "Detected" : "Added"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isSelected && (
+                              <Badge variant="outline" className="text-xs">
+                                Selected
+                              </Badge>
+                            )}
+                            <Checkbox
+                              checked={isSelected}
+                              onChange={() => toggleRoomSurfaces(room.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Surface Details when selected */}
+                        {isSelected && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="grid grid-cols-2 gap-3">
+                              {interiorRoomsMatrixConfig.columns.map(column => (
+                                <div key={column.id} className="flex items-center justify-between">
+                                  <label className="text-sm text-gray-600">{column.label}</label>
+                                  {column.type === "checkbox" ? (
+                                    <Checkbox
+                                      checked={room[column.id as keyof StandardizedRoom] as boolean}
+                                      onCheckedChange={(checked) => 
+                                        onCheckboxChange(room.id, column.id, Boolean(checked))
+                                      }
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : column.type === "number" ? (
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      max={20}
+                                      value={room[column.id as keyof StandardizedRoom] as number}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        onNumberChange(room.id, column.id, parseInt(e.target.value) || 0);
+                                      }}
+                                      className="w-16 h-8 text-center text-sm"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : null}
+                                </div>
+                              ))}
                             </div>
-                          );
-                        })}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -257,13 +200,13 @@ const RoomMatrixMobile: React.FC<RoomMatrixMobileProps> = ({
           );
         })}
       </Accordion>
-      
-      {/* Sticky Add Room Button */}
-      <div className="fixed bottom-6 right-6 z-20">
+
+      {/* Floating Add Room Button */}
+      <div className="fixed bottom-6 right-6 z-10">
         <Button
-          onClick={() => setIsAddRoomOpen(true)}
+          onClick={() => setAddRoomModalOpen(true)}
+          className="rounded-full w-14 h-14 shadow-lg"
           size="icon"
-          className="h-14 w-14 rounded-full shadow-lg"
         >
           <Plus className="h-6 w-6" />
         </Button>
@@ -271,8 +214,8 @@ const RoomMatrixMobile: React.FC<RoomMatrixMobileProps> = ({
 
       {/* Add Room Modal */}
       <AddRoomModal
-        isOpen={isAddRoomOpen}
-        onClose={() => setIsAddRoomOpen(false)}
+        isOpen={addRoomModalOpen}
+        onClose={() => setAddRoomModalOpen(false)}
         workingMatrix={workingMatrix}
         onAddRoom={handleAddRoom}
       />

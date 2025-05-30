@@ -81,6 +81,7 @@ const RoomsTabContent: React.FC<RoomsTabContentProps> = ({
         onToggleGroupVisibility={toggleGroupVisibility}
         isRoomExtracted={isRoomExtracted}
         hasSelectedSurfaces={hasSelectedSurfaces}
+        onRoomMatrixChange={onRoomMatrixChange}
       />
       
       <div className="mt-6">
