@@ -10,11 +10,11 @@ import StepRenderer from '@/components/estimate-generator/components/StepRendere
 import StartOverDialog from '@/components/estimate-generator/components/StartOverDialog';
 import { useEstimateFlow } from '@/components/estimate-generator/hooks/useEstimateFlow';
 import { ESTIMATE_STEPS } from '@/components/estimate-generator/constants/EstimateSteps';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const EstimateGenerator = () => {
   const { state, handlers, setCurrentStep, restartWorkflow } = useEstimateFlow();
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useIsMobile();
   const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
   // Adjust step logic for mobile flow (skip step 3 since it's combined with step 2)

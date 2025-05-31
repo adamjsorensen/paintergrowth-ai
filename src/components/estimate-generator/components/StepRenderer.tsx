@@ -13,7 +13,7 @@ import EstimateContentGenerator from '@/components/estimate-generator/EstimateCo
 import EstimateContentEditor from '@/components/estimate-generator/EstimateContentEditor';
 import EstimatePDFGenerator from '@/components/estimate-generator/EstimatePDFGenerator';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StepRendererProps {
   state: EstimateState;
@@ -23,7 +23,7 @@ interface StepRendererProps {
 }
 
 const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers, onGoBackToRooms }) => {
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useIsMobile();
   
   const {
     currentStep,

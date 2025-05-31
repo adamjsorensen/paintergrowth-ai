@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -77,10 +77,21 @@ const clearSavedState = () => {
 export const useEstimateFlow = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [state, setState] = useState<EstimateState>(getInitialState);
+  
+  // Use lazy initialization to avoid race conditions
+  const [state, setState] = useState<EstimateState>(() => getInitialState());
+  
+  // Add ref to track if mobile protection effect has run
+  const mobileEffectHasRun = useRef(false);
 
   // Mobile step 3 protection - automatically redirect to step 4
   useEffect(() => {
+    // Skip on first render to prevent initial redirect
+    if (!mobileEffectHasRun.current) {
+      mobileEffectHasRun.current = true;
+      return;
+    }
+
     if (isMobile && state.currentStep === 3) {
       console.log('Mobile user detected on step 3, redirecting to step 4');
       setState(prev => ({ ...prev, currentStep: 4 }));
