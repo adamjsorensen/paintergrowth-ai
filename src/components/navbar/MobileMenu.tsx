@@ -55,13 +55,6 @@ export const MobileMenu = ({
                 Generate
               </Link>
               <Link 
-                to="/generate/proposal" 
-                className="text-lg py-2 hover:text-paintergrowth-600 pl-4 text-base"
-                onClick={() => setSheetOpen(false)}
-              >
-                Proposal
-              </Link>
-              <Link 
                 to="/generate/estimate" 
                 className="text-lg py-2 hover:text-paintergrowth-600 pl-4 text-base"
                 onClick={() => setSheetOpen(false)}

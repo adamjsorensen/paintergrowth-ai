@@ -1,23 +1,15 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "@/components/PageLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Mic } from "lucide-react";
-import StylePreferencesDialog from "@/components/proposal-generator/StylePreferencesDialog";
+import { Mic } from "lucide-react";
 
 const GenerateIndex = () => {
   const navigate = useNavigate();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   const contentTypes = [
-    {
-      id: "proposal",
-      title: "Proposal",
-      description: "Generate professional painting proposals for your clients",
-      icon: <FileText className="h-10 w-10 text-paintergrowth-600" />,
-      onClick: () => setDialogOpen(true),
-    },
     {
       id: "estimate",
       title: "Voice Estimate",
@@ -52,8 +44,6 @@ const GenerateIndex = () => {
           ))}
         </div>
       </div>
-      
-      <StylePreferencesDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </PageLayout>
   );
 };
