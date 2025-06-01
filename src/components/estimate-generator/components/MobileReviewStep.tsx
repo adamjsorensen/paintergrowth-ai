@@ -11,8 +11,8 @@ interface ProjectMetadata {
   wallColors: number;
   coats: 'one' | 'two';
   paintType: string;
-  specialConsiderations: string;
-  salesNotes: string;
+  projectNotes: string;
+  internalNotes: string;
   productionDate: Date | undefined;
   discountPercent: number;
 }
@@ -57,8 +57,8 @@ const MobileReviewStep: React.FC<MobileReviewStepProps> = ({
       wallColors: extractedMetadata.wallColors || 1,
       coats: extractedMetadata.coats || 'two',
       paintType: extractedMetadata.paintType || 'Premium Interior Paint',
-      specialConsiderations: extractedMetadata.specialConsiderations || '',
-      salesNotes: extractedMetadata.salesNotes || '',
+      projectNotes: extractedMetadata.specialConsiderations || extractedMetadata.projectNotes || '',
+      internalNotes: extractedMetadata.salesNotes || extractedMetadata.internalNotes || '',
       productionDate: extractedMetadata.productionDate || undefined,
       discountPercent: extractedMetadata.discountPercent || 0
     };

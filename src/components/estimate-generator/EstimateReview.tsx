@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import RoomsMatrixField from './rooms/RoomsMatrixField';
@@ -54,8 +53,8 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     wallColors: 1,
     coats: 'two',
     paintType: 'Premium Interior Paint',
-    specialConsiderations: '',
-    salesNotes: '',
+    projectNotes: '',
+    internalNotes: '',
     productionDate: undefined,
     discountPercent: 0
   });

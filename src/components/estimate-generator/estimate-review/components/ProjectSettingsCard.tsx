@@ -153,26 +153,26 @@ const ProjectSettingsCard: React.FC<ProjectSettingsCardProps> = ({
 
         {/* Full Width Fields */}
         <div className="space-y-4">
-          {/* Special Project Considerations */}
+          {/* Project Notes */}
           <div className="space-y-2">
-            <Label htmlFor="specialConsiderations">Special Project Considerations</Label>
+            <Label htmlFor="projectNotes">Project Notes</Label>
             <Textarea
-              id="specialConsiderations"
-              value={projectMetadata.specialConsiderations}
-              onChange={(e) => handleFieldChange('specialConsiderations', e.target.value)}
-              placeholder="Any special requirements, challenges, or considerations for this project..."
+              id="projectNotes"
+              value={projectMetadata.projectNotes}
+              onChange={(e) => handleFieldChange('projectNotes', e.target.value)}
+              placeholder="Special requirements, preparation needs, project considerations, or other relevant details..."
               rows={3}
             />
           </div>
 
-          {/* Sales Notes / Customer Needs */}
+          {/* Internal Notes */}
           <div className="space-y-2">
-            <Label htmlFor="salesNotes">Sales Notes / Customer Needs</Label>
+            <Label htmlFor="internalNotes">Internal Notes</Label>
             <Textarea
-              id="salesNotes"
-              value={projectMetadata.salesNotes}
-              onChange={(e) => handleFieldChange('salesNotes', e.target.value)}
-              placeholder="Customer preferences, special requests, or sales notes..."
+              id="internalNotes"
+              value={projectMetadata.internalNotes}
+              onChange={(e) => handleFieldChange('internalNotes', e.target.value)}
+              placeholder="Sales notes, customer preferences, team communication, or internal reminders..."
               rows={3}
             />
           </div>

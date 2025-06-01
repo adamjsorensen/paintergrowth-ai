@@ -9,8 +9,8 @@ export const useProjectMetadata = () => {
       wallColors: 1,
       coats: 'two',
       paintType: 'Premium Interior Paint',
-      specialConsiderations: '',
-      salesNotes: '',
+      projectNotes: '',
+      internalNotes: '',
       productionDate: undefined,
       discountPercent: 0
     };
