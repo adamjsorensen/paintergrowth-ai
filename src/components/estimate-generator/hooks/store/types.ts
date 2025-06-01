@@ -14,3 +14,6 @@ export interface UseEstimateStoreProps {
   extractedData: Record<string, any>;
   projectType: 'interior' | 'exterior';
 }
+
+// Re-export ProjectMetadata so it can be imported from this module
+export type { ProjectMetadata };
