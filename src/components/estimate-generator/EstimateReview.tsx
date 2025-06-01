@@ -6,8 +6,10 @@ import { useEstimateProcessing } from './estimate-review/hooks/useEstimateProces
 import LoadingCard from './estimate-review/components/LoadingCard';
 import ExtractedInformationTable from './estimate-review/components/ExtractedInformationTable';
 import EstimateDetailsTable from './estimate-review/components/EstimateDetailsTable';
+import ProjectSettingsCard from './estimate-review/components/ProjectSettingsCard';
 import { generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
 import { StandardizedRoom } from '@/types/room-types';
+import { ProjectMetadata } from './types/ProjectMetadata';
 
 interface EstimateReviewProps {
   transcript: string;
@@ -45,6 +47,18 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     setRoomsMatrix,
     extractedRoomsList
   } = useEstimateProcessing(transcript, summary, missingInfo, projectType, extractedData);
+
+  // Initialize project metadata
+  const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata>({
+    trimColor: '',
+    wallColors: 1,
+    coats: 'two',
+    paintType: 'Premium Interior Paint',
+    specialConsiderations: '',
+    salesNotes: '',
+    productionDate: undefined,
+    discountPercent: 0
+  });
 
   const [subtotal, setSubtotal] = useState(() => {
     // Initialize subtotal from existing line items if any
@@ -162,6 +176,7 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       taxRate,
       tax,
       total,
+      projectMetadata,
       createdAt: new Date().toISOString(),
       status: 'draft'
     };
@@ -170,6 +185,9 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       acc[field.formField] = field.value;
       return acc;
     }, {} as Record<string, any>);
+    
+    // Add project metadata to fields
+    fieldsObject.projectMetadata = projectMetadata;
     
     if (projectType === 'interior') {
       fieldsObject.roomsMatrix = roomsMatrix;
@@ -195,6 +213,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
           <ExtractedInformationTable 
             estimateFields={estimateFields}
             setEstimateFields={setEstimateFields}
+          />
+          
+          <ProjectSettingsCard
+            projectMetadata={projectMetadata}
+            onProjectMetadataChange={setProjectMetadata}
           />
           
           {projectType === 'interior' && (

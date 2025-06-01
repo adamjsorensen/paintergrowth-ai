@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { ProjectMetadata } from './types';
+import { ProjectMetadata } from '../../types/ProjectMetadata';
 
 export const useProjectMetadata = () => {
   const initializeProjectMetadata = (): ProjectMetadata => {

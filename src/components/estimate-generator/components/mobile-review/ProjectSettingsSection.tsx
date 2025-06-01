@@ -10,17 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-interface ProjectMetadata {
-  trimColor: string;
-  wallColors: number;
-  coats: 'one' | 'two';
-  paintType: string;
-  specialConsiderations: string;
-  salesNotes: string;
-  productionDate: Date | undefined;
-  discountPercent: number;
-}
+import { ProjectMetadata } from '../../types/ProjectMetadata';
 
 interface ProjectSettingsSectionProps {
   projectMetadata: ProjectMetadata;
