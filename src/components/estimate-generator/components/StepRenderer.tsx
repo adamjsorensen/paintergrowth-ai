@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { ESTIMATE_STEPS } from '../constants/EstimateSteps';
@@ -46,11 +45,16 @@ const StepRenderer: React.FC<StepRendererProps> = ({
         <Transcriber
           audioBlob={null}
           onComplete={(transcript: string, summary: string) => {
-            // Convert Transcriber callback format to what handleInformationExtracted expects
-            handlers.handleInformationExtracted({
+            // Create the proper data structure that handleInformationExtracted expects
+            const extractedData = {
               transcript,
-              summary
-            });
+              summary,
+              // Add any additional fields that might be expected
+              fields: [],
+              projectType: state.projectType
+            };
+            console.log('StepRenderer - Transcriber completed, passing data:', extractedData);
+            handlers.handleInformationExtracted(extractedData);
           }}
         />
       );
@@ -60,7 +64,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
         <MobileReviewStep
           summary={state.summary}
           transcript={state.transcript}
-          extractedData={state.extractedData}
+          extractedData={state.extractedData || {}}
           missingInfo={state.missingInfo}
           projectType={state.projectType}
           onComplete={handlers.handleMissingInfoComplete}
