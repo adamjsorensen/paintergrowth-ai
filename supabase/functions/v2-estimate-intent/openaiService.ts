@@ -1,7 +1,6 @@
 
 export async function callOpenRouterAPI(
   fullPrompt: string,
-  functionDefinition: any,
   model: string,
   temperature: number
 ) {
@@ -13,12 +12,6 @@ export async function callOpenRouterAPI(
 
   console.log(`Calling OpenRouter with model: ${model}, temperature: ${temperature}`);
 
-  // Convert the function definition to the new tools format
-  const toolDefinition = {
-    type: "function",
-    function: functionDefinition
-  };
-
   const requestBody = {
     model: model,
     messages: [
@@ -27,8 +20,6 @@ export async function callOpenRouterAPI(
         content: fullPrompt
       }
     ],
-    tools: [toolDefinition],
-    tool_choice: { type: "function", function: { name: "generate_comprehensive_pdf_content" } },
     temperature: temperature,
     max_tokens: 4000
   };
@@ -58,187 +49,34 @@ export async function callOpenRouterAPI(
   return result;
 }
 
-export function createFunctionDefinition() {
-  return {
-    name: "generate_comprehensive_pdf_content",
-    description: "Generate comprehensive PDF content for painting estimates with all 9 required sections",
-    parameters: {
-      type: "object",
-      properties: {
-        coverPage: {
-          type: "object",
-          properties: {
-            estimateDate: {
-              type: "string",
-              description: "Current date for the estimate"
-            },
-            estimateNumber: {
-              type: "string", 
-              description: "Unique estimate number"
-            },
-            proposalNumber: {
-              type: "string",
-              description: "Unique proposal number"
-            },
-            clientName: {
-              type: "string",
-              description: "Client's full name"
-            },
-            clientPhone: {
-              type: "string",
-              description: "Client's phone number"
-            },
-            clientEmail: {
-              type: "string",
-              description: "Client's email address"
-            },
-            projectAddress: {
-              type: "string",
-              description: "Project address"
-            },
-            estimatorName: {
-              type: "string",
-              description: "Estimator's name"
-            },
-            estimatorEmail: {
-              type: "string",
-              description: "Estimator's email"
-            },
-            estimatorPhone: {
-              type: "string",
-              description: "Estimator's phone number"
-            }
-          },
-          required: ["estimateDate", "estimateNumber", "proposalNumber", "clientName", "clientPhone", "clientEmail", "projectAddress", "estimatorName", "estimatorEmail", "estimatorPhone"]
-        },
-        projectOverview: {
-          type: "string",
-          description: "Comprehensive overview of the painting project including client details and project summary"
-        },
-        scopeOfWork: {
-          type: "string", 
-          description: "Detailed description of all work to be performed"
-        },
-        lineItems: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              description: {
-                type: "string",
-                description: "Description of the line item"
-              },
-              quantity: {
-                type: "number",
-                description: "Quantity of the item"
-              },
-              unit: {
-                type: "string",
-                description: "Unit of measurement"
-              },
-              unitPrice: {
-                type: "number",
-                description: "Price per unit"
-              },
-              total: {
-                type: "number",
-                description: "Total price for this line item"
-              }
-            },
-            required: ["description", "quantity", "unit", "unitPrice", "total"]
-          },
-          description: "Array of line items with pricing"
-        },
-        addOns: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              description: {
-                type: "string",
-                description: "Description of the add-on service"
-              },
-              price: {
-                type: "number",
-                description: "Price of the add-on"
-              },
-              selected: {
-                type: "boolean",
-                description: "Whether this add-on is selected"
-              }
-            },
-            required: ["description", "price", "selected"]
-          },
-          description: "Array of optional add-on services"
-        },
-        pricing: {
-          type: "object",
-          properties: {
-            subtotal: {
-              type: "number",
-              description: "Subtotal amount"
-            },
-            tax: {
-              type: "number",
-              description: "Tax amount"
-            },
-            total: {
-              type: "number",
-              description: "Total amount including tax"
-            },
-            taxRate: {
-              type: "string",
-              description: "Tax rate percentage"
-            }
-          },
-          required: ["subtotal", "tax", "total", "taxRate"]
-        },
-        termsAndConditions: {
-          type: "string",
-          description: "Terms and conditions for the project"
-        },
-        companyInfo: {
-          type: "object",
-          properties: {
-            name: {
-              type: "string",
-              description: "Company name"
-            },
-            address: {
-              type: "string",
-              description: "Company address"
-            },
-            phone: {
-              type: "string",
-              description: "Company phone number"
-            },
-            email: {
-              type: "string",
-              description: "Company email"
-            },
-            website: {
-              type: "string",
-              description: "Company website (optional)"
-            }
-          },
-          required: ["name", "address", "phone", "email"]
-        },
-        signatures: {
-          type: "object",
-          properties: {
-            clientSignatureRequired: {
-              type: "boolean",
-              description: "Whether client signature is required"
-            },
-            warrantyInfo: {
-              type: "string",
-              description: "Warranty information text"
-            }
-          },
-          required: ["clientSignatureRequired", "warrantyInfo"]
-        }
-      },
-      required: ["coverPage", "projectOverview", "scopeOfWork", "lineItems", "addOns", "pricing", "termsAndConditions", "companyInfo", "signatures"]
+export function parseAIResponse(response: string): any {
+  console.log('Parsing AI response for JSON content');
+  
+  // Try to extract JSON from the response
+  // Look for content between ```json and ``` or just raw JSON
+  const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
+                   response.match(/```\s*([\s\S]*?)\s*```/) ||
+                   response.match(/\{[\s\S]*\}/);
+  
+  if (jsonMatch) {
+    try {
+      const jsonContent = jsonMatch[1] || jsonMatch[0];
+      const parsed = JSON.parse(jsonContent);
+      console.log('Successfully parsed JSON from AI response');
+      return parsed;
+    } catch (parseError) {
+      console.error('Failed to parse extracted JSON:', parseError);
+      throw new Error(`Invalid JSON in AI response: ${parseError.message}`);
     }
-  };
+  }
+  
+  // If no clear JSON blocks found, try to parse the entire response
+  try {
+    const parsed = JSON.parse(response);
+    console.log('Successfully parsed entire response as JSON');
+    return parsed;
+  } catch (parseError) {
+    console.error('Failed to parse response as JSON:', parseError);
+    throw new Error(`No valid JSON found in AI response. Response: ${response.substring(0, 200)}...`);
+  }
 }

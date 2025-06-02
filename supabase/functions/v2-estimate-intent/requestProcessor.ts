@@ -1,11 +1,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { PDFContentSchema } from "./schemas.ts";
 import { getBoilerplateTexts } from "./boilerplateCache.ts";
-import { callOpenRouterAPI, createFunctionDefinition } from "./openaiService.ts";
+import { callOpenRouterAPI, parseAIResponse } from "./openaiService.ts";
 import { prepareStructuredInput, buildPrompt } from "./dataProcessor.ts";
-import { ERROR_CODES } from "./constants.ts";
-import { getDefaultBoilerplate, createFallbackResponse } from "./fallbackService.ts";
+import { validateAndFixContent } from "./contentValidator.ts";
+import { createFallbackResponse } from "./fallbackService.ts";
 
 export async function processEstimateRequest(
   body: any,
@@ -27,7 +26,7 @@ export async function processEstimateRequest(
     colorApprovals = []
   } = body;
 
-  console.log('Processing estimate intent with comprehensive structure');
+  console.log('Processing estimate intent with flexible JSON parsing approach');
 
   // Validate required data with better error messages
   if (!estimateData && !clientInfo) {
@@ -60,7 +59,7 @@ export async function processEstimateRequest(
     boilerplate = await getBoilerplateTexts(supabaseClient);
   } catch (error) {
     console.error('E_DB_SCHEMA: Error fetching boilerplate texts:', error);
-    boilerplate = getDefaultBoilerplate();
+    boilerplate = {};
   }
 
   // Get active prompt template with better error handling
@@ -114,18 +113,76 @@ export async function processEstimateRequest(
     );
   }
 
-  // Replace placeholders in prompt
-  const fullPrompt = buildPrompt(promptTemplate.prompt_text, structuredInput);
+  // Replace placeholders in prompt and add JSON formatting instructions
+  const basePrompt = buildPrompt(promptTemplate.prompt_text, structuredInput);
+  const fullPrompt = `${basePrompt}
 
-  console.log('Calling OpenRouter with comprehensive function calling mode');
+IMPORTANT: Return your response as a valid JSON object with the following structure:
 
-  // Use OpenAI function calling with comprehensive structured schema
+{
+  "coverPage": {
+    "estimateDate": "string",
+    "estimateNumber": "string", 
+    "proposalNumber": "string",
+    "clientName": "string",
+    "clientPhone": "string",
+    "clientEmail": "string",
+    "projectAddress": "string",
+    "estimatorName": "string",
+    "estimatorEmail": "string",
+    "estimatorPhone": "string"
+  },
+  "projectOverview": "string - comprehensive project overview",
+  "scopeOfWork": "string - detailed scope of work description",
+  "lineItems": [
+    {
+      "description": "string",
+      "quantity": number,
+      "unit": "string",
+      "unitPrice": number,
+      "total": number
+    }
+  ],
+  "addOns": [
+    {
+      "description": "string",
+      "price": number,
+      "selected": boolean
+    }
+  ],
+  "pricing": {
+    "subtotal": number,
+    "tax": number,
+    "total": number,
+    "taxRate": "string"
+  },
+  "termsAndConditions": "string - terms and conditions text",
+  "companyInfo": {
+    "name": "string",
+    "address": "string",
+    "phone": "string",
+    "email": "string",
+    "website": "string (optional)"
+  },
+  "signatures": {
+    "clientSignatureRequired": boolean,
+    "warrantyInfo": "string"
+  }
+}
+
+Make sure to:
+1. Generate meaningful, project-specific content for each section
+2. Include all required fields
+3. Use proper data types (strings, numbers, booleans, arrays)
+4. Return ONLY the JSON object, no additional text or formatting`;
+
+  console.log('Calling OpenRouter with flexible JSON parsing mode');
+
+  // Use regular OpenAI call instead of function calling
   let result;
   try {
-    const functionDefinition = createFunctionDefinition();
     result = await callOpenRouterAPI(
       fullPrompt,
-      functionDefinition,
       promptTemplate.model,
       promptTemplate.temperature
     );
@@ -134,33 +191,37 @@ export async function processEstimateRequest(
     return createFallbackResponse('AI service temporarily unavailable', corsHeaders);
   }
 
-  // Updated to handle the new tools response format
-  const toolCalls = result.choices?.[0]?.message?.tool_calls;
-  const functionCall = toolCalls?.[0]?.function;
-
-  if (!functionCall || functionCall.name !== "generate_comprehensive_pdf_content") {
-    console.error('E_OPENROUTER_FAIL: AI did not use comprehensive function calling properly');
-    return createFallbackResponse('AI response format error', corsHeaders);
-  }
-
-  // Parse and validate the function call arguments
-  let generatedContent;
+  // Parse the AI response
+  let aiContent;
   try {
-    const parsedArgs = JSON.parse(functionCall.arguments);
-    generatedContent = PDFContentSchema.parse(parsedArgs);
-    console.log('Comprehensive PDF content validated successfully');
-  } catch (validationError) {
-    console.error('E_VALIDATION_FAILED: Comprehensive content validation failed:', validationError);
+    const responseText = result.choices?.[0]?.message?.content;
+    if (!responseText) {
+      throw new Error('No content in AI response');
+    }
     
-    // Return fallback instead of diagnostic error for better user experience
-    console.log('Returning fallback response due to validation failure');
-    return createFallbackResponse('AI generated invalid content structure', corsHeaders);
+    console.log('AI Response received, parsing JSON...');
+    aiContent = parseAIResponse(responseText);
+    
+  } catch (parseError) {
+    console.error('E_PARSE_FAILED: Failed to parse AI response:', parseError);
+    return createFallbackResponse('AI response parsing failed', corsHeaders);
   }
 
-  console.log('Comprehensive PDF intent processed successfully');
+  // Validate and fix the content using our flexible validator
+  const validationResult = validateAndFixContent(aiContent, structuredInput);
+  
+  if (validationResult.fixedSections.length > 0) {
+    console.log(`Fixed sections: ${validationResult.fixedSections.join(', ')}`);
+  }
+  
+  if (validationResult.errors.length > 0) {
+    console.log(`Validation warnings: ${validationResult.errors.join(', ')}`);
+  }
+
+  console.log('PDF content processed successfully with flexible validation');
 
   return new Response(
-    JSON.stringify(generatedContent),
+    JSON.stringify(validationResult.content),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
