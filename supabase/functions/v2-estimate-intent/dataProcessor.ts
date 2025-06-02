@@ -1,4 +1,3 @@
-
 export function prepareStructuredInput(
   estimateData: Record<string, any>,
   projectType: string,
@@ -12,30 +11,40 @@ export function prepareStructuredInput(
   upsells: any[] = [],
   colorApprovals: any[] = []
 ) {
-  return {
-    // Client Information
-    clientName: clientInfo.name || estimateData.clientName || 'Valued Client',
-    clientEmail: clientInfo.email || estimateData.clientEmail || '',
-    clientPhone: clientInfo.phone || estimateData.clientPhone || '',
-    projectAddress: clientInfo.address || estimateData.projectAddress || estimateData.address || 'Project Address',
+  console.log('dataProcessor - Input estimateData:', estimateData);
+  console.log('dataProcessor - Input clientInfo:', clientInfo);
+  console.log('dataProcessor - Input totals:', totals);
+
+  // Only use fallbacks if values are truly undefined/null, not if they're empty strings or 0
+  const result = {
+    // Client Information - prioritize actual data over fallbacks
+    clientName: estimateData?.clientName || clientInfo?.name || 'Valued Client',
+    clientEmail: estimateData?.clientEmail || clientInfo?.email || '',
+    clientPhone: estimateData?.clientPhone || clientInfo?.phone || '',
+    projectAddress: estimateData?.projectAddress || estimateData?.address || clientInfo?.address || 'Project Address',
     
     // Company Information
-    companyName: companyProfile.company_name || 'Your Company',
-    estimatorName: companyProfile.contact_name || companyProfile.owner_name || 'Project Estimator',
-    estimatorEmail: companyProfile.email || 'estimator@company.com',
-    estimatorPhone: companyProfile.phone || '(555) 123-4567',
-    website: companyProfile.website || 'www.yourcompany.com',
+    companyName: companyProfile?.company_name || 'Your Company',
+    estimatorName: companyProfile?.contact_name || companyProfile?.owner_name || 'Project Estimator',
+    estimatorEmail: companyProfile?.email || 'estimator@company.com',
+    estimatorPhone: companyProfile?.phone || '(555) 123-4567',
+    website: companyProfile?.website || 'www.yourcompany.com',
     
     // Project Details
     projectType,
     roomsMatrix: roomsMatrix || [],
-    clientNotes: clientNotes || '',
+    clientNotes: clientNotes || estimateData?.specialNotes || '',
+    timeline: estimateData?.timeline || '',
+    colorPalette: estimateData?.colorPalette || '',
+    prepNeeds: estimateData?.prepNeeds || [],
+    surfacesToPaint: estimateData?.surfacesToPaint || [],
+    roomsToPaint: estimateData?.roomsToPaint || [],
     
-    // Financial Information
-    subtotal: totals.subtotal || 0,
-    tax: totals.tax || 0,
-    total: totals.total || 0,
-    taxRate: taxRate || '7.5%',
+    // Financial Information - ensure numbers are preserved even if 0
+    subtotal: typeof totals?.subtotal === 'number' ? totals.subtotal : 0,
+    tax: typeof totals?.tax === 'number' ? totals.tax : 0,
+    total: typeof totals?.total === 'number' ? totals.total : 0,
+    taxRate: taxRate || '0%',
     
     // Additional Services
     upsells: upsells || [],
@@ -49,6 +58,9 @@ export function prepareStructuredInput(
     estimateNumber: `EST-${Date.now()}`,
     proposalNumber: `PROP-${Date.now()}`
   };
+
+  console.log('dataProcessor - Prepared structured input:', result);
+  return result;
 }
 
 export function buildPrompt(promptTemplate: string, structuredInput: any) {

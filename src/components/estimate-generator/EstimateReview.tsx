@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import RoomsMatrixField from './rooms/RoomsMatrixField';
@@ -9,6 +10,7 @@ import ProjectSettingsCard from './estimate-review/components/ProjectSettingsCar
 import { generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
 import { StandardizedRoom } from '@/types/room-types';
 import { ProjectMetadata } from './types/ProjectMetadata';
+import { parseEstimateFields, validateEstimateData } from './utils/estimateDataParser';
 
 interface EstimateReviewProps {
   transcript: string;
@@ -163,19 +165,46 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
 
   // Complete the estimate
   const handleComplete = () => {
+    console.log('EstimateReview - Starting completion with estimateFields:', estimateFields);
+    
+    // Parse estimate fields into structured data
+    const structuredEstimateData = parseEstimateFields(estimateFields);
+    console.log('EstimateReview - Structured estimate data:', structuredEstimateData);
+    
+    // Validate the data and log warnings
+    const warnings = validateEstimateData(structuredEstimateData);
+    if (warnings.length > 0) {
+      console.warn('EstimateReview - Data validation warnings:', warnings);
+    }
+
     const finalEstimate = {
-      clientName: estimateFields.find(f => f.formField === 'clientName')?.value || '',
-      clientEmail: estimateFields.find(f => f.formField === 'clientEmail')?.value || '',
-      clientPhone: estimateFields.find(f => f.formField === 'clientPhone')?.value || '',
-      projectAddress: estimateFields.find(f => f.formField === 'projectAddress')?.value || '',
-      jobType: projectType,
+      // Include the structured estimate data
+      ...structuredEstimateData,
+      
+      // Financial data
       subtotal,
       discount,
       discountAmount,
       taxRate,
       tax,
       total,
-      projectMetadata,
+      
+      // Additional metadata
+      projectMetadata: {
+        ...projectMetadata,
+        ...structuredEstimateData.projectMetadata
+      },
+      roomsMatrix: projectType === 'interior' ? roomsMatrix : [],
+      lineItems,
+      totals: {
+        subtotal,
+        tax,
+        total,
+        taxRate: `${taxRate}%`
+      },
+      
+      // System fields
+      jobType: projectType,
       createdAt: new Date().toISOString(),
       status: 'draft'
     };
@@ -185,12 +214,16 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
       return acc;
     }, {} as Record<string, any>);
     
-    // Add project metadata to fields
+    // Add additional data to fields
     fieldsObject.projectMetadata = projectMetadata;
+    fieldsObject.structuredEstimateData = structuredEstimateData;
     
     if (projectType === 'interior') {
       fieldsObject.roomsMatrix = roomsMatrix;
     }
+    
+    console.log('EstimateReview - Final estimate data:', finalEstimate);
+    console.log('EstimateReview - Fields object:', fieldsObject);
     
     onComplete(fieldsObject, finalEstimate);
   };

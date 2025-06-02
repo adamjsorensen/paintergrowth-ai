@@ -1,18 +1,16 @@
-
 import React from 'react';
-import InlineProjectTypeSelector from './InlineProjectTypeSelector';
-import MobileProjectTypeSelector from './MobileProjectTypeSelector';
-import ReviewEditStep from './ReviewEditStep';
-import MobileReviewStep from './MobileReviewStep';
-import MobilePricingStep from './MobilePricingStep';
-import EstimateSuggestionEngine from './EstimateSuggestionEngine';
-import TranscriptInput from '@/components/audio-transcript/TranscriptInput';
-import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
-import EstimateReview from '@/components/estimate-generator/EstimateReview';
-import EstimateContentGenerator from '@/components/estimate-generator/EstimateContentGenerator';
-import EstimateContentEditor from '@/components/estimate-generator/EstimateContentEditor';
-import PDFGeneratorV2 from '@/components/estimate-generator/PDFGeneratorV2';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
+import { ESTIMATE_STEPS } from '../constants/EstimateSteps';
+import InlineProjectTypeSelector from './InlineProjectTypeSelector';
+import Transcriber from '../Transcriber';
+import SummaryChecker from '../SummaryChecker';
+import EstimateReview from '../EstimateReview';
+import EstimateSuggestionEngine from './EstimateSuggestionEngine';
+import EstimateContentGenerator from '../EstimateContentGenerator';
+import EstimateContentEditor from '../EstimateContentEditor';
+import PDFGeneratorV2 from '../PDFGeneratorV2';
+import MobileProjectTypeSelector from './MobileProjectTypeSelector';
+import MobileReviewStep from './MobileReviewStep';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StepRendererProps {
@@ -22,123 +20,112 @@ interface StepRendererProps {
   onStartOver?: () => void;
 }
 
-const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers, onGoBackToRooms }) => {
+const StepRenderer: React.FC<StepRendererProps> = ({ 
+  state, 
+  handlers, 
+  onGoBackToRooms,
+  onStartOver 
+}) => {
   const isMobile = useIsMobile();
   
-  const {
-    currentStep,
-    projectType,
-    extractedData,
-    transcript,
-    summary,
-    missingInfo,
-    lineItems,
-    totals,
-    generatedContent,
-    editedContent
-  } = state;
-
-  const {
-    handleProjectTypeSelect,
-    handleInformationExtracted,
-    handleMissingInfoComplete,
-    handleEstimateComplete,
-    handleSuggestionsComplete,
-    handleContentGenerated,
-    handleContentEdited,
-    handlePDFComplete,
-    handleBackToContentGeneration,
-    handleBackToContentEditor
-  } = handlers;
-
-  switch (currentStep) {
+  switch (state.currentStep) {
     case 0:
       return isMobile ? (
-        <MobileProjectTypeSelector onSelect={handleProjectTypeSelect} />
+        <MobileProjectTypeSelector
+          onProjectTypeSelect={handlers.handleProjectTypeSelect}
+        />
       ) : (
-        <InlineProjectTypeSelector onSelect={handleProjectTypeSelect} />
+        <InlineProjectTypeSelector
+          onProjectTypeSelect={handlers.handleProjectTypeSelect}
+        />
       );
+    
     case 1:
       return (
-        <div className={isMobile ? "px-4 py-6" : ""}>
-          <TranscriptInput 
-            onInformationExtracted={handleInformationExtracted}
-            onClose={() => {}}
-          />
-        </div>
+        <Transcriber
+          projectType={state.projectType}
+          onInformationExtracted={handlers.handleInformationExtracted}
+        />
       );
+    
     case 2:
-      // Use the new ReviewEditStep for mobile, combining steps 2 and 3
       return isMobile ? (
-        <ReviewEditStep
-          summary={summary || 'Project information extracted from your input'} 
-          transcript={transcript || 'Information extracted from your input'}
-          extractedData={extractedData}
-          missingInfo={missingInfo}
-          projectType={projectType}
-          onComplete={handleEstimateComplete}
+        <MobileReviewStep
+          summary={state.summary}
+          transcript={state.transcript}
+          extractedData={state.extractedData}
+          missingInfo={state.missingInfo}
+          projectType={state.projectType}
+          onComplete={handlers.handleMissingInfoComplete}
+          onStartOver={onStartOver}
         />
       ) : (
-        <SummaryChecker 
-          summary={summary || 'Project information extracted from your input'} 
-          transcript={transcript || 'Information extracted from your input'}
-          extractedData={extractedData}
-          onComplete={handleMissingInfoComplete} 
+        <SummaryChecker
+          summary={state.summary}
+          transcript={state.transcript}
+          extractedData={state.extractedData}
+          missingInfo={state.missingInfo}
+          projectType={state.projectType}
+          onComplete={handlers.handleMissingInfoComplete}
         />
       );
+    
     case 3:
-      // Skip step 3 on mobile since it's now part of step 2 (ReviewEditStep)
-      return isMobile ? null : (
-        <EstimateReview 
-          transcript={transcript || 'Information extracted from your input'}
-          summary={summary || 'Project information extracted from your input'}
-          missingInfo={missingInfo}
-          projectType={projectType}
-          extractedData={extractedData}
-          onComplete={handleEstimateComplete} 
+      return (
+        <EstimateReview
+          transcript={state.transcript}
+          summary={state.summary}
+          missingInfo={state.missingInfo}
+          projectType={state.projectType}
+          extractedData={state.extractedData}
+          onComplete={handlers.handleEstimateComplete}
         />
       );
+    
     case 4:
       return (
         <EstimateSuggestionEngine
-          estimateData={{ ...extractedData, ...missingInfo }}
-          projectType={projectType}
-          lineItems={lineItems}
-          totals={totals}
-          onComplete={handleSuggestionsComplete}
+          transcript={state.transcript}
+          projectType={state.projectType}
+          onComplete={handlers.handleSuggestionsComplete}
           onGoBackToRooms={onGoBackToRooms}
         />
       );
+    
     case 5:
       return (
         <EstimateContentGenerator
-          estimateData={{ ...extractedData, ...missingInfo }}
-          projectType={projectType}
-          lineItems={lineItems}
-          totals={totals}
-          onComplete={handleContentGenerated}
+          projectType={state.projectType}
+          acceptedSuggestions={state.acceptedSuggestions}
+          estimateFields={state.estimateFields}
+          onContentGenerated={handlers.handleContentGenerated}
         />
       );
+    
     case 6:
       return (
         <EstimateContentEditor
-          content={generatedContent}
-          onComplete={handleContentEdited}
-          onBack={handleBackToContentGeneration}
+          projectType={state.projectType}
+          generatedContent={state.generatedContent}
+          onContentEdited={handlers.handleContentEdited}
+          onBackToContentGeneration={handlers.handleBackToContentGeneration}
         />
       );
+    
     case 7:
       return (
         <PDFGeneratorV2
-          estimateData={{ ...extractedData, ...missingInfo }}
-          projectType={projectType}
-          lineItems={lineItems}
-          totals={totals}
-          onComplete={handlePDFComplete}
+          estimateData={state.estimateFields || {}}
+          projectType={state.projectType}
+          lineItems={state.lineItems}
+          totals={state.totals}
+          estimateFields={Array.isArray(state.estimateFields) ? state.estimateFields : Object.entries(state.estimateFields || {}).map(([key, value]) => ({ formField: key, value }))}
+          onComplete={handlers.handlePDFComplete}
         />
       );
+    
     default:
-      return null;
+      return <div>Step not found</div>;
   }
 };
 

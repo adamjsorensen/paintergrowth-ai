@@ -89,6 +89,7 @@ interface PDFGeneratorV2Props {
   projectType: 'interior' | 'exterior';
   lineItems: any[];
   totals: Record<string, any>;
+  estimateFields?: any[]; // Add this for fallback parsing
   onComplete: () => void;
 }
 
@@ -97,6 +98,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
   projectType,
   lineItems,
   totals,
+  estimateFields = [],
   onComplete
 }) => {
   const { toast } = useToast();
@@ -125,26 +127,51 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
     setError(null);
     setDiagnosticData(null);
     
-    console.log('Generating PDF content with V2 architecture...');
+    console.log('PDFGeneratorV2 - Starting generation with estimateData:', estimateData);
+    console.log('PDFGeneratorV2 - Totals:', totals);
+    console.log('PDFGeneratorV2 - Company profile:', companyProfile);
 
     try {
+      // Prepare comprehensive payload with all available data
       const payload = {
-        estimateData,
+        estimateData: {
+          ...estimateData,
+          // Ensure core fields are present with fallbacks only if truly missing
+          clientName: estimateData.clientName || estimateData.client_name || 'Valued Client',
+          clientEmail: estimateData.clientEmail || estimateData.client_email || '',
+          clientPhone: estimateData.clientPhone || estimateData.client_phone || '',
+          projectAddress: estimateData.projectAddress || estimateData.address || 'Project Address',
+          timeline: estimateData.timeline || '',
+          specialNotes: estimateData.specialNotes || estimateData.clientNotes || '',
+          colorPalette: estimateData.colorPalette || '',
+          prepNeeds: estimateData.prepNeeds || [],
+          surfacesToPaint: estimateData.surfacesToPaint || [],
+          roomsToPaint: estimateData.roomsToPaint || []
+        },
         projectType,
         lineItems,
-        totals,
+        totals: {
+          subtotal: totals.subtotal || 0,
+          tax: totals.tax || 0,
+          total: totals.total || 0,
+          taxRate: totals.taxRate || '0%'
+        },
         roomsMatrix: estimateData.roomsMatrix || [],
-        clientNotes: estimateData.clientNotes || '',
+        clientNotes: estimateData.specialNotes || estimateData.clientNotes || '',
         companyProfile: companyProfile || {},
         clientInfo: {
-          name: estimateData.clientName || 'Valued Client',
-          address: estimateData.address || 'Project Address',
-          phone: estimateData.clientPhone || '',
-          email: estimateData.clientEmail || ''
+          name: estimateData.clientName || estimateData.client_name || 'Valued Client',
+          address: estimateData.projectAddress || estimateData.address || 'Project Address',
+          phone: estimateData.clientPhone || estimateData.client_phone || '',
+          email: estimateData.clientEmail || estimateData.client_email || ''
         },
         taxRate: totals.taxRate || '0%',
-        addOns: estimateData.addOns || []
+        addOns: estimateData.addOns || [],
+        upsells: estimateData.upsells || [],
+        colorApprovals: estimateData.colorApprovals || []
       };
+
+      console.log('PDFGeneratorV2 - Final payload being sent:', payload);
 
       const { data, error: functionError } = await supabase.functions.invoke('v2-estimate-intent', {
         body: payload
@@ -171,7 +198,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
         return;
       }
 
-      console.log('PDF content generated successfully:', data);
+      console.log('PDFGeneratorV2 - PDF content generated successfully:', data);
       setPdfContent(data);
       
       toast({
@@ -180,7 +207,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
       });
 
     } catch (err) {
-      console.error('Error generating PDF content:', err);
+      console.error('PDFGeneratorV2 - Error generating PDF content:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate PDF content');
       
       toast({
