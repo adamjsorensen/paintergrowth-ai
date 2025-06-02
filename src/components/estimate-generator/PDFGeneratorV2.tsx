@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Download, FileText, Loader2, AlertTriangle } from 'lucide-react';
+import { Download, FileText, Loader2, AlertTriangle, Image } from 'lucide-react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -199,31 +199,40 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
     setIsGenerating(true);
     
     try {
-      const element = document.getElementById('pdf-preview-v2');
-      if (!element) {
-        throw new Error('PDF preview element not found');
-      }
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-
+      // Create PDF with proper page handling
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const pageWidth = pdf.internal.pageSize.getWidth();
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      // Get all page elements
+      const pages = document.querySelectorAll('.pdf-page');
       
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i] as HTMLElement;
+        
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: page.offsetWidth,
+          height: page.offsetHeight
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+        
+        const imgX = (pageWidth - imgWidth * ratio) / 2;
+        const imgY = 0;
+        
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      }
       
       const clientName = pdfContent.coverPage.clientName.replace(/[^a-zA-Z0-9]/g, '_');
       const date = new Date().toISOString().split('T')[0];
@@ -312,32 +321,44 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
               <div id="pdf-preview-v2" className="bg-white max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
                 
                 {/* Page 1 - Cover Page */}
-                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
-                  {/* Logo placeholder */}
+                <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
+                  {/* Logo Section */}
                   <div className="mb-8">
-                    <div className="border-2 border-black p-4 inline-block">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">YOUR</div>
-                        <div className="text-2xl font-bold">LOGO</div>
-                        <div className="text-sm">PLACEHOLDER</div>
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Project Photo Placeholder */}
                   <div className="mb-8">
-                    <div className="w-full h-80 bg-blue-300 border-2 border-blue-400 flex items-center justify-center">
-                      <span className="text-gray-700 text-lg">Project Photo Placeholder</span>
+                    <div className="w-full h-80 bg-blue-100 border-2 border-blue-300 flex items-center justify-center rounded-lg">
+                      <div className="text-center text-gray-600">
+                        <Image className="h-12 w-12 mx-auto mb-2" />
+                        <span className="text-lg">Project Photo Placeholder</span>
+                        <p className="text-sm mt-1">Upload project photos to replace this</p>
+                      </div>
                     </div>
                   </div>
 
                   {/* Project Estimate Title */}
-                  <h1 className="text-3xl font-bold mb-8 text-black">PROJECT ESTIMATE</h1>
+                  <h1 className="text-4xl font-bold mb-8 text-black text-center">PROJECT ESTIMATE</h1>
 
                   {/* Estimate Details */}
                   <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <div><strong>Date:</strong></div>
+                      <div><strong>Date:</strong> {pdfContent.coverPage.estimateDate}</div>
                       <div><strong>Estimator Name:</strong> {pdfContent.coverPage.estimatorName}</div>
                       <div><strong>Estimator Email:</strong> {pdfContent.coverPage.estimatorEmail}</div>
                       <div><strong>Estimator Phone:</strong> {pdfContent.coverPage.estimatorPhone}</div>
@@ -353,159 +374,183 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                 </div>
 
                 {/* Page 2 - Introduction */}
-                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
                   <div className="mb-8">
-                    <div className="border-2 border-black p-4 inline-block">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">YOUR</div>
-                        <div className="text-2xl font-bold">LOGO</div>
-                        <div className="text-sm">PLACEHOLDER</div>
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <h2 className="text-2xl font-bold mb-8">INTRODUCTION</h2>
+                  <h2 className="text-3xl font-bold mb-8 text-black">INTRODUCTION</h2>
                   
-                  <div className="space-y-4 text-gray-800 leading-relaxed">
+                  <div className="space-y-6 text-gray-800 leading-relaxed text-base">
                     <p>{pdfContent.introductionLetter.greeting}</p>
                     <p>{pdfContent.introductionLetter.thankYouMessage}</p>
                     <p>{pdfContent.introductionLetter.valueProposition}</p>
                     <p>{pdfContent.introductionLetter.qualityCommitment}</p>
                     <p>{pdfContent.introductionLetter.collaborationMessage}</p>
                     <p>{pdfContent.introductionLetter.bookingInstructions}</p>
-                    <p className="mt-6">{pdfContent.introductionLetter.closing}</p>
-                    <div className="mt-4">
+                    <p className="mt-8">{pdfContent.introductionLetter.closing}</p>
+                    <div className="mt-6">
                       <p>({pdfContent.introductionLetter.ownerName})</p>
                       <p>({pdfContent.introductionLetter.companyName})</p>
                     </div>
-                    <p className="mt-8 text-center italic">
+                    <p className="mt-12 text-center italic text-lg">
                       More information about us is also available at: {pdfContent.introductionLetter.website}
                     </p>
                   </div>
                 </div>
 
                 {/* Page 3 - Description of Project */}
-                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
                   <div className="mb-8">
-                    <div className="border-2 border-black p-4 inline-block">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">YOUR</div>
-                        <div className="text-2xl font-bold">LOGO</div>
-                        <div className="text-sm">PLACEHOLDER</div>
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <h2 className="text-2xl font-bold mb-8">DESCRIPTION OF PROJECT</h2>
+                  <h2 className="text-3xl font-bold mb-8 text-black">DESCRIPTION OF PROJECT</h2>
 
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div>
-                      <h3 className="font-bold text-lg mb-2">POWER WASHING AND/OR PREP FOR PAINTING</h3>
-                      <p className="mb-2">{pdfContent.projectDescription.powerWashing.description}</p>
-                      <p className="mb-2">Areas included in the wash:</p>
-                      <ol className="list-decimal list-inside ml-4">
+                      <h3 className="font-bold text-xl mb-4 text-black">POWER WASHING AND/OR PREP FOR PAINTING</h3>
+                      <p className="mb-4 text-base">{pdfContent.projectDescription.powerWashing.description}</p>
+                      <p className="mb-3 font-semibold">Areas included in the wash:</p>
+                      <ol className="list-decimal list-inside ml-4 space-y-1">
                         {pdfContent.projectDescription.powerWashing.areas.map((area, index) => (
-                          <li key={index}>{area}</li>
+                          <li key={index} className="text-base">{area}</li>
                         ))}
                       </ol>
                       {pdfContent.projectDescription.powerWashing.notes.map((note, index) => (
-                        <p key={index} className="mt-2">**{note}</p>
+                        <p key={index} className="mt-3 text-base">**{note}</p>
                       ))}
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg mb-2">SURFACE PREPARATION</h3>
-                      <p className="mb-2">INCLUDES:</p>
+                      <h3 className="font-bold text-xl mb-4 text-black">SURFACE PREPARATION</h3>
+                      <p className="mb-3 font-semibold">INCLUDES:</p>
                       {pdfContent.projectDescription.surfacePreparation.includes.map((item, index) => (
-                        <p key={index} className="mb-1">** {item}</p>
+                        <p key={index} className="mb-2 text-base">** {item}</p>
                       ))}
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg mb-2">PAINT APPLICATION:</h3>
-                      <p className="mb-2">**{pdfContent.projectDescription.paintApplication.description}</p>
+                      <h3 className="font-bold text-xl mb-4 text-black">PAINT APPLICATION:</h3>
+                      <p className="mb-4 text-base">**{pdfContent.projectDescription.paintApplication.description}</p>
                       {pdfContent.projectDescription.paintApplication.notes.map((note, index) => (
-                        <p key={index} className="mb-2">++{note}</p>
+                        <p key={index} className="mb-3 text-base">++{note}</p>
                       ))}
-                      <p className="font-bold mt-4">PREPARE AND PAINT EXTERIOR OF THE HOME.</p>
+                      <p className="font-bold mt-6 text-lg">PREPARE AND PAINT EXTERIOR OF THE HOME.</p>
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg mb-2">INCLUSIONS:</h3>
+                      <h3 className="font-bold text-xl mb-4 text-black">INCLUSIONS:</h3>
                       {pdfContent.projectDescription.inclusions.map((item, index) => (
-                        <p key={index} className="mb-1">{item}</p>
+                        <p key={index} className="mb-2 text-base">{item}</p>
                       ))}
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg mb-2">EXCLUSIONS:</h3>
+                      <h3 className="font-bold text-xl mb-4 text-black">EXCLUSIONS:</h3>
                       {pdfContent.projectDescription.exclusions.map((item, index) => (
-                        <p key={index} className="mb-1">{item}</p>
+                        <p key={index} className="mb-2 text-base">{item}</p>
                       ))}
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg mb-2">SAFETY, SETUP & CLEAN UP</h3>
+                      <h3 className="font-bold text-xl mb-4 text-black">SAFETY, SETUP & CLEAN UP</h3>
                       {pdfContent.projectDescription.safetyAndCleanup.map((item, index) => (
-                        <p key={index} className="mb-2">** {item}</p>
+                        <p key={index} className="mb-3 text-base">** {item}</p>
                       ))}
                     </div>
                   </div>
                 </div>
 
                 {/* Page 4 - Pricing and Color Approvals */}
-                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
                   <div className="mb-8">
-                    <div className="border-2 border-black p-4 inline-block">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">YOUR</div>
-                        <div className="text-2xl font-bold">LOGO</div>
-                        <div className="text-sm">PLACEHOLDER</div>
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     {/* Special Considerations */}
                     <div>
-                      <h3 className="font-bold text-lg mb-2">SPECIAL CONSIDERATIONS</h3>
-                      <p>{pdfContent.projectDescription.specialConsiderations}</p>
+                      <h3 className="font-bold text-xl mb-4 text-black">SPECIAL CONSIDERATIONS</h3>
+                      <p className="text-base">{pdfContent.projectDescription.specialConsiderations}</p>
                     </div>
 
                     {/* Pricing Summary */}
-                    <div className="text-right space-y-2">
-                      <div className="flex justify-between">
-                        <span>Quote Subtotal:</span>
-                        <span>{formatCurrency(pdfContent.pricing.subtotal)}</span>
+                    <div className="text-right space-y-3 text-lg">
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-semibold">Quote Subtotal:</span>
+                        <span className="font-bold">{formatCurrency(pdfContent.pricing.subtotal)}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Sales Tax (X%):</span>
-                        <span>{formatCurrency(pdfContent.pricing.tax)}</span>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="font-semibold">Sales Tax:</span>
+                        <span className="font-bold">{formatCurrency(pdfContent.pricing.tax)}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <div className="flex justify-between font-bold text-2xl border-t-2 border-black pt-4">
                         <span>Total:</span>
                         <span>{formatCurrency(pdfContent.pricing.total)}</span>
                       </div>
                     </div>
 
                     {/* Color Approvals Section */}
-                    <div className="bg-cyan-100 p-6 border-2 border-cyan-200">
-                      <h3 className="text-xl font-bold mb-4">Color Approvals</h3>
-                      <div className="border-2 border-purple-400 bg-purple-100 p-4">
+                    <div className="bg-cyan-50 p-8 border-2 border-cyan-300 rounded-lg">
+                      <h3 className="text-2xl font-bold mb-6 text-black">Color Approvals</h3>
+                      <div className="border-2 border-purple-400 bg-purple-50 p-6 rounded-lg">
                         {pdfContent.colorApprovals.map((color, index) => (
-                          <div key={index} className="mb-4">
+                          <div key={index} className="mb-6 text-base">
                             <div><strong>Color {index + 1} ({color.colorCode}):</strong> {color.colorName}</div>
                             <div><strong>Surfaces:</strong> {color.surfaces}</div>
                           </div>
                         ))}
                         
-                        <div className="mt-6 border-t-2 border-purple-400 pt-4">
-                          <div className="flex justify-between items-center">
+                        <div className="mt-8 border-t-2 border-purple-400 pt-6">
+                          <div className="flex justify-between items-center text-base">
                             <span>Approved by _________________________ on _________________</span>
                           </div>
-                          <div className="text-center mt-2">
+                          <div className="text-center mt-3">
                             <span>(Client Signature)</span>
-                            <span className="ml-20">(Date)</span>
+                            <span className="ml-32">(Date)</span>
                           </div>
                         </div>
                       </div>
@@ -514,52 +559,60 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                 </div>
 
                 {/* Page 5 - Add-ons & Signing Authorization */}
-                <div className="p-8 min-h-screen page-break">
+                <div className="pdf-page p-8 min-h-screen">
                   <div className="mb-8">
-                    <div className="border-2 border-black p-4 inline-block">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">YOUR</div>
-                        <div className="text-2xl font-bold">LOGO</div>
-                        <div className="text-sm">PLACEHOLDER</div>
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <h2 className="text-2xl font-bold mb-8">ADD ONS & SIGNING AUTHORIZATION</h2>
+                  <h2 className="text-3xl font-bold mb-8 text-black">ADD ONS & SIGNING AUTHORIZATION</h2>
 
-                  <div className="space-y-8">
-                    <div className="text-xl font-semibold">
+                  <div className="space-y-10">
+                    <div className="text-2xl font-bold text-center">
                       Total Price: {formatCurrency(pdfContent.addOns.totalPrice)}
                     </div>
 
-                    <div className="bg-gray-100 p-4">
-                      <p className="text-center font-medium">
+                    <div className="bg-gray-100 p-6 rounded-lg">
+                      <p className="text-center font-bold text-lg">
                         Estimate Valid for {pdfContent.addOns.validityDays} days. A {pdfContent.addOns.depositPercent}% deposit is required to confirm proposal
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-bold mb-4">OPTIONAL UPGRADES</h3>
-                      <table className="w-full border-collapse border border-gray-400">
+                      <h3 className="text-2xl font-bold mb-6 text-black">OPTIONAL UPGRADES</h3>
+                      <table className="w-full border-collapse border-2 border-gray-600">
                         <thead>
                           <tr className="bg-gray-200">
-                            <th className="border border-gray-400 p-2"></th>
-                            <th className="border border-gray-400 p-2 text-left">Description</th>
-                            <th className="border border-gray-400 p-2">Qty</th>
-                            <th className="border border-gray-400 p-2">Unit Price</th>
-                            <th className="border border-gray-400 p-2">Line Total</th>
+                            <th className="border border-gray-600 p-3 text-left"></th>
+                            <th className="border border-gray-600 p-3 text-left font-bold">Description</th>
+                            <th className="border border-gray-600 p-3 text-center font-bold">Qty</th>
+                            <th className="border border-gray-600 p-3 text-center font-bold">Unit Price</th>
+                            <th className="border border-gray-600 p-3 text-center font-bold">Line Total</th>
                           </tr>
                         </thead>
                         <tbody>
                           {pdfContent.addOns.optionalUpgrades.map((upgrade, index) => (
-                            <tr key={index}>
-                              <td className="border border-gray-400 p-2 text-center">
-                                <input type="checkbox" checked={upgrade.selected} readOnly />
+                            <tr key={index} className="text-base">
+                              <td className="border border-gray-600 p-3 text-center">
+                                <input type="checkbox" checked={upgrade.selected} readOnly className="w-4 h-4" />
                               </td>
-                              <td className="border border-gray-400 p-2">{upgrade.description}</td>
-                              <td className="border border-gray-400 p-2 text-center">{upgrade.quantity}</td>
-                              <td className="border border-gray-400 p-2 text-right">{formatCurrency(upgrade.unitPrice)}</td>
-                              <td className="border border-gray-400 p-2 text-right">{formatCurrency(upgrade.lineTotal)}</td>
+                              <td className="border border-gray-600 p-3">{upgrade.description}</td>
+                              <td className="border border-gray-600 p-3 text-center">{upgrade.quantity}</td>
+                              <td className="border border-gray-600 p-3 text-right">{formatCurrency(upgrade.unitPrice)}</td>
+                              <td className="border border-gray-600 p-3 text-right font-bold">{formatCurrency(upgrade.lineTotal)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -567,25 +620,25 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-bold mb-6">Project Acceptance:</h3>
-                      <div className="space-y-8">
+                      <h3 className="text-2xl font-bold mb-8 text-black">Project Acceptance:</h3>
+                      <div className="space-y-10">
                         <div className="flex justify-between">
                           <div>
-                            <div className="border-b-2 border-black w-80 mb-2"></div>
-                            <div>Client Name</div>
+                            <div className="border-b-2 border-black w-96 mb-3"></div>
+                            <div className="text-lg">Client Name</div>
                           </div>
                           <div>
-                            <div className="border-b-2 border-black w-48 mb-2"></div>
-                            <div>Date</div>
+                            <div className="border-b-2 border-black w-64 mb-3"></div>
+                            <div className="text-lg">Date</div>
                           </div>
                         </div>
                         
                         <div>
-                          <div className="border-b-2 border-black w-80 mb-2"></div>
-                          <div>Client Signature</div>
+                          <div className="border-b-2 border-black w-96 mb-3"></div>
+                          <div className="text-lg">Client Signature</div>
                         </div>
 
-                        <div className="text-sm leading-relaxed">
+                        <div className="text-base leading-relaxed bg-gray-50 p-6 rounded-lg">
                           <p>{pdfContent.addOns.projectAcceptance.agreementText}</p>
                         </div>
                       </div>
