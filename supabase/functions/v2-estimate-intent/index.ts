@@ -124,7 +124,9 @@ serve(async (req) => {
       return createFallbackResponse('AI service temporarily unavailable');
     }
 
-    const functionCall = result.choices?.[0]?.message?.function_call;
+    // Updated to handle the new tools response format
+    const toolCalls = result.choices?.[0]?.message?.tool_calls;
+    const functionCall = toolCalls?.[0]?.function;
 
     if (!functionCall || functionCall.name !== "generate_pdf_content") {
       console.error('E_OPENROUTER_FAIL: AI did not use function calling properly');

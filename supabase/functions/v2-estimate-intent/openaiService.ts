@@ -1,3 +1,4 @@
+
 export async function callOpenRouterAPI(
   fullPrompt: string,
   functionDefinition: any,
@@ -12,6 +13,12 @@ export async function callOpenRouterAPI(
 
   console.log(`Calling OpenRouter with model: ${model}, temperature: ${temperature}`);
 
+  // Convert the function definition to the new tools format
+  const toolDefinition = {
+    type: "function",
+    function: functionDefinition
+  };
+
   const requestBody = {
     model: model,
     messages: [
@@ -20,8 +27,8 @@ export async function callOpenRouterAPI(
         content: fullPrompt
       }
     ],
-    functions: [functionDefinition],
-    function_call: { name: "generate_pdf_content" },
+    tools: [toolDefinition],
+    tool_choice: { type: "function", function: { name: "generate_pdf_content" } },
     temperature: temperature,
     max_tokens: 4000
   };
