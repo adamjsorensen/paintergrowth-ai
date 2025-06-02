@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { ESTIMATE_STEPS } from '../constants/EstimateSteps';
@@ -32,19 +33,19 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     case 0:
       return isMobile ? (
         <MobileProjectTypeSelector
-          onProjectTypeSelect={handlers.handleProjectTypeSelect}
+          onSelect={handlers.handleProjectTypeSelect}
         />
       ) : (
         <InlineProjectTypeSelector
-          onProjectTypeSelect={handlers.handleProjectTypeSelect}
+          onSelect={handlers.handleProjectTypeSelect}
         />
       );
     
     case 1:
       return (
         <Transcriber
-          projectType={state.projectType}
-          onInformationExtracted={handlers.handleInformationExtracted}
+          audioBlob={null}
+          onComplete={handlers.handleInformationExtracted}
         />
       );
     
@@ -64,8 +65,6 @@ const StepRenderer: React.FC<StepRendererProps> = ({
           summary={state.summary}
           transcript={state.transcript}
           extractedData={state.extractedData}
-          missingInfo={state.missingInfo}
-          projectType={state.projectType}
           onComplete={handlers.handleMissingInfoComplete}
         />
       );
@@ -85,8 +84,10 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     case 4:
       return (
         <EstimateSuggestionEngine
-          transcript={state.transcript}
+          estimateData={state.estimateFields}
           projectType={state.projectType}
+          lineItems={state.lineItems}
+          totals={state.totals}
           onComplete={handlers.handleSuggestionsComplete}
           onGoBackToRooms={onGoBackToRooms}
         />
@@ -95,20 +96,20 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     case 5:
       return (
         <EstimateContentGenerator
+          estimateData={state.estimateFields}
           projectType={state.projectType}
-          acceptedSuggestions={state.acceptedSuggestions}
-          estimateFields={state.estimateFields}
-          onContentGenerated={handlers.handleContentGenerated}
+          lineItems={state.lineItems}
+          totals={state.totals}
+          onComplete={handlers.handleContentGenerated}
         />
       );
     
     case 6:
       return (
         <EstimateContentEditor
-          projectType={state.projectType}
-          generatedContent={state.generatedContent}
-          onContentEdited={handlers.handleContentEdited}
-          onBackToContentGeneration={handlers.handleBackToContentGeneration}
+          content={state.generatedContent}
+          onComplete={handlers.handleContentEdited}
+          onBack={handlers.handleBackToContentGeneration}
         />
       );
     
