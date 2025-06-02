@@ -9,13 +9,51 @@ import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-interface SimplePDFContent {
+interface ComprehensivePDFContent {
+  coverPage: {
+    estimateDate: string;
+    estimateNumber: string;
+    proposalNumber: string;
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    projectAddress: string;
+    estimatorName: string;
+    estimatorEmail: string;
+    estimatorPhone: string;
+  };
   projectOverview: string;
   scopeOfWork: string;
-  materialsAndLabor: string;
-  timeline: string;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+    total: number;
+  }>;
+  addOns: Array<{
+    description: string;
+    price: number;
+    selected: boolean;
+  }>;
+  pricing: {
+    subtotal: number;
+    tax: number;
+    total: number;
+    taxRate: string;
+  };
   termsAndConditions: string;
-  additionalNotes: string;
+  companyInfo: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    website?: string;
+  };
+  signatures: {
+    clientSignatureRequired: boolean;
+    warrantyInfo: string;
+  };
 }
 
 interface PDFGeneratorV2Props {
@@ -48,7 +86,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
   
   const { data: companyProfile } = useCompanyProfile(user?.id);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [pdfContent, setPdfContent] = useState<SimplePDFContent | null>(null);
+  const [pdfContent, setPdfContent] = useState<ComprehensivePDFContent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [diagnosticData, setDiagnosticData] = useState<any>(null);
 
@@ -226,42 +264,6 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
     }).format(amount);
   };
 
-  // Create structured data for the PDF layout from the simple content
-  const createPDFData = () => {
-    if (!pdfContent) return null;
-
-    const currentDate = new Date().toLocaleDateString();
-    const estimateNumber = `EST-${Date.now()}`;
-    const proposalNumber = `PROP-${Date.now()}`;
-
-    return {
-      coverPage: {
-        estimateDate: currentDate,
-        estimateNumber,
-        proposalNumber,
-        clientName: estimateData.clientName || estimateData.client_name || 'Valued Client',
-        clientPhone: estimateData.clientPhone || estimateData.client_phone || '',
-        clientEmail: estimateData.clientEmail || estimateData.client_email || '',
-        projectAddress: estimateData.projectAddress || estimateData.address || 'Project Address',
-        estimatorName: companyProfile?.contact_name || companyProfile?.owner_name || 'Project Estimator',
-        estimatorEmail: companyProfile?.email || 'estimator@company.com',
-        estimatorPhone: companyProfile?.phone || '(555) 123-4567'
-      },
-      content: pdfContent,
-      pricing: {
-        subtotal: totals.subtotal || 0,
-        tax: totals.tax || 0,
-        total: totals.total || 0
-      },
-      companyInfo: {
-        name: companyProfile?.company_name || 'Your Company',
-        website: companyProfile?.website || 'www.yourcompany.com'
-      }
-    };
-  };
-
-  const pdfData = createPDFData();
-
   return (
     <div className="space-y-6">
       <Card>
@@ -312,7 +314,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
             </div>
           )}
 
-          {pdfContent && pdfData && (
+          {pdfContent && (
             <>
               <div id="pdf-preview-v2" className="bg-white max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
                 
@@ -354,17 +356,17 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                   {/* Estimate Details */}
                   <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <div><strong>Date:</strong> {pdfData.coverPage.estimateDate}</div>
-                      <div><strong>Estimator Name:</strong> {pdfData.coverPage.estimatorName}</div>
-                      <div><strong>Estimator Email:</strong> {pdfData.coverPage.estimatorEmail}</div>
-                      <div><strong>Estimator Phone:</strong> {pdfData.coverPage.estimatorPhone}</div>
-                      <div><strong>Client Name:</strong> {pdfData.coverPage.clientName}</div>
-                      <div><strong>Client Phone:</strong> {pdfData.coverPage.clientPhone}</div>
-                      <div><strong>Client Email:</strong> {pdfData.coverPage.clientEmail}</div>
-                      <div><strong>Project Address:</strong> {pdfData.coverPage.projectAddress}</div>
+                      <div><strong>Date:</strong> {pdfContent.coverPage?.estimateDate || new Date().toLocaleDateString()}</div>
+                      <div><strong>Estimator Name:</strong> {pdfContent.coverPage?.estimatorName || companyProfile?.owner_name || 'Project Estimator'}</div>
+                      <div><strong>Estimator Email:</strong> {pdfContent.coverPage?.estimatorEmail || companyProfile?.email || 'estimator@company.com'}</div>
+                      <div><strong>Estimator Phone:</strong> {pdfContent.coverPage?.estimatorPhone || companyProfile?.phone || '(555) 123-4567'}</div>
+                      <div><strong>Client Name:</strong> {pdfContent.coverPage?.clientName || estimateData.clientName || 'Valued Client'}</div>
+                      <div><strong>Client Phone:</strong> {pdfContent.coverPage?.clientPhone || estimateData.clientPhone || ''}</div>
+                      <div><strong>Client Email:</strong> {pdfContent.coverPage?.clientEmail || estimateData.clientEmail || ''}</div>
+                      <div><strong>Project Address:</strong> {pdfContent.coverPage?.projectAddress || estimateData.projectAddress || 'Project Address'}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-semibold">Proposal #: {pdfData.coverPage.proposalNumber}</div>
+                      <div className="text-xl font-semibold">Proposal #: {pdfContent.coverPage?.proposalNumber || `PROP-${Date.now()}`}</div>
                     </div>
                   </div>
                 </div>
@@ -392,7 +394,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                   <h2 className="text-3xl font-bold mb-8 text-black">PROJECT OVERVIEW</h2>
                   
                   <div className="space-y-6 text-gray-800 leading-relaxed text-base">
-                    <p>{pdfContent.projectOverview}</p>
+                    <p>{pdfContent.projectOverview || 'Thank you for considering our painting services for your project. This estimate provides a comprehensive overview of the proposed work.'}</p>
                   </div>
                 </div>
 
@@ -419,11 +421,11 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                   <h2 className="text-3xl font-bold mb-8 text-black">SCOPE OF WORK</h2>
 
                   <div className="space-y-6 text-gray-800 leading-relaxed text-base">
-                    <p>{pdfContent.scopeOfWork}</p>
+                    <p>{pdfContent.scopeOfWork || 'We will provide complete interior/exterior painting services including surface preparation, primer application, and finish coats using premium materials.'}</p>
                   </div>
                 </div>
 
-                {/* Page 4 - Materials and Labor + Timeline */}
+                {/* Page 4 - Line Items & Add-Ons */}
                 <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
                   <div className="mb-8">
                     {companyProfile?.logo_url ? (
@@ -443,36 +445,123 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                     )}
                   </div>
 
-                  <div className="space-y-10">
-                    <div>
-                      <h3 className="font-bold text-xl mb-4 text-black">MATERIALS AND LABOR</h3>
-                      <p className="text-base text-gray-800 leading-relaxed">{pdfContent.materialsAndLabor}</p>
-                    </div>
+                  <h2 className="text-3xl font-bold mb-8 text-black">LINE ITEMS & PRICING</h2>
 
-                    <div>
-                      <h3 className="font-bold text-xl mb-4 text-black">PROJECT TIMELINE</h3>
-                      <p className="text-base text-gray-800 leading-relaxed">{pdfContent.timeline}</p>
-                    </div>
+                  {/* Line Items Table */}
+                  <div className="mb-8">
+                    <table className="w-full border-collapse border border-gray-300">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border border-gray-300 p-2 text-left">Description</th>
+                          <th className="border border-gray-300 p-2 text-center">Qty</th>
+                          <th className="border border-gray-300 p-2 text-center">Unit</th>
+                          <th className="border border-gray-300 p-2 text-right">Unit Price</th>
+                          <th className="border border-gray-300 p-2 text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(pdfContent.lineItems || lineItems || []).map((item: any, index: number) => (
+                          <tr key={index}>
+                            <td className="border border-gray-300 p-2">{item.description}</td>
+                            <td className="border border-gray-300 p-2 text-center">{item.quantity}</td>
+                            <td className="border border-gray-300 p-2 text-center">{item.unit}</td>
+                            <td className="border border-gray-300 p-2 text-right">{formatCurrency(item.unitPrice || item.unit_price || 0)}</td>
+                            <td className="border border-gray-300 p-2 text-right">{formatCurrency(item.total || 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                    {/* Pricing Summary */}
-                    <div className="text-right space-y-3 text-lg">
+                  {/* Add-Ons Section */}
+                  {(pdfContent.addOns || estimateData.addOns || []).length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-xl font-bold mb-4 text-black">OPTIONAL ADD-ONS</h3>
+                      <div className="space-y-2">
+                        {(pdfContent.addOns || estimateData.addOns || []).map((addon: any, index: number) => (
+                          <div key={index} className="flex justify-between border-b pb-2">
+                            <span>{addon.description}</span>
+                            <span className="font-semibold">{formatCurrency(addon.price || 0)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Page 5 - Pricing Summary */}
+                <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
+                  <div className="mb-8">
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <h2 className="text-3xl font-bold mb-8 text-black">PRICING SUMMARY</h2>
+
+                  <div className="max-w-md ml-auto">
+                    <div className="space-y-4 text-lg">
                       <div className="flex justify-between border-b pb-2">
-                        <span className="font-semibold">Quote Subtotal:</span>
-                        <span className="font-bold">{formatCurrency(pdfData.pricing.subtotal)}</span>
+                        <span className="font-semibold">Subtotal:</span>
+                        <span className="font-bold">{formatCurrency(pdfContent.pricing?.subtotal || totals.subtotal || 0)}</span>
                       </div>
                       <div className="flex justify-between border-b pb-2">
-                        <span className="font-semibold">Sales Tax:</span>
-                        <span className="font-bold">{formatCurrency(pdfData.pricing.tax)}</span>
+                        <span className="font-semibold">Tax ({pdfContent.pricing?.taxRate || totals.taxRate || '0%'}):</span>
+                        <span className="font-bold">{formatCurrency(pdfContent.pricing?.tax || totals.tax || 0)}</span>
                       </div>
                       <div className="flex justify-between font-bold text-2xl border-t-2 border-black pt-4">
                         <span>Total:</span>
-                        <span>{formatCurrency(pdfData.pricing.total)}</span>
+                        <span>{formatCurrency(pdfContent.pricing?.total || totals.total || 0)}</span>
                       </div>
                     </div>
                   </div>
+
+                  <div className="mt-12 space-y-6 text-gray-800 leading-relaxed">
+                    <h3 className="text-xl font-bold text-black">Payment Terms</h3>
+                    <p>Payment in full is due upon completion of work. All invoices not paid in full after 15 days will be subject to a 2% per month interest charge.</p>
+                  </div>
                 </div>
 
-                {/* Page 5 - Terms and Conditions + Additional Notes */}
+                {/* Page 6 - Terms and Conditions */}
+                <div className="pdf-page p-8 min-h-screen border-b-2 border-gray-300" style={{ pageBreakAfter: 'always' }}>
+                  <div className="mb-8">
+                    {companyProfile?.logo_url ? (
+                      <img 
+                        src={companyProfile.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    ) : (
+                      <div className="border-2 border-black p-4 inline-block">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">YOUR</div>
+                          <div className="text-2xl font-bold">LOGO</div>
+                          <div className="text-sm">PLACEHOLDER</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <h2 className="text-3xl font-bold mb-8 text-black">TERMS AND CONDITIONS</h2>
+                  
+                  <div className="space-y-6 text-gray-800 leading-relaxed text-base">
+                    <p>{pdfContent.termsAndConditions || 'Standard terms and conditions apply. Payment schedule and warranty information will be provided with the final contract.'}</p>
+                  </div>
+                </div>
+
+                {/* Page 7 - Company Info & Signatures */}
                 <div className="pdf-page p-8 min-h-screen">
                   <div className="mb-8">
                     {companyProfile?.logo_url ? (
@@ -494,13 +583,13 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
 
                   <div className="space-y-10">
                     <div>
-                      <h3 className="text-2xl font-bold mb-6 text-black">TERMS AND CONDITIONS</h3>
-                      <p className="text-base text-gray-800 leading-relaxed">{pdfContent.termsAndConditions}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-2xl font-bold mb-6 text-black">ADDITIONAL NOTES</h3>
-                      <p className="text-base text-gray-800 leading-relaxed">{pdfContent.additionalNotes}</p>
+                      <h3 className="text-2xl font-bold mb-6 text-black">COMPANY INFORMATION</h3>
+                      <div className="space-y-2">
+                        <div><strong>Company:</strong> {pdfContent.companyInfo?.name || companyProfile?.business_name || 'Your Company'}</div>
+                        <div><strong>Address:</strong> {pdfContent.companyInfo?.address || companyProfile?.location || 'Company Address'}</div>
+                        <div><strong>Phone:</strong> {pdfContent.companyInfo?.phone || companyProfile?.phone || '(555) 123-4567'}</div>
+                        <div><strong>Email:</strong> {pdfContent.companyInfo?.email || companyProfile?.email || 'contact@company.com'}</div>
+                      </div>
                     </div>
 
                     <div className="mt-16">
@@ -523,8 +612,15 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
                         </div>
 
                         <div className="text-base leading-relaxed bg-gray-50 p-6 rounded-lg">
-                          <p>By signing above, I acknowledge that I have read and agree to the terms and conditions outlined in this estimate. I authorize {pdfData.companyInfo.name} to proceed with the work as described.</p>
+                          <p>By signing above, I acknowledge that I have read and agree to the terms and conditions outlined in this estimate. I authorize {companyProfile?.business_name || 'Your Company'} to proceed with the work as described.</p>
                         </div>
+
+                        {pdfContent.signatures?.warrantyInfo && (
+                          <div className="mt-8">
+                            <h4 className="text-lg font-bold mb-4">Warranty Information</h4>
+                            <p className="text-sm text-gray-700">{pdfContent.signatures.warrantyInfo}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

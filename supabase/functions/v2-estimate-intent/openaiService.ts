@@ -28,7 +28,7 @@ export async function callOpenRouterAPI(
       }
     ],
     tools: [toolDefinition],
-    tool_choice: { type: "function", function: { name: "generate_pdf_content" } },
+    tool_choice: { type: "function", function: { name: "generate_comprehensive_pdf_content" } },
     temperature: temperature,
     max_tokens: 4000
   };
@@ -60,37 +60,185 @@ export async function callOpenRouterAPI(
 
 export function createFunctionDefinition() {
   return {
-    name: "generate_pdf_content",
-    description: "Generate structured PDF content for painting estimates matching the content editor format",
+    name: "generate_comprehensive_pdf_content",
+    description: "Generate comprehensive PDF content for painting estimates with all 9 required sections",
     parameters: {
       type: "object",
       properties: {
+        coverPage: {
+          type: "object",
+          properties: {
+            estimateDate: {
+              type: "string",
+              description: "Current date for the estimate"
+            },
+            estimateNumber: {
+              type: "string", 
+              description: "Unique estimate number"
+            },
+            proposalNumber: {
+              type: "string",
+              description: "Unique proposal number"
+            },
+            clientName: {
+              type: "string",
+              description: "Client's full name"
+            },
+            clientPhone: {
+              type: "string",
+              description: "Client's phone number"
+            },
+            clientEmail: {
+              type: "string",
+              description: "Client's email address"
+            },
+            projectAddress: {
+              type: "string",
+              description: "Project address"
+            },
+            estimatorName: {
+              type: "string",
+              description: "Estimator's name"
+            },
+            estimatorEmail: {
+              type: "string",
+              description: "Estimator's email"
+            },
+            estimatorPhone: {
+              type: "string",
+              description: "Estimator's phone number"
+            }
+          },
+          required: ["estimateDate", "estimateNumber", "proposalNumber", "clientName", "clientPhone", "clientEmail", "projectAddress", "estimatorName", "estimatorEmail", "estimatorPhone"]
+        },
         projectOverview: {
           type: "string",
-          description: "Overview of the painting project including client details and project summary"
+          description: "Comprehensive overview of the painting project including client details and project summary"
         },
         scopeOfWork: {
           type: "string", 
           description: "Detailed description of all work to be performed"
         },
-        materialsAndLabor: {
-          type: "string",
-          description: "Information about materials to be used and labor details"
+        lineItems: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              description: {
+                type: "string",
+                description: "Description of the line item"
+              },
+              quantity: {
+                type: "number",
+                description: "Quantity of the item"
+              },
+              unit: {
+                type: "string",
+                description: "Unit of measurement"
+              },
+              unitPrice: {
+                type: "number",
+                description: "Price per unit"
+              },
+              total: {
+                type: "number",
+                description: "Total price for this line item"
+              }
+            },
+            required: ["description", "quantity", "unit", "unitPrice", "total"]
+          },
+          description: "Array of line items with pricing"
         },
-        timeline: {
-          type: "string",
-          description: "Project timeline and scheduling information"
+        addOns: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              description: {
+                type: "string",
+                description: "Description of the add-on service"
+              },
+              price: {
+                type: "number",
+                description: "Price of the add-on"
+              },
+              selected: {
+                type: "boolean",
+                description: "Whether this add-on is selected"
+              }
+            },
+            required: ["description", "price", "selected"]
+          },
+          description: "Array of optional add-on services"
+        },
+        pricing: {
+          type: "object",
+          properties: {
+            subtotal: {
+              type: "number",
+              description: "Subtotal amount"
+            },
+            tax: {
+              type: "number",
+              description: "Tax amount"
+            },
+            total: {
+              type: "number",
+              description: "Total amount including tax"
+            },
+            taxRate: {
+              type: "string",
+              description: "Tax rate percentage"
+            }
+          },
+          required: ["subtotal", "tax", "total", "taxRate"]
         },
         termsAndConditions: {
           type: "string",
           description: "Terms and conditions for the project"
         },
-        additionalNotes: {
-          type: "string",
-          description: "Any additional notes or special considerations"
+        companyInfo: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "Company name"
+            },
+            address: {
+              type: "string",
+              description: "Company address"
+            },
+            phone: {
+              type: "string",
+              description: "Company phone number"
+            },
+            email: {
+              type: "string",
+              description: "Company email"
+            },
+            website: {
+              type: "string",
+              description: "Company website (optional)"
+            }
+          },
+          required: ["name", "address", "phone", "email"]
+        },
+        signatures: {
+          type: "object",
+          properties: {
+            clientSignatureRequired: {
+              type: "boolean",
+              description: "Whether client signature is required"
+            },
+            warrantyInfo: {
+              type: "string",
+              description: "Warranty information text"
+            }
+          },
+          required: ["clientSignatureRequired", "warrantyInfo"]
         }
       },
-      required: ["projectOverview", "scopeOfWork", "materialsAndLabor", "timeline", "termsAndConditions", "additionalNotes"]
+      required: ["coverPage", "projectOverview", "scopeOfWork", "lineItems", "addOns", "pricing", "termsAndConditions", "companyInfo", "signatures"]
     }
   };
 }

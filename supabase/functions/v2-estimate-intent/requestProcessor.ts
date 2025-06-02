@@ -27,7 +27,7 @@ export async function processEstimateRequest(
     colorApprovals = []
   } = body;
 
-  console.log('Processing estimate intent with structured data');
+  console.log('Processing estimate intent with comprehensive structure');
 
   // Fetch boilerplate texts with better error handling
   let boilerplate;
@@ -71,12 +71,16 @@ export async function processEstimateRequest(
     colorApprovals
   );
 
+  // Add line items to structured input
+  structuredInput.lineItems = lineItems || [];
+  structuredInput.addOns = addOns || estimateData.addOns || [];
+
   // Replace placeholders in prompt
   const fullPrompt = buildPrompt(promptTemplate.prompt_text, structuredInput);
 
-  console.log('Calling OpenRouter with function calling mode');
+  console.log('Calling OpenRouter with comprehensive function calling mode');
 
-  // Use OpenAI function calling with structured schema
+  // Use OpenAI function calling with comprehensive structured schema
   let result;
   try {
     const functionDefinition = createFunctionDefinition();
@@ -95,8 +99,8 @@ export async function processEstimateRequest(
   const toolCalls = result.choices?.[0]?.message?.tool_calls;
   const functionCall = toolCalls?.[0]?.function;
 
-  if (!functionCall || functionCall.name !== "generate_pdf_content") {
-    console.error('E_OPENROUTER_FAIL: AI did not use function calling properly');
+  if (!functionCall || functionCall.name !== "generate_comprehensive_pdf_content") {
+    console.error('E_OPENROUTER_FAIL: AI did not use comprehensive function calling properly');
     return createFallbackResponse('AI response format error', corsHeaders);
   }
 
@@ -105,15 +109,15 @@ export async function processEstimateRequest(
   try {
     const parsedArgs = JSON.parse(functionCall.arguments);
     generatedContent = PDFContentSchema.parse(parsedArgs);
-    console.log('PDF content validated successfully');
+    console.log('Comprehensive PDF content validated successfully');
   } catch (validationError) {
-    console.error('E_VALIDATION_FAILED: Content validation failed:', validationError);
+    console.error('E_VALIDATION_FAILED: Comprehensive content validation failed:', validationError);
     
     // Return diagnostic error for debugging
     return new Response(
       JSON.stringify({
         error: 'AI_VALIDATION_FAILED',
-        message: 'Generated content failed validation',
+        message: 'Generated content failed comprehensive validation',
         rawResponse: functionCall.arguments,
         validationErrors: validationError.errors || validationError.message
       }),
@@ -121,7 +125,7 @@ export async function processEstimateRequest(
     );
   }
 
-  console.log('PDF intent processed successfully');
+  console.log('Comprehensive PDF intent processed successfully');
 
   return new Response(
     JSON.stringify(generatedContent),
