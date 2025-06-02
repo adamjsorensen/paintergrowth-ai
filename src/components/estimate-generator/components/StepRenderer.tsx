@@ -2,7 +2,7 @@ import React from 'react';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { ESTIMATE_STEPS } from '../constants/EstimateSteps';
 import InlineProjectTypeSelector from './InlineProjectTypeSelector';
-import Transcriber from '../Transcriber';
+import AudioTranscriptionInput from '../../audio-transcript/AudioTranscriptionInput';
 import SummaryChecker from '../SummaryChecker';
 import EstimateReview from '../EstimateReview';
 import EstimateSuggestionEngine from './EstimateSuggestionEngine';
@@ -42,18 +42,13 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     
     case 1:
       return (
-        <Transcriber
-          audioBlob={null}
-          onComplete={(transcript: string, summary: string) => {
-            // Create the proper data structure that handleInformationExtracted expects
-            const extractedData = {
-              transcript,
-              summary,
-              // Add any additional fields that might be expected
-              fields: [],
-              projectType: state.projectType
-            };
-            console.log('StepRenderer - Transcriber completed, passing data:', extractedData);
+        <AudioTranscriptionInput
+          onTranscriptionComplete={(transcript: string) => {
+            console.log('StepRenderer - Transcription completed:', transcript);
+            // Store transcript but don't advance yet - wait for information extraction
+          }}
+          onInformationExtracted={(extractedData: Record<string, any>) => {
+            console.log('StepRenderer - Information extracted, passing data:', extractedData);
             handlers.handleInformationExtracted(extractedData);
           }}
         />
