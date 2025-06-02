@@ -1,20 +1,20 @@
 
 import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 
-// Schema definitions
-export const UpsellItemSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  price: z.number(),
-  selected: z.boolean().default(false)
+// Updated schemas to match the exact template structure
+export const ColorApprovalSchema = z.object({
+  colorCode: z.string(),
+  colorName: z.string(),
+  surfaces: z.string(),
+  approved: z.boolean().default(false)
 });
 
-export const ColorApprovalSchema = z.object({
-  room: z.string(),
-  colorName: z.string(),
-  approved: z.boolean().default(false),
-  signatureRequired: z.boolean().default(true)
+export const OptionalUpgradeSchema = z.object({
+  selected: z.boolean().default(false),
+  description: z.string(),
+  quantity: z.number(),
+  unitPrice: z.number(),
+  lineTotal: z.number()
 });
 
 export const PDFContentSchema = z.object({
@@ -24,44 +24,63 @@ export const PDFContentSchema = z.object({
     projectAddress: z.string(),
     estimateDate: z.string(),
     estimateNumber: z.string(),
-    validUntil: z.string()
+    proposalNumber: z.string(),
+    estimatorName: z.string(),
+    estimatorEmail: z.string(),
+    estimatorPhone: z.string(),
+    clientPhone: z.string(),
+    clientEmail: z.string()
   }),
   introductionLetter: z.object({
     greeting: z.string(),
-    projectOverview: z.string(),
-    whyChooseUs: z.array(z.string()),
-    nextSteps: z.string(),
-    closing: z.string()
+    thankYouMessage: z.string(),
+    valueProposition: z.string(),
+    qualityCommitment: z.string(),
+    collaborationMessage: z.string(),
+    bookingInstructions: z.string(),
+    closing: z.string(),
+    ownerName: z.string(),
+    companyName: z.string(),
+    website: z.string()
   }),
-  scopeOfWork: z.object({
-    preparation: z.array(z.string()),
-    painting: z.array(z.string()),
-    cleanup: z.array(z.string()),
-    timeline: z.string()
+  projectDescription: z.object({
+    powerWashing: z.object({
+      description: z.string(),
+      areas: z.array(z.string()),
+      notes: z.array(z.string())
+    }),
+    surfacePreparation: z.object({
+      includes: z.array(z.string())
+    }),
+    paintApplication: z.object({
+      description: z.string(),
+      notes: z.array(z.string())
+    }),
+    inclusions: z.array(z.string()),
+    exclusions: z.array(z.string()),
+    safetyAndCleanup: z.array(z.string()),
+    specialConsiderations: z.string()
   }),
-  pricingSummary: z.object({
+  pricing: z.object({
     subtotal: z.number(),
     tax: z.number(),
-    discount: z.number().optional(),
-    total: z.number(),
-    paymentTerms: z.string()
+    total: z.number()
   }),
-  upsells: z.array(UpsellItemSchema),
   colorApprovals: z.array(ColorApprovalSchema),
-  termsAndConditions: z.object({
-    warranty: z.string(),
-    materials: z.string(),
-    scheduling: z.string(),
-    changes: z.string()
-  }),
-  companyInfo: z.object({
-    businessName: z.string(),
-    contactInfo: z.string(),
-    license: z.string(),
-    insurance: z.string()
+  addOns: z.object({
+    totalPrice: z.number(),
+    validityDays: z.number(),
+    depositPercent: z.number(),
+    optionalUpgrades: z.array(OptionalUpgradeSchema),
+    projectAcceptance: z.object({
+      clientNameLine: z.string(),
+      dateLine: z.string(),
+      signatureLine: z.string(),
+      agreementText: z.string()
+    })
   })
 });
 
 export type PDFContent = z.infer<typeof PDFContentSchema>;
-export type UpsellItem = z.infer<typeof UpsellItemSchema>;
 export type ColorApproval = z.infer<typeof ColorApprovalSchema>;
+export type OptionalUpgrade = z.infer<typeof OptionalUpgradeSchema>;

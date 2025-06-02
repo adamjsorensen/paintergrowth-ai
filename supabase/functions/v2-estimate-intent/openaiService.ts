@@ -37,7 +37,7 @@ export async function callOpenRouterAPI(
 export function createFunctionDefinition() {
   return {
     name: "generate_pdf_content",
-    description: "Generate structured PDF content for painting estimates",
+    description: "Generate structured PDF content for painting estimates matching the exact template format",
     parameters: {
       type: "object",
       properties: {
@@ -49,89 +49,116 @@ export function createFunctionDefinition() {
             projectAddress: { type: "string" },
             estimateDate: { type: "string" },
             estimateNumber: { type: "string" },
-            validUntil: { type: "string" }
+            proposalNumber: { type: "string" },
+            estimatorName: { type: "string" },
+            estimatorEmail: { type: "string" },
+            estimatorPhone: { type: "string" },
+            clientPhone: { type: "string" },
+            clientEmail: { type: "string" }
           },
-          required: ["title", "clientName", "projectAddress", "estimateDate", "estimateNumber", "validUntil"]
+          required: ["title", "clientName", "projectAddress", "estimateDate", "estimateNumber", "proposalNumber", "estimatorName", "estimatorEmail", "estimatorPhone", "clientPhone", "clientEmail"]
         },
         introductionLetter: {
           type: "object",
           properties: {
             greeting: { type: "string" },
-            projectOverview: { type: "string" },
-            whyChooseUs: { type: "array", items: { type: "string" } },
-            nextSteps: { type: "string" },
-            closing: { type: "string" }
+            thankYouMessage: { type: "string" },
+            valueProposition: { type: "string" },
+            qualityCommitment: { type: "string" },
+            collaborationMessage: { type: "string" },
+            bookingInstructions: { type: "string" },
+            closing: { type: "string" },
+            ownerName: { type: "string" },
+            companyName: { type: "string" },
+            website: { type: "string" }
           },
-          required: ["greeting", "projectOverview", "whyChooseUs", "nextSteps", "closing"]
+          required: ["greeting", "thankYouMessage", "valueProposition", "qualityCommitment", "collaborationMessage", "bookingInstructions", "closing", "ownerName", "companyName", "website"]
         },
-        scopeOfWork: {
+        projectDescription: {
           type: "object",
           properties: {
-            preparation: { type: "array", items: { type: "string" } },
-            painting: { type: "array", items: { type: "string" } },
-            cleanup: { type: "array", items: { type: "string" } },
-            timeline: { type: "string" }
+            powerWashing: {
+              type: "object",
+              properties: {
+                description: { type: "string" },
+                areas: { type: "array", items: { type: "string" } },
+                notes: { type: "array", items: { type: "string" } }
+              }
+            },
+            surfacePreparation: {
+              type: "object",
+              properties: {
+                includes: { type: "array", items: { type: "string" } }
+              }
+            },
+            paintApplication: {
+              type: "object",
+              properties: {
+                description: { type: "string" },
+                notes: { type: "array", items: { type: "string" } }
+              }
+            },
+            inclusions: { type: "array", items: { type: "string" } },
+            exclusions: { type: "array", items: { type: "string" } },
+            safetyAndCleanup: { type: "array", items: { type: "string" } },
+            specialConsiderations: { type: "string" }
           },
-          required: ["preparation", "painting", "cleanup", "timeline"]
+          required: ["powerWashing", "surfacePreparation", "paintApplication", "inclusions", "exclusions", "safetyAndCleanup", "specialConsiderations"]
         },
-        pricingSummary: {
+        pricing: {
           type: "object",
           properties: {
             subtotal: { type: "number" },
             tax: { type: "number" },
-            discount: { type: "number" },
-            total: { type: "number" },
-            paymentTerms: { type: "string" }
+            total: { type: "number" }
           },
-          required: ["subtotal", "tax", "total", "paymentTerms"]
-        },
-        upsells: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: { type: "string" },
-              title: { type: "string" },
-              description: { type: "string" },
-              price: { type: "number" },
-              selected: { type: "boolean" }
-            }
-          }
+          required: ["subtotal", "tax", "total"]
         },
         colorApprovals: {
           type: "array",
           items: {
             type: "object",
             properties: {
-              room: { type: "string" },
+              colorCode: { type: "string" },
               colorName: { type: "string" },
-              approved: { type: "boolean" },
-              signatureRequired: { type: "boolean" }
+              surfaces: { type: "string" },
+              approved: { type: "boolean" }
             }
           }
         },
-        termsAndConditions: {
+        addOns: {
           type: "object",
           properties: {
-            warranty: { type: "string" },
-            materials: { type: "string" },
-            scheduling: { type: "string" },
-            changes: { type: "string" }
+            totalPrice: { type: "number" },
+            validityDays: { type: "number" },
+            depositPercent: { type: "number" },
+            optionalUpgrades: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  selected: { type: "boolean" },
+                  description: { type: "string" },
+                  quantity: { type: "number" },
+                  unitPrice: { type: "number" },
+                  lineTotal: { type: "number" }
+                }
+              }
+            },
+            projectAcceptance: {
+              type: "object",
+              properties: {
+                clientNameLine: { type: "string" },
+                dateLine: { type: "string" },
+                signatureLine: { type: "string" },
+                agreementText: { type: "string" }
+              }
+            }
           },
-          required: ["warranty", "materials", "scheduling", "changes"]
-        },
-        companyInfo: {
-          type: "object",
-          properties: {
-            businessName: { type: "string" },
-            contactInfo: { type: "string" },
-            license: { type: "string" },
-            insurance: { type: "string" }
-          },
-          required: ["businessName", "contactInfo", "license", "insurance"]
+          required: ["totalPrice", "validityDays", "depositPercent", "optionalUpgrades", "projectAcceptance"]
         }
       },
-      required: ["coverPage", "introductionLetter", "scopeOfWork", "pricingSummary", "termsAndConditions", "companyInfo"]
+      required: ["coverPage", "introductionLetter", "projectDescription", "pricing", "colorApprovals", "addOns"]
     }
   };
 }

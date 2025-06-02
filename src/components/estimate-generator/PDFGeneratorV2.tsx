@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,52 +16,71 @@ interface PDFContent {
     projectAddress: string;
     estimateDate: string;
     estimateNumber: string;
-    validUntil: string;
+    proposalNumber: string;
+    estimatorName: string;
+    estimatorEmail: string;
+    estimatorPhone: string;
+    clientPhone: string;
+    clientEmail: string;
   };
   introductionLetter: {
     greeting: string;
-    projectOverview: string;
-    whyChooseUs: string[];
-    nextSteps: string;
+    thankYouMessage: string;
+    valueProposition: string;
+    qualityCommitment: string;
+    collaborationMessage: string;
+    bookingInstructions: string;
     closing: string;
+    ownerName: string;
+    companyName: string;
+    website: string;
   };
-  scopeOfWork: {
-    preparation: string[];
-    painting: string[];
-    cleanup: string[];
-    timeline: string;
+  projectDescription: {
+    powerWashing: {
+      description: string;
+      areas: string[];
+      notes: string[];
+    };
+    surfacePreparation: {
+      includes: string[];
+    };
+    paintApplication: {
+      description: string;
+      notes: string[];
+    };
+    inclusions: string[];
+    exclusions: string[];
+    safetyAndCleanup: string[];
+    specialConsiderations: string;
   };
-  pricingSummary: {
+  pricing: {
     subtotal: number;
     tax: number;
-    discount?: number;
     total: number;
-    paymentTerms: string;
   };
-  upsells: Array<{
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    selected: boolean;
-  }>;
   colorApprovals: Array<{
-    room: string;
+    colorCode: string;
     colorName: string;
+    surfaces: string;
     approved: boolean;
-    signatureRequired: boolean;
   }>;
-  termsAndConditions: {
-    warranty: string;
-    materials: string;
-    scheduling: string;
-    changes: string;
-  };
-  companyInfo: {
-    businessName: string;
-    contactInfo: string;
-    license: string;
-    insurance: string;
+  addOns: {
+    totalPrice: number;
+    validityDays: number;
+    depositPercent: number;
+    optionalUpgrades: Array<{
+      selected: boolean;
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      lineTotal: number;
+    }>;
+    projectAcceptance: {
+      clientNameLine: string;
+      dateLine: string;
+      signatureLine: string;
+      agreementText: string;
+    };
   };
 }
 
@@ -108,39 +128,6 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
     console.log('Generating PDF content with V2 architecture...');
 
     try {
-      // Prepare sample upsells and color approvals (in real app, these would come from form data)
-      const sampleUpsells = [
-        {
-          id: 'premium-prep',
-          title: 'Premium Surface Preparation',
-          description: 'Complete sanding, patching, and primer application',
-          price: 450,
-          selected: false
-        },
-        {
-          id: 'trim-painting',
-          title: 'Trim and Molding',
-          description: 'Professional trim painting with precision finish',
-          price: 320,
-          selected: false
-        }
-      ];
-
-      const sampleColorApprovals = [
-        {
-          room: 'Living Room',
-          colorName: 'Warm White (SW 7004)',
-          approved: false,
-          signatureRequired: true
-        },
-        {
-          room: 'Kitchen',
-          colorName: 'Sea Salt (SW 6204)',
-          approved: false,
-          signatureRequired: true
-        }
-      ];
-
       const payload = {
         estimateData,
         projectType,
@@ -156,9 +143,7 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
           email: estimateData.clientEmail || ''
         },
         taxRate: totals.taxRate || '0%',
-        addOns: estimateData.addOns || [],
-        upsells: sampleUpsells,
-        colorApprovals: sampleColorApprovals
+        addOns: estimateData.addOns || []
       };
 
       const { data, error: functionError } = await supabase.functions.invoke('v2-estimate-intent', {
@@ -324,176 +309,290 @@ const PDFGeneratorV2: React.FC<PDFGeneratorV2Props> = ({
 
           {pdfContent && (
             <>
-              <div id="pdf-preview-v2" className="bg-white p-8 border rounded-lg shadow-sm space-y-8 max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
-                {/* Cover Page */}
-                <div className="text-center border-b pb-8">
-                  <h1 className="text-3xl font-bold text-gray-800 mb-2">{pdfContent.coverPage.title}</h1>
-                  <div className="text-lg text-gray-600 space-y-1">
-                    <p><strong>Client:</strong> {pdfContent.coverPage.clientName}</p>
-                    <p><strong>Project Address:</strong> {pdfContent.coverPage.projectAddress}</p>
-                    <p><strong>Estimate Date:</strong> {pdfContent.coverPage.estimateDate}</p>
-                    <p><strong>Estimate #:</strong> {pdfContent.coverPage.estimateNumber}</p>
-                    <p><strong>Valid Until:</strong> {pdfContent.coverPage.validUntil}</p>
+              <div id="pdf-preview-v2" className="bg-white max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
+                
+                {/* Page 1 - Cover Page */}
+                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                  {/* Logo placeholder */}
+                  <div className="mb-8">
+                    <div className="border-2 border-black p-4 inline-block">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">YOUR</div>
+                        <div className="text-2xl font-bold">LOGO</div>
+                        <div className="text-sm">PLACEHOLDER</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Project Photo Placeholder */}
+                  <div className="mb-8">
+                    <div className="w-full h-80 bg-blue-300 border-2 border-blue-400 flex items-center justify-center">
+                      <span className="text-gray-700 text-lg">Project Photo Placeholder</span>
+                    </div>
+                  </div>
+
+                  {/* Project Estimate Title */}
+                  <h1 className="text-3xl font-bold mb-8 text-black">PROJECT ESTIMATE</h1>
+
+                  {/* Estimate Details */}
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div><strong>Date:</strong></div>
+                      <div><strong>Estimator Name:</strong> {pdfContent.coverPage.estimatorName}</div>
+                      <div><strong>Estimator Email:</strong> {pdfContent.coverPage.estimatorEmail}</div>
+                      <div><strong>Estimator Phone:</strong> {pdfContent.coverPage.estimatorPhone}</div>
+                      <div><strong>Client Name:</strong> {pdfContent.coverPage.clientName}</div>
+                      <div><strong>Client Phone:</strong> {pdfContent.coverPage.clientPhone}</div>
+                      <div><strong>Client Email:</strong> {pdfContent.coverPage.clientEmail}</div>
+                      <div><strong>Project Address:</strong> {pdfContent.coverPage.projectAddress}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-semibold">Proposal #: {pdfContent.coverPage.proposalNumber}</div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Introduction Letter */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Personal Message</h2>
-                  <div className="space-y-3 text-gray-700">
+                {/* Page 2 - Introduction */}
+                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                  <div className="mb-8">
+                    <div className="border-2 border-black p-4 inline-block">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">YOUR</div>
+                        <div className="text-2xl font-bold">LOGO</div>
+                        <div className="text-sm">PLACEHOLDER</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h2 className="text-2xl font-bold mb-8">INTRODUCTION</h2>
+                  
+                  <div className="space-y-4 text-gray-800 leading-relaxed">
                     <p>{pdfContent.introductionLetter.greeting}</p>
-                    <p>{pdfContent.introductionLetter.projectOverview}</p>
-                    <div>
-                      <strong>Why Choose Us:</strong>
-                      <ul className="list-disc list-inside ml-4 mt-1">
-                        {pdfContent.introductionLetter.whyChooseUs.map((reason, index) => (
-                          <li key={index}>{reason}</li>
-                        ))}
-                      </ul>
+                    <p>{pdfContent.introductionLetter.thankYouMessage}</p>
+                    <p>{pdfContent.introductionLetter.valueProposition}</p>
+                    <p>{pdfContent.introductionLetter.qualityCommitment}</p>
+                    <p>{pdfContent.introductionLetter.collaborationMessage}</p>
+                    <p>{pdfContent.introductionLetter.bookingInstructions}</p>
+                    <p className="mt-6">{pdfContent.introductionLetter.closing}</p>
+                    <div className="mt-4">
+                      <p>({pdfContent.introductionLetter.ownerName})</p>
+                      <p>({pdfContent.introductionLetter.companyName})</p>
                     </div>
-                    <p>{pdfContent.introductionLetter.nextSteps}</p>
-                    <p className="italic">{pdfContent.introductionLetter.closing}</p>
+                    <p className="mt-8 text-center italic">
+                      More information about us is also available at: {pdfContent.introductionLetter.website}
+                    </p>
                   </div>
                 </div>
 
-                {/* Scope of Work */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Scope of Work</h2>
-                  <div className="grid gap-4">
-                    <div>
-                      <strong>Preparation:</strong>
-                      <ul className="list-disc list-inside ml-4 mt-1">
-                        {pdfContent.scopeOfWork.preparation.map((item, index) => (
-                          <li key={index} className="text-gray-700">{item}</li>
-                        ))}
-                      </ul>
+                {/* Page 3 - Description of Project */}
+                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                  <div className="mb-8">
+                    <div className="border-2 border-black p-4 inline-block">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">YOUR</div>
+                        <div className="text-2xl font-bold">LOGO</div>
+                        <div className="text-sm">PLACEHOLDER</div>
+                      </div>
                     </div>
+                  </div>
+
+                  <h2 className="text-2xl font-bold mb-8">DESCRIPTION OF PROJECT</h2>
+
+                  <div className="space-y-6">
                     <div>
-                      <strong>Painting:</strong>
-                      <ul className="list-disc list-inside ml-4 mt-1">
-                        {pdfContent.scopeOfWork.painting.map((item, index) => (
-                          <li key={index} className="text-gray-700">{item}</li>
+                      <h3 className="font-bold text-lg mb-2">POWER WASHING AND/OR PREP FOR PAINTING</h3>
+                      <p className="mb-2">{pdfContent.projectDescription.powerWashing.description}</p>
+                      <p className="mb-2">Areas included in the wash:</p>
+                      <ol className="list-decimal list-inside ml-4">
+                        {pdfContent.projectDescription.powerWashing.areas.map((area, index) => (
+                          <li key={index}>{area}</li>
                         ))}
-                      </ul>
+                      </ol>
+                      {pdfContent.projectDescription.powerWashing.notes.map((note, index) => (
+                        <p key={index} className="mt-2">**{note}</p>
+                      ))}
                     </div>
+
                     <div>
-                      <strong>Cleanup:</strong>
-                      <ul className="list-disc list-inside ml-4 mt-1">
-                        {pdfContent.scopeOfWork.cleanup.map((item, index) => (
-                          <li key={index} className="text-gray-700">{item}</li>
-                        ))}
-                      </ul>
+                      <h3 className="font-bold text-lg mb-2">SURFACE PREPARATION</h3>
+                      <p className="mb-2">INCLUDES:</p>
+                      {pdfContent.projectDescription.surfacePreparation.includes.map((item, index) => (
+                        <p key={index} className="mb-1">** {item}</p>
+                      ))}
                     </div>
+
                     <div>
-                      <strong>Timeline:</strong> {pdfContent.scopeOfWork.timeline}
+                      <h3 className="font-bold text-lg mb-2">PAINT APPLICATION:</h3>
+                      <p className="mb-2">**{pdfContent.projectDescription.paintApplication.description}</p>
+                      {pdfContent.projectDescription.paintApplication.notes.map((note, index) => (
+                        <p key={index} className="mb-2">++{note}</p>
+                      ))}
+                      <p className="font-bold mt-4">PREPARE AND PAINT EXTERIOR OF THE HOME.</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-lg mb-2">INCLUSIONS:</h3>
+                      {pdfContent.projectDescription.inclusions.map((item, index) => (
+                        <p key={index} className="mb-1">{item}</p>
+                      ))}
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-lg mb-2">EXCLUSIONS:</h3>
+                      {pdfContent.projectDescription.exclusions.map((item, index) => (
+                        <p key={index} className="mb-1">{item}</p>
+                      ))}
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-lg mb-2">SAFETY, SETUP & CLEAN UP</h3>
+                      {pdfContent.projectDescription.safetyAndCleanup.map((item, index) => (
+                        <p key={index} className="mb-2">** {item}</p>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Pricing Summary (NO line items table) */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Pricing Summary</h2>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="space-y-2">
+                {/* Page 4 - Pricing and Color Approvals */}
+                <div className="p-8 min-h-screen border-b-2 border-gray-300 page-break">
+                  <div className="mb-8">
+                    <div className="border-2 border-black p-4 inline-block">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">YOUR</div>
+                        <div className="text-2xl font-bold">LOGO</div>
+                        <div className="text-sm">PLACEHOLDER</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* Special Considerations */}
+                    <div>
+                      <h3 className="font-bold text-lg mb-2">SPECIAL CONSIDERATIONS</h3>
+                      <p>{pdfContent.projectDescription.specialConsiderations}</p>
+                    </div>
+
+                    {/* Pricing Summary */}
+                    <div className="text-right space-y-2">
                       <div className="flex justify-between">
-                        <span>Subtotal:</span>
-                        <span>{formatCurrency(pdfContent.pricingSummary.subtotal)}</span>
+                        <span>Quote Subtotal:</span>
+                        <span>{formatCurrency(pdfContent.pricing.subtotal)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Tax:</span>
-                        <span>{formatCurrency(pdfContent.pricingSummary.tax)}</span>
+                        <span>Sales Tax (X%):</span>
+                        <span>{formatCurrency(pdfContent.pricing.tax)}</span>
                       </div>
-                      {pdfContent.pricingSummary.discount && (
-                        <div className="flex justify-between text-green-600">
-                          <span>Discount:</span>
-                          <span>-{formatCurrency(pdfContent.pricingSummary.discount)}</span>
-                        </div>
-                      )}
                       <div className="flex justify-between font-bold text-lg border-t pt-2">
                         <span>Total:</span>
-                        <span>{formatCurrency(pdfContent.pricingSummary.total)}</span>
+                        <span>{formatCurrency(pdfContent.pricing.total)}</span>
                       </div>
                     </div>
-                    <div className="mt-3 text-sm text-gray-600">
-                      <strong>Payment Terms:</strong> {pdfContent.pricingSummary.paymentTerms}
-                    </div>
-                  </div>
-                </div>
 
-                {/* Upsells Section */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Optional Upgrades</h2>
-                  <div className="space-y-3">
-                    {pdfContent.upsells.map((upsell, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <input type="checkbox" checked={upsell.selected} readOnly className="h-4 w-4" />
-                            <div>
-                              <strong>{upsell.title}</strong>
-                              <p className="text-sm text-gray-600">{upsell.description}</p>
-                            </div>
+                    {/* Color Approvals Section */}
+                    <div className="bg-cyan-100 p-6 border-2 border-cyan-200">
+                      <h3 className="text-xl font-bold mb-4">Color Approvals</h3>
+                      <div className="border-2 border-purple-400 bg-purple-100 p-4">
+                        {pdfContent.colorApprovals.map((color, index) => (
+                          <div key={index} className="mb-4">
+                            <div><strong>Color {index + 1} ({color.colorCode}):</strong> {color.colorName}</div>
+                            <div><strong>Surfaces:</strong> {color.surfaces}</div>
+                          </div>
+                        ))}
+                        
+                        <div className="mt-6 border-t-2 border-purple-400 pt-4">
+                          <div className="flex justify-between items-center">
+                            <span>Approved by _________________________ on _________________</span>
+                          </div>
+                          <div className="text-center mt-2">
+                            <span>(Client Signature)</span>
+                            <span className="ml-20">(Date)</span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="font-semibold">{formatCurrency(upsell.price)}</span>
-                        </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Color Approvals Section */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Color Approvals</h2>
-                  <div className="space-y-4">
-                    {pdfContent.colorApprovals.map((approval, index) => (
-                      <div key={index} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
+                {/* Page 5 - Add-ons & Signing Authorization */}
+                <div className="p-8 min-h-screen page-break">
+                  <div className="mb-8">
+                    <div className="border-2 border-black p-4 inline-block">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">YOUR</div>
+                        <div className="text-2xl font-bold">LOGO</div>
+                        <div className="text-sm">PLACEHOLDER</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h2 className="text-2xl font-bold mb-8">ADD ONS & SIGNING AUTHORIZATION</h2>
+
+                  <div className="space-y-8">
+                    <div className="text-xl font-semibold">
+                      Total Price: {formatCurrency(pdfContent.addOns.totalPrice)}
+                    </div>
+
+                    <div className="bg-gray-100 p-4">
+                      <p className="text-center font-medium">
+                        Estimate Valid for {pdfContent.addOns.validityDays} days. A {pdfContent.addOns.depositPercent}% deposit is required to confirm proposal
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold mb-4">OPTIONAL UPGRADES</h3>
+                      <table className="w-full border-collapse border border-gray-400">
+                        <thead>
+                          <tr className="bg-gray-200">
+                            <th className="border border-gray-400 p-2"></th>
+                            <th className="border border-gray-400 p-2 text-left">Description</th>
+                            <th className="border border-gray-400 p-2">Qty</th>
+                            <th className="border border-gray-400 p-2">Unit Price</th>
+                            <th className="border border-gray-400 p-2">Line Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pdfContent.addOns.optionalUpgrades.map((upgrade, index) => (
+                            <tr key={index}>
+                              <td className="border border-gray-400 p-2 text-center">
+                                <input type="checkbox" checked={upgrade.selected} readOnly />
+                              </td>
+                              <td className="border border-gray-400 p-2">{upgrade.description}</td>
+                              <td className="border border-gray-400 p-2 text-center">{upgrade.quantity}</td>
+                              <td className="border border-gray-400 p-2 text-right">{formatCurrency(upgrade.unitPrice)}</td>
+                              <td className="border border-gray-400 p-2 text-right">{formatCurrency(upgrade.lineTotal)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold mb-6">Project Acceptance:</h3>
+                      <div className="space-y-8">
+                        <div className="flex justify-between">
                           <div>
-                            <strong>{approval.room}</strong>
-                            <p className="text-gray-600">{approval.colorName}</p>
+                            <div className="border-b-2 border-black w-80 mb-2"></div>
+                            <div>Client Name</div>
                           </div>
-                          <input type="checkbox" checked={approval.approved} readOnly className="h-4 w-4" />
+                          <div>
+                            <div className="border-b-2 border-black w-48 mb-2"></div>
+                            <div>Date</div>
+                          </div>
                         </div>
-                        {approval.signatureRequired && (
-                          <div className="border-t pt-3">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-600">Client Approval:</span>
-                              <span className="text-sm text-gray-600">Date:</span>
-                            </div>
-                            <div className="flex justify-between mt-1">
-                              <div className="border-b border-gray-400 w-48"></div>
-                              <div className="border-b border-gray-400 w-24"></div>
-                            </div>
-                          </div>
-                        )}
+                        
+                        <div>
+                          <div className="border-b-2 border-black w-80 mb-2"></div>
+                          <div>Client Signature</div>
+                        </div>
+
+                        <div className="text-sm leading-relaxed">
+                          <p>{pdfContent.addOns.projectAcceptance.agreementText}</p>
+                        </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Terms and Conditions */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Terms and Conditions</h2>
-                  <div className="space-y-3 text-sm">
-                    <div><strong>Warranty:</strong> {pdfContent.termsAndConditions.warranty}</div>
-                    <div><strong>Materials:</strong> {pdfContent.termsAndConditions.materials}</div>
-                    <div><strong>Scheduling:</strong> {pdfContent.termsAndConditions.scheduling}</div>
-                    <div><strong>Changes:</strong> {pdfContent.termsAndConditions.changes}</div>
-                  </div>
-                </div>
-
-                {/* Company Info */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3 border-b pb-1">Company Information</h2>
-                  <div className="space-y-2 text-sm">
-                    <div><strong>Business:</strong> {pdfContent.companyInfo.businessName}</div>
-                    <div><strong>Contact:</strong> {pdfContent.companyInfo.contactInfo}</div>
-                    <div><strong>License:</strong> {pdfContent.companyInfo.license}</div>
-                    <div><strong>Insurance:</strong> {pdfContent.companyInfo.insurance}</div>
-                  </div>
-                </div>
               </div>
 
               <div className="flex gap-3 justify-center">
