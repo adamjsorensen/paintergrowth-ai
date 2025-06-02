@@ -3,9 +3,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import RoomsMatrixField from './rooms/RoomsMatrixField';
 import { useEstimateProcessing } from './estimate-review/hooks/useEstimateProcessing';
 import LoadingCard from './estimate-review/components/LoadingCard';
@@ -14,6 +17,9 @@ import EstimateDetailsTable from './estimate-review/components/EstimateDetailsTa
 import { generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
 import { StandardizedRoom } from '@/types/room-types';
 import { ProjectMetadata } from './types/ProjectMetadata';
+import { groupRoomsByFloor, countSelectedRoomsByFloor, countSelectedRoomsByGroup } from './rooms/utils/FloorGroupingUtils';
+import { floorGroups, roomGroups } from './rooms/config/RoomDefinitions';
+import { interiorRoomsMatrixConfig } from './rooms/InteriorRoomsConfig';
 
 interface EstimateReviewProps {
   transcript: string;
@@ -78,6 +84,11 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   
   const [taxRate, setTaxRate] = useState(7.5);
 
+  // Floor collapse state management
+  const [floorCollapseStates, setFloorCollapseStates] = useState<Record<string, boolean>>(
+    floorGroups.reduce((acc, floor) => ({ ...acc, [floor.id]: true }), {})
+  );
+
   // Calculate default accordion states
   const getExtractedInfoDefaultState = () => {
     const highConfidenceFields = estimateFields.filter(field => field.confidence > 0.8);
@@ -112,6 +123,18 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     setProjectMetadata({
       ...projectMetadata,
       [field]: value
+    });
+  };
+
+  // Check if a room has any surfaces selected
+  const hasSelectedSurfaces = (room: StandardizedRoom) => {
+    return interiorRoomsMatrixConfig.columns.some(column => {
+      if (column.type === "checkbox") {
+        return room[column.id as keyof StandardizedRoom] === true;
+      } else if (column.type === "number") {
+        return (room[column.id as keyof StandardizedRoom] as number) > 0;
+      }
+      return false;
     });
   };
 
@@ -228,110 +251,156 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     }
   }, [lineItems]);
 
+  // Group rooms by floor and get counts
+  const floorGroupedRooms = groupRoomsByFloor(roomsMatrix);
+  const floorCounts = countSelectedRoomsByFloor(floorGroupedRooms, hasSelectedSurfaces);
+
   return (
     <div className="space-y-6">
       {isLoading ? (
         <LoadingCard isExtracting={isExtracting} extractionProgress={extractionProgress} />
       ) : (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Information</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Review and edit extracted information and project settings
-              </p>
-            </CardHeader>
-            <CardContent>
-              <Accordion 
-                type="multiple" 
-                value={accordionValue} 
-                onValueChange={setAccordionValue}
-                className="w-full"
-              >
-                <AccordionItem value="extracted-info">
-                  <AccordionTrigger>Extracted Information</AccordionTrigger>
-                  <AccordionContent className="space-y-6">
-                    <ExtractedInformationTable 
-                      estimateFields={estimateFields}
-                      setEstimateFields={setEstimateFields}
+          {/* Project Information - Remove outer Card wrapper */}
+          <Accordion 
+            type="multiple" 
+            value={accordionValue} 
+            onValueChange={setAccordionValue}
+            className="w-full border rounded-lg shadow-sm"
+          >
+            <AccordionItem value="extracted-info" className="border-none">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline border-b">
+                <div className="text-left">
+                  <h3 className="text-xl font-semibold">Project Information</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review and edit extracted information and project settings
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 py-6 space-y-6">
+                <ExtractedInformationTable 
+                  estimateFields={estimateFields}
+                  setEstimateFields={setEstimateFields}
+                />
+                
+                {/* Project Settings Fields */}
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-medium text-muted-foreground">Project Settings</h4>
+                  
+                  {/* Trim Color */}
+                  <div className="space-y-2">
+                    <Label htmlFor="trimColor">Trim Color</Label>
+                    <Input
+                      id="trimColor"
+                      value={projectMetadata.trimColor}
+                      onChange={(e) => handleFieldChange('trimColor', e.target.value)}
+                      placeholder="e.g., Semi-Gloss White"
                     />
-                    
-                    {/* Project Settings Fields */}
-                    <div className="space-y-4 border-t pt-4">
-                      <h4 className="text-sm font-medium text-muted-foreground">Project Settings</h4>
-                      
-                      {/* Trim Color */}
-                      <div className="space-y-2">
-                        <Label htmlFor="trimColor">Trim Color</Label>
-                        <Input
-                          id="trimColor"
-                          value={projectMetadata.trimColor}
-                          onChange={(e) => handleFieldChange('trimColor', e.target.value)}
-                          placeholder="e.g., Semi-Gloss White"
-                        />
-                      </div>
+                  </div>
 
-                      {/* Number of Coats */}
-                      <div className="space-y-3">
-                        <Label>Number of Coats</Label>
-                        <RadioGroup
-                          value={projectMetadata.coats}
-                          onValueChange={(value) => handleFieldChange('coats', value)}
-                          className="flex gap-6"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="one" id="one-coat" />
-                            <Label htmlFor="one-coat">One</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="two" id="two-coats" />
-                            <Label htmlFor="two-coats">Two</Label>
-                          </div>
-                        </RadioGroup>
+                  {/* Number of Coats */}
+                  <div className="space-y-3">
+                    <Label>Number of Coats</Label>
+                    <RadioGroup
+                      value={projectMetadata.coats}
+                      onValueChange={(value) => handleFieldChange('coats', value)}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="one" id="one-coat" />
+                        <Label htmlFor="one-coat">One</Label>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="two" id="two-coats" />
+                        <Label htmlFor="two-coats">Two</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
 
-                      {/* Paint Type */}
-                      <div className="space-y-2">
-                        <Label htmlFor="paintType">Paint Type</Label>
-                        <Input
-                          id="paintType"
-                          value={projectMetadata.paintType}
-                          onChange={(e) => handleFieldChange('paintType', e.target.value)}
-                          placeholder="e.g., Sherwin Williams ProClassic"
-                        />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
+                  {/* Paint Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="paintType">Paint Type</Label>
+                    <Input
+                      id="paintType"
+                      value={projectMetadata.paintType}
+                      onChange={(e) => handleFieldChange('paintType', e.target.value)}
+                      placeholder="e.g., Sherwin Williams ProClassic"
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
           
+          {/* Rooms to Paint - Floor-based collapsible sections */}
           {projectType === 'interior' && (
             <Accordion 
               type="multiple" 
               value={accordionValue} 
               onValueChange={setAccordionValue}
-              className="w-full"
+              className="w-full border rounded-lg shadow-sm"
             >
-              <AccordionItem value="rooms-to-paint">
-                <AccordionTrigger>
-                  <Card className="w-full border-none shadow-none">
-                    <CardHeader className="pb-2">
-                      <CardTitle>Rooms to Paint</CardTitle>
-                    </CardHeader>
-                  </Card>
+              <AccordionItem value="rooms-to-paint" className="border-none">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline border-b">
+                  <div className="text-left">
+                    <h3 className="text-xl font-semibold">Rooms to Paint</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Select rooms and surfaces to include in your estimate
+                    </p>
+                  </div>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <RoomsMatrixField 
-                        matrixValue={roomsMatrix}
-                        onChange={handleRoomsMatrixChange}
-                        extractedRoomsList={extractedRoomsList}
-                      />
-                    </CardContent>
-                  </Card>
+                <AccordionContent className="px-6 py-6">
+                  <div className="space-y-4">
+                    {/* Floor-based grouping */}
+                    {floorGroups.map(floor => {
+                      const floorRooms = Object.values(floorGroupedRooms[floor.id] || {}).flat();
+                      if (floorRooms.length === 0) return null;
+
+                      const floorCount = floorCounts[floor.id] || { selected: 0, total: 0 };
+                      const isOpen = floorCollapseStates[floor.id];
+
+                      return (
+                        <Collapsible
+                          key={floor.id}
+                          open={isOpen}
+                          onOpenChange={(open) => 
+                            setFloorCollapseStates(prev => ({ ...prev, [floor.id]: open }))
+                          }
+                        >
+                          <div className="border rounded-lg">
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="w-full p-4 justify-between hover:bg-gray-50 rounded-lg"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium">{floor.label}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {floorCount.selected} / {floorCount.total}
+                                  </Badge>
+                                </div>
+                                {isOpen ? (
+                                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                )}
+                              </Button>
+                            </CollapsibleTrigger>
+                            
+                            <CollapsibleContent>
+                              <div className="p-4 border-t">
+                                <RoomsMatrixField 
+                                  matrixValue={floorRooms}
+                                  onChange={handleRoomsMatrixChange}
+                                  extractedRoomsList={extractedRoomsList}
+                                />
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+                      );
+                    })}
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
