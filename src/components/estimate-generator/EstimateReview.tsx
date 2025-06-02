@@ -17,8 +17,6 @@ import EstimateDetailsTable from './estimate-review/components/EstimateDetailsTa
 import { generateLineItemsFromRooms } from './rooms/RoomExtractionUtils';
 import { StandardizedRoom } from '@/types/room-types';
 import { ProjectMetadata } from './types/ProjectMetadata';
-import { groupRoomsByFloor, countSelectedRoomsByFloor, countSelectedRoomsByGroup } from './rooms/utils/FloorGroupingUtils';
-import { floorGroups, roomGroups } from './rooms/config/RoomDefinitions';
 import { interiorRoomsMatrixConfig } from './rooms/InteriorRoomsConfig';
 
 interface EstimateReviewProps {
@@ -83,11 +81,6 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   });
   
   const [taxRate, setTaxRate] = useState(7.5);
-
-  // Floor collapse state management
-  const [floorCollapseStates, setFloorCollapseStates] = useState<Record<string, boolean>>(
-    floorGroups.reduce((acc, floor) => ({ ...acc, [floor.id]: true }), {})
-  );
 
   // Calculate default accordion states
   const getExtractedInfoDefaultState = () => {
@@ -251,17 +244,13 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
     }
   }, [lineItems]);
 
-  // Group rooms by floor and get counts
-  const floorGroupedRooms = groupRoomsByFloor(roomsMatrix);
-  const floorCounts = countSelectedRoomsByFloor(floorGroupedRooms, hasSelectedSurfaces);
-
   return (
     <div className="space-y-6">
       {isLoading ? (
         <LoadingCard isExtracting={isExtracting} extractionProgress={extractionProgress} />
       ) : (
         <>
-          {/* Project Information - Remove outer Card wrapper */}
+          {/* Project Information */}
           <Accordion 
             type="multiple" 
             value={accordionValue} 
@@ -332,78 +321,13 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
             </AccordionItem>
           </Accordion>
           
-          {/* Rooms to Paint - Floor-based collapsible sections */}
+          {/* Rooms to Paint - Use RoomsMatrixField component directly */}
           {projectType === 'interior' && (
-            <Accordion 
-              type="multiple" 
-              value={accordionValue} 
-              onValueChange={setAccordionValue}
-              className="w-full border rounded-lg shadow-sm"
-            >
-              <AccordionItem value="rooms-to-paint" className="border-none">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline border-b">
-                  <div className="text-left">
-                    <h3 className="text-xl font-semibold">Rooms to Paint</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Select rooms and surfaces to include in your estimate
-                    </p>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 py-6">
-                  <div className="space-y-4">
-                    {/* Floor-based grouping */}
-                    {floorGroups.map(floor => {
-                      const floorRooms = Object.values(floorGroupedRooms[floor.id] || {}).flat();
-                      if (floorRooms.length === 0) return null;
-
-                      const floorCount = floorCounts[floor.id] || { selected: 0, total: 0 };
-                      const isOpen = floorCollapseStates[floor.id];
-
-                      return (
-                        <Collapsible
-                          key={floor.id}
-                          open={isOpen}
-                          onOpenChange={(open) => 
-                            setFloorCollapseStates(prev => ({ ...prev, [floor.id]: open }))
-                          }
-                        >
-                          <div className="border rounded-lg">
-                            <CollapsibleTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className="w-full p-4 justify-between hover:bg-gray-50 rounded-lg"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <span className="font-medium">{floor.label}</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {floorCount.selected} / {floorCount.total}
-                                  </Badge>
-                                </div>
-                                {isOpen ? (
-                                  <ChevronUp className="h-4 w-4 text-gray-500" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                                )}
-                              </Button>
-                            </CollapsibleTrigger>
-                            
-                            <CollapsibleContent>
-                              <div className="p-4 border-t">
-                                <RoomsMatrixField 
-                                  matrixValue={floorRooms}
-                                  onChange={handleRoomsMatrixChange}
-                                  extractedRoomsList={extractedRoomsList}
-                                />
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-                      );
-                    })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <RoomsMatrixField 
+              matrixValue={roomsMatrix}
+              onChange={handleRoomsMatrixChange}
+              extractedRoomsList={extractedRoomsList}
+            />
           )}
           
           <EstimateDetailsTable
