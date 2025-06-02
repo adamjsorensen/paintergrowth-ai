@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { ESTIMATE_STEPS } from '../constants/EstimateSteps';
@@ -45,7 +46,13 @@ const StepRenderer: React.FC<StepRendererProps> = ({
       return (
         <Transcriber
           audioBlob={null}
-          onComplete={handlers.handleInformationExtracted}
+          onComplete={(transcript: string, summary: string) => {
+            // Convert Transcriber callback format to what handleInformationExtracted expects
+            handlers.handleInformationExtracted({
+              transcript,
+              summary
+            });
+          }}
         />
       );
     
@@ -131,3 +138,4 @@ const StepRenderer: React.FC<StepRendererProps> = ({
 };
 
 export default StepRenderer;
+
