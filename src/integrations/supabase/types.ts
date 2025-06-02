@@ -44,6 +44,7 @@ export type Database = {
       }
       boilerplate_texts: {
         Row: {
+          active: boolean | null
           content: string
           id: string
           locale: string
@@ -52,6 +53,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          active?: boolean | null
           content: string
           id?: string
           locale: string
@@ -60,6 +62,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          active?: boolean | null
           content?: string
           id?: string
           locale?: string

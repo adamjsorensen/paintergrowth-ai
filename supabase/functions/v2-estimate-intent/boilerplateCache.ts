@@ -17,6 +17,7 @@ export async function getBoilerplateTexts(supabaseClient: any) {
   try {
     console.log('Fetching boilerplate texts from database');
     
+    // Updated query to use the new 'active' column
     const { data: boilerplateData, error } = await supabaseClient
       .from('boilerplate_texts')
       .select('*')
@@ -27,9 +28,10 @@ export async function getBoilerplateTexts(supabaseClient: any) {
       return getDefaultBoilerplate();
     }
     
-    // Convert array to object keyed by section
+    // Convert array to object keyed by type (since section column doesn't exist)
     const boilerplate = boilerplateData.reduce((acc: Record<string, any>, item: any) => {
-      acc[item.section] = item.content;
+      // Use 'type' field instead of 'section' since that's what exists in the schema
+      acc[item.type] = item.content;
       return acc;
     }, {});
     

@@ -1,37 +1,54 @@
-
 export async function callOpenRouterAPI(
   fullPrompt: string,
   functionDefinition: any,
   model: string,
   temperature: number
 ) {
+  const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+  
+  if (!openRouterApiKey) {
+    throw new Error('OPENROUTER_API_KEY not found in environment variables');
+  }
+
+  console.log(`Calling OpenRouter with model: ${model}, temperature: ${temperature}`);
+
+  const requestBody = {
+    model: model,
+    messages: [
+      {
+        role: 'user',
+        content: fullPrompt
+      }
+    ],
+    functions: [functionDefinition],
+    function_call: { name: "generate_pdf_content" },
+    temperature: temperature,
+    max_tokens: 4000
+  };
+
+  console.log('OpenRouter request body prepared');
+
   const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${Deno.env.get('OPENROUTER_API_KEY')}`,
+      'Authorization': `Bearer ${openRouterApiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://supabase.com',
       'X-Title': 'Estimate Generator V2'
     },
-    body: JSON.stringify({
-      model: model,
-      messages: [
-        {
-          role: 'user',
-          content: fullPrompt
-        }
-      ],
-      functions: [functionDefinition],
-      function_call: { name: "generate_pdf_content" },
-      temperature: temperature
-    })
+    body: JSON.stringify(requestBody)
   });
 
   if (!openRouterResponse.ok) {
-    throw new Error(`OpenRouter API error: ${openRouterResponse.statusText}`);
+    const errorText = await openRouterResponse.text();
+    console.error(`OpenRouter API error (${openRouterResponse.status}):`, errorText);
+    throw new Error(`OpenRouter API error: ${openRouterResponse.status} - ${errorText}`);
   }
 
-  return await openRouterResponse.json();
+  const result = await openRouterResponse.json();
+  console.log('OpenRouter API call successful');
+  
+  return result;
 }
 
 export function createFunctionDefinition() {
