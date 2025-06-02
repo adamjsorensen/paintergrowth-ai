@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { getBoilerplateTexts } from "./boilerplateCache.ts";
 import { callOpenRouterAPI, parseAIResponse } from "./openaiService.ts";
@@ -105,6 +104,9 @@ export async function processEstimateRequest(
     // Add line items and add-ons to structured input
     structuredInput.lineItems = lineItems || [];
     structuredInput.addOns = addOns || estimateData?.addOns || [];
+    
+    // Convert line items to JSON string for template replacement
+    structuredInput.lineItemsJson = JSON.stringify(lineItems || []);
 
   } catch (error) {
     console.error('E_DATA_PROCESSING: Error preparing structured input:', error);
@@ -181,9 +183,14 @@ Make sure to:
 3. Use proper data types (strings, numbers, booleans, arrays)
 4. Return ONLY the JSON object, no additional text or formatting`;
 
-  console.log('PROMPT CONSTRUCTED WITH LENGTH:', fullPrompt.length);
-  console.log('PROMPT FIRST 500 CHARS:', fullPrompt.substring(0, 500));
-  console.log('PROMPT LAST 500 CHARS:', fullPrompt.substring(fullPrompt.length - 500));
+  console.log('=== DEBUGGING: FINAL PROMPT BEING SENT TO AI ===');
+  console.log('Prompt length:', fullPrompt.length);
+  console.log('Contains client name:', fullPrompt.includes(structuredInput.clientName));
+  console.log('Contains project type:', fullPrompt.includes(structuredInput.projectType));
+  console.log('Contains pricing data:', fullPrompt.includes(structuredInput.total.toString()));
+  console.log('Sample from prompt (first 500 chars):');
+  console.log(fullPrompt.substring(0, 500));
+  console.log('=== END PROMPT DEBUG ===');
 
   console.log('Calling OpenRouter with flexible JSON parsing mode');
 
