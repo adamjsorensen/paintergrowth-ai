@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { ESTIMATE_STEPS } from '../constants/EstimateSteps';
@@ -138,4 +137,3 @@ const StepRenderer: React.FC<StepRendererProps> = ({
 };
 
 export default StepRenderer;
-
