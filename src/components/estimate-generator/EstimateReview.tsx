@@ -1,5 +1,8 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import RoomsMatrixField from './rooms/RoomsMatrixField';
 import { useEstimateProcessing } from './estimate-review/hooks/useEstimateProcessing';
 import LoadingCard from './estimate-review/components/LoadingCard';
@@ -72,6 +75,19 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
   });
   
   const [taxRate, setTaxRate] = useState(7.5);
+
+  // Calculate default accordion states
+  const getExtractedInfoDefaultState = () => {
+    const highConfidenceFields = estimateFields.filter(field => field.confidence > 0.8);
+    const percentage = estimateFields.length > 0 ? (highConfidenceFields.length / estimateFields.length) : 0;
+    return percentage > 0.7 ? [] : ['extracted-info']; // collapsed if >70% high confidence
+  };
+
+  const [accordionValue, setAccordionValue] = useState<string[]>(() => [
+    ...getExtractedInfoDefaultState(),
+    'project-settings',
+    'rooms-to-paint'
+  ]);
 
   // Calculate discount amount
   const calculateDiscountAmount = () => {
@@ -209,22 +225,71 @@ const EstimateReview: React.FC<EstimateReviewProps> = ({
         <LoadingCard isExtracting={isExtracting} extractionProgress={extractionProgress} />
       ) : (
         <>
-          <ExtractedInformationTable 
-            estimateFields={estimateFields}
-            setEstimateFields={setEstimateFields}
-          />
-          
-          <ProjectSettingsCard
-            projectMetadata={projectMetadata}
-            onProjectMetadataChange={setProjectMetadata}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Information</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Review and edit extracted information and project settings
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Accordion 
+                type="multiple" 
+                value={accordionValue} 
+                onValueChange={setAccordionValue}
+                className="w-full"
+              >
+                <AccordionItem value="extracted-info">
+                  <AccordionTrigger>Extracted Information</AccordionTrigger>
+                  <AccordionContent>
+                    <ExtractedInformationTable 
+                      estimateFields={estimateFields}
+                      setEstimateFields={setEstimateFields}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+                
+                <AccordionItem value="project-settings">
+                  <AccordionTrigger>Remaining Project Settings</AccordionTrigger>
+                  <AccordionContent>
+                    <ProjectSettingsCard
+                      projectMetadata={projectMetadata}
+                      onProjectMetadataChange={setProjectMetadata}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
           
           {projectType === 'interior' && (
-            <RoomsMatrixField 
-              matrixValue={roomsMatrix}
-              onChange={handleRoomsMatrixChange}
-              extractedRoomsList={extractedRoomsList}
-            />
+            <Accordion 
+              type="multiple" 
+              value={accordionValue} 
+              onValueChange={setAccordionValue}
+              className="w-full"
+            >
+              <AccordionItem value="rooms-to-paint">
+                <AccordionTrigger>
+                  <Card className="w-full border-none shadow-none">
+                    <CardHeader className="pb-2">
+                      <CardTitle>Rooms to Paint</CardTitle>
+                    </CardHeader>
+                  </Card>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <RoomsMatrixField 
+                        matrixValue={roomsMatrix}
+                        onChange={handleRoomsMatrixChange}
+                        extractedRoomsList={extractedRoomsList}
+                      />
+                    </CardContent>
+                  </Card>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
           
           <EstimateDetailsTable
