@@ -29,6 +29,31 @@ export async function processEstimateRequest(
 
   console.log('Processing estimate intent with comprehensive structure');
 
+  // Validate required data with better error messages
+  if (!estimateData && !clientInfo) {
+    console.error('E_VALIDATION_FAILED: Missing required estimate or client data');
+    return new Response(
+      JSON.stringify({
+        error: 'MISSING_REQUIRED_DATA',
+        message: 'Missing required estimate or client information',
+        details: 'Please provide either estimateData or clientInfo'
+      }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!projectType) {
+    console.error('E_VALIDATION_FAILED: Missing project type');
+    return new Response(
+      JSON.stringify({
+        error: 'MISSING_PROJECT_TYPE',
+        message: 'Project type is required (interior or exterior)',
+        details: 'Please specify the project type'
+      }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Fetch boilerplate texts with better error handling
   let boilerplate;
   try {
@@ -56,24 +81,38 @@ export async function processEstimateRequest(
     return createFallbackResponse('No prompt template configured', corsHeaders);
   }
 
-  // Prepare structured data for AI
-  const structuredInput = prepareStructuredInput(
-    estimateData,
-    projectType,
-    totals,
-    roomsMatrix,
-    clientNotes,
-    companyProfile,
-    clientInfo,
-    taxRate,
-    boilerplate,
-    upsells,
-    colorApprovals
-  );
+  // Prepare structured data for AI with validation
+  let structuredInput;
+  try {
+    structuredInput = prepareStructuredInput(
+      estimateData,
+      projectType,
+      totals,
+      roomsMatrix,
+      clientNotes,
+      companyProfile,
+      clientInfo,
+      taxRate,
+      boilerplate,
+      upsells,
+      colorApprovals
+    );
 
-  // Add line items to structured input
-  structuredInput.lineItems = lineItems || [];
-  structuredInput.addOns = addOns || estimateData.addOns || [];
+    // Add line items and add-ons to structured input
+    structuredInput.lineItems = lineItems || [];
+    structuredInput.addOns = addOns || estimateData?.addOns || [];
+
+  } catch (error) {
+    console.error('E_DATA_PROCESSING: Error preparing structured input:', error);
+    return new Response(
+      JSON.stringify({
+        error: 'DATA_PROCESSING_ERROR',
+        message: 'Failed to process input data',
+        details: error.message
+      }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 
   // Replace placeholders in prompt
   const fullPrompt = buildPrompt(promptTemplate.prompt_text, structuredInput);
@@ -113,16 +152,9 @@ export async function processEstimateRequest(
   } catch (validationError) {
     console.error('E_VALIDATION_FAILED: Comprehensive content validation failed:', validationError);
     
-    // Return diagnostic error for debugging
-    return new Response(
-      JSON.stringify({
-        error: 'AI_VALIDATION_FAILED',
-        message: 'Generated content failed comprehensive validation',
-        rawResponse: functionCall.arguments,
-        validationErrors: validationError.errors || validationError.message
-      }),
-      { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Return fallback instead of diagnostic error for better user experience
+    console.log('Returning fallback response due to validation failure');
+    return createFallbackResponse('AI generated invalid content structure', corsHeaders);
   }
 
   console.log('Comprehensive PDF intent processed successfully');

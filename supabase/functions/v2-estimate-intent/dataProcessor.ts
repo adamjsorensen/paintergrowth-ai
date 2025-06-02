@@ -1,3 +1,4 @@
+
 export function prepareStructuredInput(
   estimateData: Record<string, any>,
   projectType: string,
@@ -14,6 +15,7 @@ export function prepareStructuredInput(
   console.log('dataProcessor - Input estimateData:', estimateData);
   console.log('dataProcessor - Input clientInfo:', clientInfo);
   console.log('dataProcessor - Input totals:', totals);
+  console.log('dataProcessor - Input companyProfile:', companyProfile);
 
   // Only use fallbacks if values are truly undefined/null, not if they're empty strings or 0
   const result = {
@@ -23,12 +25,12 @@ export function prepareStructuredInput(
     clientPhone: estimateData?.clientPhone || clientInfo?.phone || '',
     projectAddress: estimateData?.projectAddress || estimateData?.address || clientInfo?.address || 'Project Address',
     
-    // Company Information
-    companyName: companyProfile?.company_name || 'Your Company',
-    estimatorName: companyProfile?.contact_name || companyProfile?.owner_name || 'Project Estimator',
+    // Company Information - using correct property names
+    companyName: companyProfile?.business_name || 'Your Company',
+    estimatorName: companyProfile?.owner_name || 'Project Estimator',
     estimatorEmail: companyProfile?.email || 'estimator@company.com',
     estimatorPhone: companyProfile?.phone || '(555) 123-4567',
-    website: companyProfile?.website || 'www.yourcompany.com',
+    companyAddress: companyProfile?.location || 'Company Address',
     
     // Project Details
     projectType,
@@ -49,6 +51,7 @@ export function prepareStructuredInput(
     // Additional Services
     upsells: upsells || [],
     colorApprovals: colorApprovals || [],
+    addOns: estimateData?.addOns || [],
     
     // Boilerplate Content
     boilerplate: boilerplate || {},
@@ -76,7 +79,7 @@ export function buildPrompt(promptTemplate: string, structuredInput: any) {
     '{{ESTIMATOR_NAME}}': structuredInput.estimatorName,
     '{{ESTIMATOR_EMAIL}}': structuredInput.estimatorEmail,
     '{{ESTIMATOR_PHONE}}': structuredInput.estimatorPhone,
-    '{{WEBSITE}}': structuredInput.website,
+    '{{COMPANY_ADDRESS}}': structuredInput.companyAddress,
     '{{PROJECT_TYPE}}': structuredInput.projectType,
     '{{SUBTOTAL}}': structuredInput.subtotal.toString(),
     '{{TAX}}': structuredInput.tax.toString(),
@@ -88,7 +91,8 @@ export function buildPrompt(promptTemplate: string, structuredInput: any) {
     '{{CLIENT_NOTES}}': structuredInput.clientNotes,
     '{{ROOMS_MATRIX}}': JSON.stringify(structuredInput.roomsMatrix),
     '{{UPSELLS}}': JSON.stringify(structuredInput.upsells),
-    '{{COLOR_APPROVALS}}': JSON.stringify(structuredInput.colorApprovals)
+    '{{COLOR_APPROVALS}}': JSON.stringify(structuredInput.colorApprovals),
+    '{{ADD_ONS}}': JSON.stringify(structuredInput.addOns)
   };
   
   Object.entries(replacements).forEach(([placeholder, value]) => {
