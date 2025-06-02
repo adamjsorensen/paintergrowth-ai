@@ -17,8 +17,8 @@ const EstimateGenerator = () => {
   const isMobile = useIsMobile();
   const [showStartOverDialog, setShowStartOverDialog] = useState(false);
 
-  // Adjust step logic for mobile flow (skip step 3 since it's combined with step 2)
-  const getMaxStep = () => isMobile ? 4 : 5;
+  // Updated to allow full flow including PDF generation steps
+  const getMaxStep = () => ESTIMATE_STEPS.length - 1; // Allow all steps including PDF generation
   const canGoBack = state.currentStep > 0 && state.currentStep < getMaxStep();
   const canGoForward = state.currentStep > 0 && state.currentStep < getMaxStep();
   
@@ -38,6 +38,12 @@ const EstimateGenerator = () => {
       case 4:
         // Suggestions step - always allow to continue (suggestions are optional)
         return true;
+      case 5:
+        // Content generation step - check if content was generated
+        return Object.keys(state.generatedContent).length > 0;
+      case 6:
+        // Content editing step - check if content was edited/confirmed
+        return Object.keys(state.editedContent).length > 0;
       default: return true;
     }
   };
@@ -112,8 +118,8 @@ const EstimateGenerator = () => {
           />
         </div>
 
-        {/* Mobile Footer Navigation - hide for ReviewEditStep since it has its own navigation */}
-        {(canGoBack || canGoForward) && state.currentStep !== 2 && (
+        {/* Mobile Footer Navigation - hide for ReviewEditStep and final steps */}
+        {(canGoBack || canGoForward) && state.currentStep !== 2 && state.currentStep < 5 && (
           <div className="bg-white border-t border-gray-200 p-4 safe-area-pb">
             <div className="flex gap-3">
               {canGoBack && (
@@ -188,7 +194,8 @@ const EstimateGenerator = () => {
             />
           </CardContent>
           
-          {state.currentStep > 0 && state.currentStep < 5 && (
+          {/* Extended navigation to include all steps through PDF generation */}
+          {state.currentStep > 0 && state.currentStep < ESTIMATE_STEPS.length - 1 && (
             <CardFooter className="flex justify-between border-t pt-6">
               <Button 
                 variant="outline" 

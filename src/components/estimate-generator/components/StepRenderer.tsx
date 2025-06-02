@@ -11,7 +11,7 @@ import SummaryChecker from '@/components/estimate-generator/SummaryChecker';
 import EstimateReview from '@/components/estimate-generator/EstimateReview';
 import EstimateContentGenerator from '@/components/estimate-generator/EstimateContentGenerator';
 import EstimateContentEditor from '@/components/estimate-generator/EstimateContentEditor';
-import EstimatePDFGenerator from '@/components/estimate-generator/EstimatePDFGenerator';
+import PDFGeneratorV2 from '@/components/estimate-generator/PDFGeneratorV2';
 import { EstimateState, EstimateHandlers } from '../types/EstimateTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -129,7 +129,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, handlers, onGoBackTo
       );
     case 7:
       return (
-        <EstimatePDFGenerator
+        <PDFGeneratorV2
           estimateData={{ ...extractedData, ...missingInfo }}
           projectType={projectType}
           lineItems={lineItems}

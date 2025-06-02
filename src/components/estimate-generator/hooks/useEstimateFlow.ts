@@ -84,19 +84,8 @@ export const useEstimateFlow = () => {
   // Add ref to track if mobile protection effect has run
   const mobileEffectHasRun = useRef(false);
 
-  // Mobile step 3 protection - automatically redirect to step 4
-  useEffect(() => {
-    // Skip on first render to prevent initial redirect
-    if (!mobileEffectHasRun.current) {
-      mobileEffectHasRun.current = true;
-      return;
-    }
-
-    if (isMobile && state.currentStep === 3) {
-      console.log('Mobile user detected on step 3, redirecting to step 4');
-      setState(prev => ({ ...prev, currentStep: 4 }));
-    }
-  }, [isMobile, state.currentStep]);
+  // Mobile step 3 protection - remove this effect to allow full flow
+  // The mobile flow is now handled in the step navigation logic
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -217,13 +206,7 @@ export const useEstimateFlow = () => {
   };
 
   const setCurrentStep = (step: number) => {
-    // Prevent mobile users from going to step 3
-    if (isMobile && step === 3) {
-      console.log('Preventing mobile navigation to step 3, redirecting to step 4');
-      setState(prev => ({ ...prev, currentStep: 4 }));
-      return;
-    }
-    
+    // Allow any step to be navigated to, including step 3 on mobile
     setState(prev => ({ ...prev, currentStep: step }));
   };
 
