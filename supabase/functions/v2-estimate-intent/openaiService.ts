@@ -11,6 +11,7 @@ export async function callOpenRouterAPI(
   }
 
   console.log(`Calling OpenRouter with model: ${model}, temperature: ${temperature}`);
+  console.log(`FULL PROMPT SENT TO AI:\n${fullPrompt.substring(0, 500)}...(truncated)`);
 
   const requestBody = {
     model: model,
@@ -46,6 +47,10 @@ export async function callOpenRouterAPI(
   const result = await openRouterResponse.json();
   console.log('OpenRouter API call successful');
   
+  // Log the raw AI response before any processing
+  const rawResponse = result.choices?.[0]?.message?.content || '';
+  console.log(`RAW AI RESPONSE:\n${rawResponse}`);
+  
   return result;
 }
 
@@ -63,9 +68,11 @@ export function parseAIResponse(response: string): any {
       const jsonContent = jsonMatch[1] || jsonMatch[0];
       const parsed = JSON.parse(jsonContent);
       console.log('Successfully parsed JSON from AI response');
+      console.log(`PARSED CONTENT STRUCTURE: ${Object.keys(parsed).join(', ')}`);
       return parsed;
     } catch (parseError) {
       console.error('Failed to parse extracted JSON:', parseError);
+      console.log(`PROBLEMATIC CONTENT: ${jsonMatch[1] || jsonMatch[0]}`);
       throw new Error(`Invalid JSON in AI response: ${parseError.message}`);
     }
   }
@@ -74,9 +81,11 @@ export function parseAIResponse(response: string): any {
   try {
     const parsed = JSON.parse(response);
     console.log('Successfully parsed entire response as JSON');
+    console.log(`PARSED CONTENT STRUCTURE: ${Object.keys(parsed).join(', ')}`);
     return parsed;
   } catch (parseError) {
     console.error('Failed to parse response as JSON:', parseError);
+    console.log(`RESPONSE SAMPLE: ${response.substring(0, 200)}...`);
     throw new Error(`No valid JSON found in AI response. Response: ${response.substring(0, 200)}...`);
   }
 }

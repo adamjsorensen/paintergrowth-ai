@@ -27,6 +27,11 @@ export async function processEstimateRequest(
   } = body;
 
   console.log('Processing estimate intent with flexible JSON parsing approach');
+  console.log('REQUEST DATA SUMMARY:');
+  console.log(`- Project Type: ${projectType}`);
+  console.log(`- Client: ${clientInfo?.name || estimateData?.clientName || 'Not specified'}`);
+  console.log(`- Line Items: ${lineItems ? lineItems.length : 0} items`);
+  console.log(`- Rooms Matrix: ${roomsMatrix ? roomsMatrix.length : 0} rooms`);
 
   // Validate required data with better error messages
   if (!estimateData && !clientInfo) {
@@ -176,6 +181,10 @@ Make sure to:
 3. Use proper data types (strings, numbers, booleans, arrays)
 4. Return ONLY the JSON object, no additional text or formatting`;
 
+  console.log('PROMPT CONSTRUCTED WITH LENGTH:', fullPrompt.length);
+  console.log('PROMPT FIRST 500 CHARS:', fullPrompt.substring(0, 500));
+  console.log('PROMPT LAST 500 CHARS:', fullPrompt.substring(fullPrompt.length - 500));
+
   console.log('Calling OpenRouter with flexible JSON parsing mode');
 
   // Use regular OpenAI call instead of function calling
@@ -200,6 +209,9 @@ Make sure to:
     }
     
     console.log('AI Response received, parsing JSON...');
+    console.log('RESPONSE FIRST 500 CHARS:', responseText.substring(0, 500));
+    console.log('RESPONSE LAST 500 CHARS:', responseText.substring(responseText.length - 500));
+    
     aiContent = parseAIResponse(responseText);
     
   } catch (parseError) {
@@ -217,6 +229,14 @@ Make sure to:
   if (validationResult.errors.length > 0) {
     console.log(`Validation warnings: ${validationResult.errors.join(', ')}`);
   }
+
+  console.log('CONTENT COMPARISON:');
+  console.log(`- Input project type: ${projectType}`);
+  console.log(`- Input client: ${structuredInput.clientName}`);
+  console.log(`- Output client: ${validationResult.content.coverPage.clientName}`);
+  console.log(`- Project Overview (first 100 chars): ${validationResult.content.projectOverview.substring(0, 100)}...`);
+  console.log(`- Scope of Work (first 100 chars): ${validationResult.content.scopeOfWork.substring(0, 100)}...`);
+  console.log(`- Line Items: ${validationResult.content.lineItems.length} items`);
 
   console.log('PDF content processed successfully with flexible validation');
 

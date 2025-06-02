@@ -62,7 +62,18 @@ export function prepareStructuredInput(
     proposalNumber: `PROP-${Date.now()}`
   };
 
-  console.log('dataProcessor - Prepared structured input:', result);
+  // Enhanced logging of the structured input
+  console.log('dataProcessor - KEY PROJECT DETAILS:');
+  console.log(`- Client: ${result.clientName} (${result.clientEmail})`);
+  console.log(`- Project Type: ${result.projectType}`);
+  console.log(`- Address: ${result.projectAddress}`);
+  console.log(`- Timeline: ${result.timeline}`);
+  console.log(`- Color Palette: ${result.colorPalette}`);
+  console.log(`- Prep Needs: ${result.prepNeeds.join(', ')}`);
+  console.log(`- Rooms to Paint: ${result.roomsToPaint.length} rooms specified`);
+  console.log(`- Selected Rooms Matrix: ${result.roomsMatrix.filter(r => r.selected).length} rooms selected`);
+  console.log(`- Pricing: $${result.subtotal} + $${result.tax} tax (${result.taxRate}) = $${result.total}`);
+
   return result;
 }
 

@@ -15,6 +15,9 @@ export function validateAndFixContent(
   const errors: string[] = [];
   const fixedSections: string[] = [];
   
+  console.log('CONTENT VALIDATION: Starting content validation and fixing');
+  console.log(`Raw content keys: ${Object.keys(rawContent).join(', ')}`);
+  
   // Start with the raw content and fix section by section
   const content: PDFContent = {
     coverPage: validateCoverPage(rawContent.coverPage, fallbackData, errors, fixedSections),
@@ -30,6 +33,18 @@ export function validateAndFixContent(
 
   // Try final validation with Zod
   const zodResult = PDFContentSchema.safeParse(content);
+  console.log(`VALIDATION RESULT: ${zodResult.success ? 'Success' : 'Failed'}`);
+  console.log(`Fixed sections: ${fixedSections.join(', ') || 'None'}`);
+  
+  if (fixedSections.length > 0) {
+    // Compare original content with fixed content for hallucination detection
+    console.log('CONTENT COMPARISON FOR FIXED SECTIONS:');
+    for (const section of fixedSections) {
+      console.log(`SECTION ${section}:`);
+      console.log(`ORIGINAL: ${JSON.stringify(rawContent[section]).substring(0, 100)}...`);
+      console.log(`FIXED: ${JSON.stringify(content[section as keyof PDFContent]).substring(0, 100)}...`);
+    }
+  }
   
   return {
     isValid: zodResult.success,
