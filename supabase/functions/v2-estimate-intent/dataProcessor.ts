@@ -12,20 +12,14 @@ export function prepareStructuredInput(
   upsells: any[] = [],
   colorApprovals: any[] = []
 ) {
-  console.log('dataProcessor - Input estimateData:', estimateData);
-  console.log('dataProcessor - Input clientInfo:', clientInfo);
-  console.log('dataProcessor - Input totals:', totals);
-  console.log('dataProcessor - Input companyProfile:', companyProfile);
-
-  // Only use fallbacks if values are truly undefined/null, not if they're empty strings or 0
   const result = {
-    // Client Information - prioritize actual data over fallbacks
+    // Client Information
     clientName: estimateData?.clientName || clientInfo?.name || 'Valued Client',
     clientEmail: estimateData?.clientEmail || clientInfo?.email || '',
     clientPhone: estimateData?.clientPhone || clientInfo?.phone || '',
     projectAddress: estimateData?.projectAddress || estimateData?.address || clientInfo?.address || 'Project Address',
     
-    // Company Information - using correct property names
+    // Company Information
     companyName: companyProfile?.business_name || 'Your Company',
     estimatorName: companyProfile?.owner_name || 'Project Estimator',
     estimatorEmail: companyProfile?.email || 'estimator@company.com',
@@ -42,7 +36,7 @@ export function prepareStructuredInput(
     surfacesToPaint: estimateData?.surfacesToPaint || [],
     roomsToPaint: estimateData?.roomsToPaint || [],
     
-    // Financial Information - ensure numbers are preserved even if 0
+    // Financial Information
     subtotal: typeof totals?.subtotal === 'number' ? totals.subtotal : 0,
     tax: typeof totals?.tax === 'number' ? totals.tax : 0,
     total: typeof totals?.total === 'number' ? totals.total : 0,
@@ -62,17 +56,11 @@ export function prepareStructuredInput(
     proposalNumber: `PROP-${Date.now()}`
   };
 
-  // Enhanced logging of the structured input
-  console.log('dataProcessor - KEY PROJECT DETAILS:');
-  console.log(`- Client: ${result.clientName} (${result.clientEmail})`);
-  console.log(`- Project Type: ${result.projectType}`);
-  console.log(`- Address: ${result.projectAddress}`);
-  console.log(`- Timeline: ${result.timeline}`);
-  console.log(`- Color Palette: ${result.colorPalette}`);
-  console.log(`- Prep Needs: ${result.prepNeeds.join(', ')}`);
-  console.log(`- Rooms to Paint: ${result.roomsToPaint.length} rooms specified`);
-  console.log(`- Selected Rooms Matrix: ${result.roomsMatrix.filter(r => r.selected).length} rooms selected`);
-  console.log(`- Pricing: $${result.subtotal} + $${result.tax} tax (${result.taxRate}) = $${result.total}`);
+  console.log('=== DEBUGGING: STRUCTURED INPUT FOR AI ===');
+  console.log('Client:', result.clientName);
+  console.log('Project Type:', result.projectType);
+  console.log('Pricing:', `$${result.subtotal} + $${result.tax} = $${result.total}`);
+  console.log('=== END STRUCTURED INPUT ===');
 
   return result;
 }

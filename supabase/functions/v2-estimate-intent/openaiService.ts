@@ -10,8 +10,9 @@ export async function callOpenRouterAPI(
     throw new Error('OPENROUTER_API_KEY not found in environment variables');
   }
 
-  console.log(`Calling OpenRouter with model: ${model}, temperature: ${temperature}`);
-  console.log(`FULL PROMPT SENT TO AI:\n${fullPrompt.substring(0, 500)}...(truncated)`);
+  console.log('=== DEBUGGING: FULL PROMPT SENT TO AI ===');
+  console.log(fullPrompt);
+  console.log('=== END PROMPT ===');
 
   const requestBody = {
     model: model,
@@ -24,8 +25,6 @@ export async function callOpenRouterAPI(
     temperature: temperature,
     max_tokens: 4000
   };
-
-  console.log('OpenRouter request body prepared');
 
   const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -45,20 +44,18 @@ export async function callOpenRouterAPI(
   }
 
   const result = await openRouterResponse.json();
-  console.log('OpenRouter API call successful');
   
-  // Log the raw AI response before any processing
+  // Log the raw AI response for debugging
   const rawResponse = result.choices?.[0]?.message?.content || '';
-  console.log(`RAW AI RESPONSE:\n${rawResponse}`);
+  console.log('=== DEBUGGING: RAW AI RESPONSE ===');
+  console.log(rawResponse);
+  console.log('=== END AI RESPONSE ===');
   
   return result;
 }
 
 export function parseAIResponse(response: string): any {
-  console.log('Parsing AI response for JSON content');
-  
   // Try to extract JSON from the response
-  // Look for content between ```json and ``` or just raw JSON
   const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
                    response.match(/```\s*([\s\S]*?)\s*```/) ||
                    response.match(/\{[\s\S]*\}/);
@@ -67,12 +64,9 @@ export function parseAIResponse(response: string): any {
     try {
       const jsonContent = jsonMatch[1] || jsonMatch[0];
       const parsed = JSON.parse(jsonContent);
-      console.log('Successfully parsed JSON from AI response');
-      console.log(`PARSED CONTENT STRUCTURE: ${Object.keys(parsed).join(', ')}`);
       return parsed;
     } catch (parseError) {
       console.error('Failed to parse extracted JSON:', parseError);
-      console.log(`PROBLEMATIC CONTENT: ${jsonMatch[1] || jsonMatch[0]}`);
       throw new Error(`Invalid JSON in AI response: ${parseError.message}`);
     }
   }
@@ -80,12 +74,9 @@ export function parseAIResponse(response: string): any {
   // If no clear JSON blocks found, try to parse the entire response
   try {
     const parsed = JSON.parse(response);
-    console.log('Successfully parsed entire response as JSON');
-    console.log(`PARSED CONTENT STRUCTURE: ${Object.keys(parsed).join(', ')}`);
     return parsed;
   } catch (parseError) {
     console.error('Failed to parse response as JSON:', parseError);
-    console.log(`RESPONSE SAMPLE: ${response.substring(0, 200)}...`);
     throw new Error(`No valid JSON found in AI response. Response: ${response.substring(0, 200)}...`);
   }
 }
