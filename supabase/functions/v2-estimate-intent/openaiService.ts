@@ -61,128 +61,36 @@ export async function callOpenRouterAPI(
 export function createFunctionDefinition() {
   return {
     name: "generate_pdf_content",
-    description: "Generate structured PDF content for painting estimates matching the exact template format",
+    description: "Generate structured PDF content for painting estimates matching the content editor format",
     parameters: {
       type: "object",
       properties: {
-        coverPage: {
-          type: "object",
-          properties: {
-            title: { type: "string" },
-            clientName: { type: "string" },
-            projectAddress: { type: "string" },
-            estimateDate: { type: "string" },
-            estimateNumber: { type: "string" },
-            proposalNumber: { type: "string" },
-            estimatorName: { type: "string" },
-            estimatorEmail: { type: "string" },
-            estimatorPhone: { type: "string" },
-            clientPhone: { type: "string" },
-            clientEmail: { type: "string" }
-          },
-          required: ["title", "clientName", "projectAddress", "estimateDate", "estimateNumber", "proposalNumber", "estimatorName", "estimatorEmail", "estimatorPhone", "clientPhone", "clientEmail"]
+        projectOverview: {
+          type: "string",
+          description: "Overview of the painting project including client details and project summary"
         },
-        introductionLetter: {
-          type: "object",
-          properties: {
-            greeting: { type: "string" },
-            thankYouMessage: { type: "string" },
-            valueProposition: { type: "string" },
-            qualityCommitment: { type: "string" },
-            collaborationMessage: { type: "string" },
-            bookingInstructions: { type: "string" },
-            closing: { type: "string" },
-            ownerName: { type: "string" },
-            companyName: { type: "string" },
-            website: { type: "string" }
-          },
-          required: ["greeting", "thankYouMessage", "valueProposition", "qualityCommitment", "collaborationMessage", "bookingInstructions", "closing", "ownerName", "companyName", "website"]
+        scopeOfWork: {
+          type: "string", 
+          description: "Detailed description of all work to be performed"
         },
-        projectDescription: {
-          type: "object",
-          properties: {
-            powerWashing: {
-              type: "object",
-              properties: {
-                description: { type: "string" },
-                areas: { type: "array", items: { type: "string" } },
-                notes: { type: "array", items: { type: "string" } }
-              }
-            },
-            surfacePreparation: {
-              type: "object",
-              properties: {
-                includes: { type: "array", items: { type: "string" } }
-              }
-            },
-            paintApplication: {
-              type: "object",
-              properties: {
-                description: { type: "string" },
-                notes: { type: "array", items: { type: "string" } }
-              }
-            },
-            inclusions: { type: "array", items: { type: "string" } },
-            exclusions: { type: "array", items: { type: "string" } },
-            safetyAndCleanup: { type: "array", items: { type: "string" } },
-            specialConsiderations: { type: "string" }
-          },
-          required: ["powerWashing", "surfacePreparation", "paintApplication", "inclusions", "exclusions", "safetyAndCleanup", "specialConsiderations"]
+        materialsAndLabor: {
+          type: "string",
+          description: "Information about materials to be used and labor details"
         },
-        pricing: {
-          type: "object",
-          properties: {
-            subtotal: { type: "number" },
-            tax: { type: "number" },
-            total: { type: "number" }
-          },
-          required: ["subtotal", "tax", "total"]
+        timeline: {
+          type: "string",
+          description: "Project timeline and scheduling information"
         },
-        colorApprovals: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              colorCode: { type: "string" },
-              colorName: { type: "string" },
-              surfaces: { type: "string" },
-              approved: { type: "boolean" }
-            }
-          }
+        termsAndConditions: {
+          type: "string",
+          description: "Terms and conditions for the project"
         },
-        addOns: {
-          type: "object",
-          properties: {
-            totalPrice: { type: "number" },
-            validityDays: { type: "number" },
-            depositPercent: { type: "number" },
-            optionalUpgrades: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  selected: { type: "boolean" },
-                  description: { type: "string" },
-                  quantity: { type: "number" },
-                  unitPrice: { type: "number" },
-                  lineTotal: { type: "number" }
-                }
-              }
-            },
-            projectAcceptance: {
-              type: "object",
-              properties: {
-                clientNameLine: { type: "string" },
-                dateLine: { type: "string" },
-                signatureLine: { type: "string" },
-                agreementText: { type: "string" }
-              }
-            }
-          },
-          required: ["totalPrice", "validityDays", "depositPercent", "optionalUpgrades", "projectAcceptance"]
+        additionalNotes: {
+          type: "string",
+          description: "Any additional notes or special considerations"
         }
       },
-      required: ["coverPage", "introductionLetter", "projectDescription", "pricing", "colorApprovals", "addOns"]
+      required: ["projectOverview", "scopeOfWork", "materialsAndLabor", "timeline", "termsAndConditions", "additionalNotes"]
     }
   };
 }

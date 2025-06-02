@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { PDFContentSchema } from "./schemas.ts";
@@ -172,82 +171,12 @@ function createFallbackResponse(reason: string) {
   console.log(`Creating fallback response due to: ${reason}`);
   
   const fallbackContent = {
-    coverPage: {
-      title: "PROJECT ESTIMATE",
-      clientName: "Valued Client",
-      projectAddress: "Project Address",
-      estimateDate: new Date().toLocaleDateString(),
-      estimateNumber: `EST-${Date.now()}`,
-      proposalNumber: `PROP-${Date.now()}`,
-      estimatorName: "Project Estimator",
-      estimatorEmail: "estimator@company.com",
-      estimatorPhone: "(555) 123-4567",
-      clientPhone: "(555) 987-6543",
-      clientEmail: "client@example.com"
-    },
-    introductionLetter: {
-      greeting: "Dear Valued Client,",
-      thankYouMessage: "Thank you for considering our painting services for your project.",
-      valueProposition: "We are committed to delivering exceptional quality and professional service.",
-      qualityCommitment: "Our team uses only premium materials and proven techniques.",
-      collaborationMessage: "We look forward to working with you on this project.",
-      bookingInstructions: "Please contact us to schedule your project.",
-      closing: "Sincerely,",
-      ownerName: "Project Manager",
-      companyName: "Your Painting Company",
-      website: "www.yourcompany.com"
-    },
-    projectDescription: {
-      powerWashing: {
-        description: "We will thoroughly clean all surfaces to ensure proper paint adhesion.",
-        areas: ["Exterior walls", "Trim", "Windows", "Doors"],
-        notes: ["Weather-dependent scheduling", "Eco-friendly cleaning solutions"]
-      },
-      surfacePreparation: {
-        includes: ["Surface cleaning", "Minor repairs", "Priming as needed", "Protection of landscaping"]
-      },
-      paintApplication: {
-        description: "Application of premium quality paint using professional techniques.",
-        notes: ["Two-coat system for durability", "Clean lines and smooth finish"]
-      },
-      inclusions: ["All labor and materials", "Setup and cleanup", "Project management"],
-      exclusions: ["Major structural repairs", "Electrical work", "Plumbing modifications"],
-      safetyAndCleanup: ["Daily cleanup", "Proper disposal of materials", "Safety protocols followed"],
-      specialConsiderations: "Project timeline subject to weather conditions."
-    },
-    pricing: {
-      subtotal: 5000,
-      tax: 375,
-      total: 5375
-    },
-    colorApprovals: [
-      {
-        colorCode: "SW-7005",
-        colorName: "Pure White",
-        surfaces: "Trim and doors",
-        approved: false
-      }
-    ],
-    addOns: {
-      totalPrice: 5375,
-      validityDays: 30,
-      depositPercent: 25,
-      optionalUpgrades: [
-        {
-          selected: false,
-          description: "Premium paint upgrade",
-          quantity: 1,
-          unitPrice: 500,
-          lineTotal: 500
-        }
-      ],
-      projectAcceptance: {
-        clientNameLine: "Client signature required",
-        dateLine: "Date",
-        signatureLine: "Signature",
-        agreementText: "By signing below, you agree to the terms and conditions outlined in this estimate."
-      }
-    }
+    projectOverview: "Thank you for considering our painting services for your project. This estimate provides a comprehensive overview of the proposed work.",
+    scopeOfWork: "We will provide complete interior/exterior painting services including surface preparation, primer application, and finish coats using premium materials.",
+    materialsAndLabor: "All materials and labor are included in this estimate. We use high-quality paints and professional-grade tools to ensure lasting results.",
+    timeline: "Project timeline will be discussed and agreed upon before work begins, taking into account weather conditions and project complexity.",
+    termsAndConditions: "Standard terms and conditions apply. Payment schedule and warranty information will be provided with the final contract.",
+    additionalNotes: "Please contact us if you have any questions about this estimate or would like to discuss any modifications to the scope of work."
   };
 
   return new Response(
